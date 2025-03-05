@@ -2,28 +2,69 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import numpy as np
 
 
+def accuracy_basic(t, p):
+    return{
+        "accuracy": accuracy_score(t, p)
+    }
+
+def precision_basic(t, p, average):
+    return{
+        "precision": precision_score(t, p, average=average, zero_division=0)
+    }
+
+def recall_basic(t, p, average):
+    return{
+        "recall": recall_score(t, p, average=average, zero_division=0)
+    }
+
+def f1_basic(t, p, average):
+    return{
+        "f1_score": f1_score(t, p, average=average, zero_division=0)
+    }
+
+def jaccard_basic(t, p, average):
+    return{
+        "jaccard": jaccard_score(t, p, average=average, zero_division=0)
+    }
+
+def silhouette_basic(x_data, p):
+    return{
+        "silhouette": silhouette_score(x_data, p) if len(set(p)) > 1 else np.nan
+    }
+
+def average_combination(t, p, average, x_data):
+    return{
+        accuracy_basic(t, p),
+        precision_basic(t, p, average),
+        recall_basic(t, p, average),
+        f1_basic(t, p, average),
+        jaccard_basic(t, p, average),
+        silhouette_basic(x_data, p)
+    }
+
+def average_combination_wos(t, p, average):
+    return{
+        accuracy_basic(t, p),
+        precision_basic(t, p, average),
+        recall_basic(t, p, average),
+        f1_basic(t, p, average),
+        jaccard_basic(t, p, average)
+    }
+
 def evaluate_clustering(y_true, y_pred, X_data):
     if not y_true.empty:
         return {
-            "macro_accuracy": accuracy_score(y_true, y_pred),
-            "macro_precision": precision_score(y_true, y_pred, average='macro', zero_division=0),
-            "macro_recall": recall_score(y_true, y_pred, average='macro', zero_division=0),
-            "macro_f1_score": f1_score(y_true, y_pred, average='macro', zero_division=0),
-            "macro_jaccard": jaccard_score(y_true, y_pred, average='macro', zero_division=0),
-            "macro_silhouette": silhouette_score(X_data, y_pred) if len(set(y_pred)) > 1 else np.nan,
-            
-            "micro_accuracy": accuracy_score(y_true, y_pred),
-            "micro_precision": precision_score(y_true, y_pred, average='micro', zero_division=0),
-            "micro_recall": recall_score(y_true, y_pred, average='micro', zero_division=0),
-            "micro_f1_score": f1_score(y_true, y_pred, average='micro', zero_division=0),
-            "micro_jaccard": jaccard_score(y_true, y_pred, average='micro', zero_division=0),
-            "micro_silhouette": silhouette_score(X_data, y_pred) if len(set(y_pred)) > 1 else np.nan,
-            
-            "weighted_accuracy": accuracy_score(y_true, y_pred),
-            "weighted_precision": precision_score(y_true, y_pred, average='weighted', zero_division=0),
-            "weighted_recall": recall_score(y_true, y_pred, average='weighted', zero_division=0),
-            "weighted_f1_score": f1_score(y_true, y_pred, average='weighted', zero_division=0),
-            "weighted_jaccard": jaccard_score(y_true, y_pred, average='weighted', zero_division=0),
-            "weighted_silhouette": silhouette_score(X_data, y_pred) if len(set(y_pred)) > 1 else np.nan,
+            "average=macro": average_combination(y_true, y_pred, 'macro', X_data),
+            "average=micro": average_combination(y_true, y_pred, 'micro', X_data),
+            "average=weighted": average_combination(y_true, y_pred, 'micro', X_data)
+        }
+    return {}
+
+def evaluate_clustering_wos(y_true, y_pred, X_data):
+    if not y_true.empty:
+        return {
+            "average=macro": average_combination_wos(y_true, y_pred, 'macro'),
+            "average=micro": average_combination_wos(y_true, y_pred, 'micro'),
+            "average=weighted": average_combination_wos(y_true, y_pred, 'micro')
         }
     return {}
