@@ -1,5 +1,6 @@
 # Separating features into attributes and encoding each
 # Output data is 'feature_list'
+# Encoding and Normalization
 
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 import numpy as np
@@ -138,13 +139,6 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
     else:
         flow_flag_data = data[binary_features].astype(int)
 
-    feature_list = [categorical_data, time_data, packet_length_data, packet_count_data, flow_flag_data]
+    data_list = [categorical_data, time_data, packet_length_data, packet_count_data, flow_flag_data]
 
-    return{feature_list}
-
-
-def Heterogeneous_Feature_named(data, file_type):
-    categorical_features, time_features, packet_length_features, count_features, binary_features = Heterogeneous_Feature_named_featrues(file_type)
-    Heterogeneous_Feature_named_combine(categorical_features, time_features, packet_length_features, count_features, binary_features, data)
-    
-    return
+    return data_list
