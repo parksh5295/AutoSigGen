@@ -21,8 +21,10 @@ def clustering_MShift_clustering(data, state, quantile, n_samples, X):  # Fundam
     return clusters, num_clusters
 
 
-def clustering_MShift(data, state, quantile, n_samples, X):
+def clustering_MShift(data, X, state, quantile, n_samples):
     clusters, num_clusters = clustering_MShift_clustering(data, state, quantile, n_samples, X)
     data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
 
-    return
+    predict_MShift = data['cluster']
+
+    return predict_MShift

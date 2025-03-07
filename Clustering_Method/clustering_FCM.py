@@ -6,9 +6,7 @@ import skfuzzy as fuzz
 from utils.progressing_bar import progress_bar
 
 
-def clustering_FCM(data, X):
-    # Number of clusters (can be tuned)
-    n_clusters = 2
+def clustering_FCM(data, X, n_clusters):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         # Fuzzy C-Means Clustering
         cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
@@ -20,4 +18,6 @@ def clustering_FCM(data, X):
         data['cluster'] = cluster_labels
     update_pbar(len(data))
 
-    return
+    predict_FCM = data['cluster']
+
+    return predict_FCM

@@ -6,7 +6,7 @@ from utils.progressing_bar import progress_bar
 from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
 
-def clustering_DBSCAN_clustering(data, eps, count_samples, X):  # Fundamental DBSCAN clustering
+def clustering_DBSCAN_clustering(data, X, eps, count_samples):  # Fundamental DBSCAN clustering
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         # Apply DBSCAN clustering
         dbscan = DBSCAN(eps=eps, min_samples=count_samples) # default; eps=0.5, min_samples=5
@@ -18,8 +18,9 @@ def clustering_DBSCAN_clustering(data, eps, count_samples, X):  # Fundamental DB
     return clusters, num_clusters
 
 
-def clustering_kmeans(data, eps, count_samples, X):
+def clustering_DBSCAN(data, eps, count_samples, X):
     clusters, num_clusters = clustering_DBSCAN_clustering(data, eps, count_samples, X)
     data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
+    predict_kmeans = data['cluster']
 
-    return
+    return predict_kmeans

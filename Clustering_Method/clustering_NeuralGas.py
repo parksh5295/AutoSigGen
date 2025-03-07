@@ -28,8 +28,10 @@ def clustering_NeuralGas_clustering(data, n_start_nodes, max_nodes, step, max_ed
     return clusters, num_clusters
 
 
-def clustering_NeuralGas(data, n_start_nodes, max_nodes, step, max_edge_age, X):
+def clustering_NeuralGas(data, X, n_start_nodes, max_nodes, step, max_edge_age):
     clusters, num_clusters = clustering_NeuralGas_clustering(data, n_start_nodes, max_nodes, step, max_edge_age, X)
     data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
 
-    return
+    predict_NeuralGas = data['cluster']
+
+    return predict_NeuralGas

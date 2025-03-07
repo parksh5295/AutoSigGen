@@ -71,10 +71,7 @@ def ck_cluster(X, c, m=2, error=0.005, maxiter=1000):
     return cntr, u, d, fpc
 
 
-def clustering_CK(data, X):
-    # Number of clusters (can be tuned)
-    n_clusters = 2
-
+def clustering_CK(data, X, n_clusters):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         # Perform Gustafson-Kessel Clustering
         cntr, u, d, fpc = ck_cluster(X, c=n_clusters, m=2)
@@ -84,4 +81,6 @@ def clustering_CK(data, X):
         data['cluster'] = cluster_labels
     update_pbar(len(data))
 
-    return
+    predict_DBSCAN = data['cluster']
+
+    return predict_DBSCAN
