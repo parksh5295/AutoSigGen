@@ -1,5 +1,6 @@
 # Clustering Methods: Gaussian-means
 # input 'X' is X_reduced or X rows
+# Return: Cluster Information, num_clusters(result), Cluster Information(not fit, optional)
 
 import numpy as np
 from sklearn.cluster import KMeans
@@ -65,5 +66,6 @@ def clustering_Gmeans(data, X, random_state):
         update_pbar(len(data))
 
     predict_Gmeans = data['cluster']
+    num_clusters = len(np.unique(predict_Gmeans))  # Counting the number of clusters
 
-    return predict_Gmeans
+    return predict_Gmeans, num_clusters, gmeans

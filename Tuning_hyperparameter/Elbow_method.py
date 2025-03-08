@@ -6,40 +6,42 @@
 # Some Clustering Algorihtm; Kmeans, Kmedians, GMM, SGMM, FCM, CK requires additional work to tune the number of clusters.
 
 import numpy as np
-from Modules.Clustering_Algorithm import choose_clustering_algorithm
+from Clustering_Method.clustering_kmeans import pre_clustering_kmeans
+from Clustering_Method.clustering_kmedians import pre_clustering_kmedians
+from Clustering_Method.clustering_GMM import pre_clustering_GMM
+from Clustering_Method.clustering_SGMM import pre_clustering_SGMM
+from Clustering_Method.clustering_FCM import pre_clustering_FCM
+from Clustering_Method.clustering_CK import pre_clustering_CK
 
 
-def Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, n_clusters):   # X: Encoding and embedding, post-PCA, post-delivery
-    parameter_dict = {'random_state' : 42, 'n_init' : 10, 'max_clusters' : 50, 'eps' : 0.5, 'count_samples' : 5, 'quantile' : 0.2,
-                      'n_samples' : 500, 'n_start_nodes' : 2, 'max_nodes' : 50, 'step' : 0.2, 'max_edge_age' : 50
-                      }
-
+def Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, n_clusters, parameter_dict):   # X: Encoding and embedding, post-PCA, post-delivery
     if clustering_algorithm == 'Kmeans':
-        clustering = choose_clustering_algorithm(data, X, 'Kmeans', n_clusters, parameter_dict)
+        a, b, clustering = pre_clustering_kmeans(data, X, n_clusters, random_state=parameter_dict['random_state'], n_init=parameter_dict['n_init'])
 
     elif clustering_algorithm == 'Kmedians':
-        clustering = choose_clustering_algorithm(data, X, 'Kmedians', n_clusters, parameter_dict)
+        a, b, clustering = pre_clustering_kmedians(data, X, n_clusters, random_state=parameter_dict['random_state'])
 
     elif clustering_algorithm == 'GMM':
-        clustering = choose_clustering_algorithm(data, X, 'GMM', n_clusters, parameter_dict)
+        GMM_type = input("Please enter the GMM type, i.e. normal, full, tied, diag: ")
+        a, b, clustering = pre_clustering_GMM(data, X, n_clusters, random_state=parameter_dict['random_state'], GMM_type=GMM_type)
 
     elif clustering_algorithm == 'SGMM':
-        clustering = choose_clustering_algorithm(data, X, 'SGMM', n_clusters, parameter_dict)
+        a, b, clustering = pre_clustering_SGMM(data, X, n_clusters, random_state=parameter_dict['random_state'])
 
     elif clustering_algorithm == 'FCM':
-        clustering = choose_clustering_algorithm(data, X, 'FCM', n_clusters, parameter_dict)
+        a, b, clustering = pre_clustering_FCM(data, X, n_clusters)
 
     elif clustering_algorithm == 'CK':
-        clustering = choose_clustering_algorithm(data, X, 'CK', n_clusters, parameter_dict)
+        a, b, clustering = pre_clustering_CK(data, X, n_clusters)
 
     return clustering
 
 
-def Elbow_method(data, X, clustering_algorithm, max_clusters):
+def Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict):
     wcss = []  # Store WCSS by number of clusters
     
     for k in range(1, max_clusters + 1):
-        clustering = Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, k)
+        clustering = Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, k, parameter_dict)
         clustering.fit(data)
         wcss.append(clustering.inertia_)
     

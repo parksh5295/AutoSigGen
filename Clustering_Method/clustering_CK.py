@@ -1,5 +1,6 @@
 # Clustering Algorithm: Custafson-Kessel (Similarly to Fuzzy Algorithm)
 # input 'X' is X_reduced or X rows
+# Return: Cluster Information, num_clusters(result), Cluster Information(not fit, optional)
 
 import numpy as np
 from utils.progressing_bar import progress_bar
@@ -81,6 +82,23 @@ def clustering_CK(data, X, n_clusters):
         data['cluster'] = cluster_labels
     update_pbar(len(data))
 
-    predict_DBSCAN = data['cluster']
+    predict_CK = data['cluster']
+    num_clusters = len(np.unique(predict_CK))  # Counting the number of clusters
 
-    return predict_DBSCAN
+    return predict_CK, num_clusters, cluster_labels
+
+
+def pre_clustering_CK(data, X, n_clusters):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        # Perform Gustafson-Kessel Clustering
+        cntr, u, d, fpc = ck_cluster(X, c=n_clusters, m=2)
+
+        # Assign clusters based on maximum membership
+        cluster_labels = np.argmax(u, axis=0)
+        data['cluster'] = cluster_labels
+    update_pbar(len(data))
+
+    predict_CK = data['cluster']
+    num_clusters = len(np.unique(predict_CK))  # Counting the number of clusters
+
+    return predict_CK, num_clusters, cluster_labels

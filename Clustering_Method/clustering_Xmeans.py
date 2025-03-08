@@ -1,7 +1,7 @@
 # input 'X' is X_reduced or X rows
 # Clustering Algorithm: X-means; Autonomously tuning n_clusters in k-means
+# Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional)
 
-import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from utils.progressing_bar import progress_bar
@@ -31,9 +31,7 @@ def clustering_Xmeans_clustering(data, random_state, max_clusters, X):  # Fundam
 
         update_pbar(len(data))
 
-    num_clusters = len(np.unique(clusters))  # Counting the number of clusters
-
-    return clusters, num_clusters
+    return clusters, optimal_k
 
 
 def clustering_Xmeans(data, X, random_state, max_clusters):
@@ -42,4 +40,4 @@ def clustering_Xmeans(data, X, random_state, max_clusters):
 
     predict_Xmeans = data['data']
 
-    return predict_Xmeans
+    return predict_Xmeans, num_clusters, clusters

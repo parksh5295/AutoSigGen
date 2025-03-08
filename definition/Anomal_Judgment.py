@@ -8,19 +8,17 @@ def anomal_judgment_nonlabel(data_type, data, data_line):
     Need more setting for another data type
     '''
     
-    return{
-        data[data_line].any(axis=1).astype(int) # data_line: A collection of features for determining the label of nonlabel data  / e.i. ['reconnaissance', 'infection', 'action']
-    }
+    result = data[data_line].any(axis=1).astype(int)
+    # data_line: A collection of features for determining the label of nonlabel data  / e.i. ['reconnaissance', 'infection', 'action']
+
+    return result
     
+
 def anomal_judment_label(data):
     if data['Label']:
-        return{
-            data['Label']
-        }
+        return data['Label']
     elif data['label']:
-        return{
-            data['label']
-        }
+        return data['label']
     else:
         print("label data error!")
         return

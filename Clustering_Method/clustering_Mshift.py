@@ -1,5 +1,6 @@
 # input 'X' is X_reduced or X rows
 # Clustering Method: MeanShift
+# Return: Cluster Information, num_clusters(result), Cluster Information(not fit, optional)
 
 import numpy as np
 from sklearn.cluster import MeanShift,  estimate_bandwidth
@@ -16,15 +17,16 @@ def clustering_MShift_clustering(data, state, quantile, n_samples, X):  # Fundam
         MShift = MeanShift(bandwidth=bandwidth, bin_seeding=True)
         clusters = MShift.fit_predict(X)
         update_pbar(len(data))
-    num_clusters = len(np.unique(clusters))  # Counting the number of clusters
 
-    return clusters, num_clusters
+    num_clusters = len(np.unique(clusters))  # Counting the number of clusters
+    
+    return clusters, num_clusters, MShift
 
 
 def clustering_MShift(data, X, state, quantile, n_samples):
-    clusters, num_clusters = clustering_MShift_clustering(data, state, quantile, n_samples, X)
+    clusters, num_clusters, MShift = clustering_MShift_clustering(data, state, quantile, n_samples, X)
     data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
 
     predict_MShift = data['cluster']
 
-    return predict_MShift
+    return predict_MShift, num_clusters, MShift

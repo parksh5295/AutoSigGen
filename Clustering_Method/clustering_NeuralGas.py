@@ -1,4 +1,5 @@
 # input 'X' is X_reduced or X rows
+# Return: Cluster Information, num_clusters(result), Cluster Information(not fit, optional)
 
 import numpy as np
 from neupy.algorithms import GrowingNeuralGas
@@ -34,4 +35,4 @@ def clustering_NeuralGas(data, X, n_start_nodes, max_nodes, step, max_edge_age):
 
     predict_NeuralGas = data['cluster']
 
-    return predict_NeuralGas
+    return predict_NeuralGas, num_clusters, clusters

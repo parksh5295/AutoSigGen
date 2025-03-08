@@ -1,4 +1,5 @@
 # input 'X' is X_reduced or X rows
+# Return: Cluster Information, num_clusters(result), Cluster Information(not fit, optional)
 
 import numpy as np
 from sklearn.cluster import DBSCAN
@@ -15,12 +16,12 @@ def clustering_DBSCAN_clustering(data, X, eps, count_samples):  # Fundamental DB
         update_pbar(len(data))
     num_clusters = len(np.unique(clusters))  # Counting the number of clusters
 
-    return clusters, num_clusters
+    return clusters, num_clusters, dbscan
 
 
 def clustering_DBSCAN(data, eps, count_samples, X):
-    clusters, num_clusters = clustering_DBSCAN_clustering(data, eps, count_samples, X)
+    clusters, num_clusters, dbscan = clustering_DBSCAN_clustering(data, X, eps, count_samples)
     data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
-    predict_kmeans = data['cluster']
+    predict_DBSCAN = data['cluster']
 
-    return predict_kmeans
+    return predict_DBSCAN, num_clusters, dbscan
