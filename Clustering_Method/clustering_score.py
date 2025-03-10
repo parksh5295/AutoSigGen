@@ -60,7 +60,7 @@ def evaluate_clustering(y_true, y_pred, X_data):
         }
     return {}
 
-def evaluate_clustering_wos(y_true, y_pred, X_data):
+def evaluate_clustering_wos(y_true, y_pred):
     if not y_true.empty:
         return {
             "average=macro": average_combination_wos(y_true, y_pred, 'macro'),

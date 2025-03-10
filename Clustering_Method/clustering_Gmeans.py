@@ -1,11 +1,14 @@
 # Clustering Methods: Gaussian-means
 # input 'X' is X_reduced or X rows
-# Return: Cluster Information, num_clusters(result), Cluster Information(not fit, optional)
+# (pre)Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional)
+# (main)Return: dictionary{Cluster Information(0, 1 Classification), best_parameter_dict}
 
 import numpy as np
 from sklearn.cluster import KMeans
 from scipy.stats import normaltest
 from utils.progressing_bar import progress_bar
+from Tuning_hyperparameter.Grid_search import Grid_search_all
+from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
 
 class GMeans:
@@ -57,15 +60,23 @@ class GMeans:
         return self.fit(X).labels_
 
 
-def clustering_Gmeans(data, X, random_state):
+def clustering_Gmeans(data, X):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        tune_parameters = Grid_search_all(X, 'Gmeans')
+        best_params = tune_parameters['Gmeans']['best_params']
+        parameter_dict = tune_parameters['Gmeans']['all_params']
+        parameter_dict.update(best_params)
+
         # G-means Clustering (using GaussianMixture)
-        gmeans = GMeans(random_state=random_state)
-        cluster_labels = gmeans.fit_predict(X)
-        data['cluster'] = cluster_labels
+        gmeans = GMeans(random_state=parameter_dict['random_state'], max_clusters=parameter_dict['max_clusters'], tol=parameter_dict['tol'])
+        clusters = gmeans.fit_predict(X)
+        n_clusters = len(np.unique(clusters))  # Counting the number of clusters
+        data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
         update_pbar(len(data))
 
     predict_Gmeans = data['cluster']
-    num_clusters = len(np.unique(predict_Gmeans))  # Counting the number of clusters
-
-    return predict_Gmeans, num_clusters, gmeans
+    
+    return {
+        'Cluster_labeling': predict_Gmeans,
+        'Best_parameter_dict': parameter_dict
+    }

@@ -37,7 +37,12 @@ def Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, n_clusters,
     return clustering
 
 
-def Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict):
+def Elbow_method(data, X, clustering_algorithm, max_clusters):
+    parameter_dict = {'random_state' : 42, 'n_init' : 30, 'max_clusters' : 1000, 'tol' : 1e-4, 'eps' : 0.5, 'count_samples' : 5,
+                        'quantile' : 0.2, 'n_samples' : 500, 'n_start_nodes' : 2, 'max_nodes' : 50, 'step' : 0.2,
+                        'max_edge_age' : 50, 'epochs' : 300, 'batch_size' : 256, 'n_neighbors' : 5
+                        }
+
     wcss = []  # Store WCSS by number of clusters
     
     for k in range(1, max_clusters + 1):
@@ -51,4 +56,7 @@ def Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict):
     # Choose the point with the largest quadratic difference as the optimal k
     optimal_k = np.argmax(second_diff) + 2  # Index calibration (+2 reason: fewer indexes when using np.diff)
 
-    return optimal_k    # Appropriate number of clusters
+    return {
+        'optimul_cluster_n': optimal_k,    # Appropriate number of clusters
+        'parameter_dict': parameter_dict
+    }

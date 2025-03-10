@@ -1,13 +1,16 @@
 # input 'X' is X_reduced or X rows
 # Clustering Algorithm: X-means; Autonomously tuning n_clusters in k-means
-# Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional)
+# (pre)Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional)
+# (main)Return: dictionary{Cluster Information(0, 1 Classification), best_parameter_dict}
 
 from sklearn.cluster import KMeans
+from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.metrics import silhouette_score
 from utils.progressing_bar import progress_bar
+from Tuning_hyperparameter.Grid_search import Grid_search_all
 from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
-# Y-Means Clustering Function
+# X-Means Clustering Function
 def x_means_clustering(X, random_state, max_clusters):
     best_score = -1
     best_model = None
@@ -22,7 +25,7 @@ def x_means_clustering(X, random_state, max_clusters):
             best_k = k
     return best_model, best_k
 
-def clustering_Xmeans_clustering(data, random_state, max_clusters, X):  # Fundamental Xmeans clustering
+def clustering_Xmeans_clustering(data, X, random_state, max_clusters):  # Fundamental Xmeans clustering
     # default; max=clusters=10, 
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         # Perform Y-Means Clustering
@@ -34,10 +37,42 @@ def clustering_Xmeans_clustering(data, random_state, max_clusters, X):  # Fundam
     return clusters, optimal_k
 
 
-def clustering_Xmeans(data, X, random_state, max_clusters):
-    clusters, num_clusters = clustering_Xmeans_clustering(data, random_state, max_clusters, X)
-    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
+def clustering_Xmeans(data, X):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        tune_parameters = Grid_search_all(X, 'Xmeans')
+        best_params = tune_parameters['Xmeans']['best_params']
+        parameter_dict = tune_parameters['Xmeans']['all_params']
+        parameter_dict.update(best_params)
 
-    predict_Xmeans = data['data']
+        clusters, num_clusters = clustering_Xmeans_clustering(data, X, random_state=parameter_dict['random_state'], max_clusters=parameter_dict['max_clusters'])
+        data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
 
-    return predict_Xmeans, num_clusters, clusters
+        update_pbar(len(data))
+
+    predict_Xmeans = data['cluster']
+
+    return {
+        'Cluster_labeling': predict_Xmeans,
+        'Best_parameter_dict': parameter_dict
+    }
+
+
+# Auxiliary class for Grid Search
+class XMeansWrapper(BaseEstimator, ClusterMixin):
+    def __init__(self, random_state=42, max_clusters=10):
+        # Automatically assign a value for __init__ if no input value is present
+        self.random_state = random_state
+        self.max_clusters = max_clusters
+        self.model = None
+        self.best_k = None
+
+    def fit(self, X, y=None):
+        self.model, self.best_k = x_means_clustering(X, self.random_state, self.max_clusters)
+        return self
+
+    def predict(self, X):
+        return self.model.predict(X) if self.model else None
+
+    def fit_predict(self, X, y=None):
+        self.fit(X)
+        return self.predict(X)

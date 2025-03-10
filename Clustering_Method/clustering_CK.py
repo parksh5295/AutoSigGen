@@ -1,9 +1,12 @@
 # Clustering Algorithm: Custafson-Kessel (Similarly to Fuzzy Algorithm)
 # input 'X' is X_reduced or X rows
-# Return: Cluster Information, num_clusters(result), Cluster Information(not fit, optional)
+# (pre)Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional)
+# (main)Return: dictionary{Cluster Information(0, 1 Classification), best_parameter_dict}
 
 import numpy as np
 from utils.progressing_bar import progress_bar
+from Tuning_hyperparameter.Elbow_method import Elbow_method
+from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
 
 # Gustafson-Kessel Clustering Implementation
@@ -72,20 +75,26 @@ def ck_cluster(X, c, m=2, error=0.005, maxiter=1000):
     return cntr, u, d, fpc
 
 
-def clustering_CK(data, X, n_clusters):
+def clustering_CK(data, X, max_clusters):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        after_elbow = Elbow_method(data, X, 'CK', max_clusters)
+        n_clusters = after_elbow['optimul_cluster_n']
+        parameter_dict = after_elbow['parameter_dict']
+
         # Perform Gustafson-Kessel Clustering
         cntr, u, d, fpc = ck_cluster(X, c=n_clusters, m=2)
 
         # Assign clusters based on maximum membership
         cluster_labels = np.argmax(u, axis=0)
-        data['cluster'] = cluster_labels
+        data['cluster'] = clustering_nomal_identify(data, cluster_labels, n_clusters)
     update_pbar(len(data))
 
     predict_CK = data['cluster']
-    num_clusters = len(np.unique(predict_CK))  # Counting the number of clusters
 
-    return predict_CK, num_clusters, cluster_labels
+    return {
+        'Cluster_labeling': predict_CK,
+        'Best_parameter_dict': parameter_dict
+    }
 
 
 def pre_clustering_CK(data, X, n_clusters):

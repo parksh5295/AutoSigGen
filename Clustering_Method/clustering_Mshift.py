@@ -1,14 +1,17 @@
 # input 'X' is X_reduced or X rows
 # Clustering Method: MeanShift
-# Return: Cluster Information, num_clusters(result), Cluster Information(not fit, optional)
+# (pre)Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional)
+# (main)Return: dictionary{Cluster Information(0, 1 Classification), best_parameter_dict}
 
 import numpy as np
-from sklearn.cluster import MeanShift,  estimate_bandwidth
+from sklearn.base import BaseEstimator, ClusterMixin
+from sklearn.cluster import MeanShift, estimate_bandwidth
 from utils.progressing_bar import progress_bar
+from Tuning_hyperparameter.Grid_search import Grid_search_all
 from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
 
-def clustering_MShift_clustering(data, state, quantile, n_samples, X):  # Fundamental MeanShift clustering
+def clustering_MShift_clustering(data, X, state, quantile, n_samples):  # Fundamental MeanShift clustering
     # Estimate bandwidth based on the data
     bandwidth = estimate_bandwidth(X, quantile=quantile, n_samples=n_samples, random_state=state) # default; randomm_state=42, n_samples=500, quantile=0.2
     
@@ -23,10 +26,41 @@ def clustering_MShift_clustering(data, state, quantile, n_samples, X):  # Fundam
     return clusters, num_clusters, MShift
 
 
-def clustering_MShift(data, X, state, quantile, n_samples):
-    clusters, num_clusters, MShift = clustering_MShift_clustering(data, state, quantile, n_samples, X)
-    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
+def clustering_MShift(data, X):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        tune_parameters = Grid_search_all(X, 'MShift')
+        best_params = tune_parameters['MShift']['best_params']
+        parameter_dict = tune_parameters['MShift']['all_params']
+        parameter_dict.update(best_params)
+
+        clusters, num_clusters, MShift = clustering_MShift_clustering(data, X, state=parameter_dict['random_state'], quantile=parameter_dict['quantile'], n_samples=parameter_dict['n_samples'])
+        data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
+
+        update_pbar(len(data))
 
     predict_MShift = data['cluster']
 
-    return predict_MShift, num_clusters, MShift
+    return {
+        'Cluster_labeling': predict_MShift,
+        'Best_parameter_dict': parameter_dict
+    }
+
+
+# Additional classes for Grid Search
+class MeanShiftWithDynamicBandwidth(BaseEstimator, ClusterMixin):
+    def __init__(self, quantile=0.3, n_samples=500, bin_seeding=True):
+        self.quantile = quantile
+        self.n_samples = n_samples
+        self.bin_seeding = bin_seeding
+        self.bandwidth = None
+        self.model = None
+
+    def fit(self, X, y=None):
+        # 데이터에 따라 bandwidth 동적 설정
+        self.bandwidth = estimate_bandwidth(X, quantile=self.quantile, n_samples=self.n_samples)
+        self.model = MeanShift(bandwidth=self.bandwidth, bin_seeding=self.bin_seeding)
+        self.model.fit(X)
+        return self
+
+    def predict(self, X):
+        return self.model.predict(X)

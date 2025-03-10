@@ -1,9 +1,11 @@
 # input 'X' is X_reduced or X rows
-# Return: Cluster Information, num_clusters(result), Cluster Information(not fit, optional)
+# (pre)Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional)
+# (main)Return: dictionary{Cluster Information(0, 1 Classification), best_parameter_dict}
 
 import numpy as np
 from sklearn.cluster import DBSCAN
 from utils.progressing_bar import progress_bar
+from Tuning_hyperparameter.Grid_search import Grid_search_all
 from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
 
@@ -19,9 +21,21 @@ def clustering_DBSCAN_clustering(data, X, eps, count_samples):  # Fundamental DB
     return clusters, num_clusters, dbscan
 
 
-def clustering_DBSCAN(data, eps, count_samples, X):
-    clusters, num_clusters, dbscan = clustering_DBSCAN_clustering(data, X, eps, count_samples)
-    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
+def clustering_DBSCAN(data, X):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        tune_parameters = Grid_search_all(X, 'DBSCAN')
+        best_params = tune_parameters['DBSCAN']['best_params']
+        parameter_dict = tune_parameters['DBSCAN']['all_params']
+        parameter_dict.update(best_params)
+
+        clusters, num_clusters, dbscan = clustering_DBSCAN_clustering(data, X, eps=parameter_dict['eps'], count_samples=parameter_dict['count_samples'])
+        data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
+
+        update_pbar(len(data))
+
     predict_DBSCAN = data['cluster']
 
-    return predict_DBSCAN, num_clusters, dbscan
+    return {
+        'Cluster_labeling': predict_DBSCAN,
+        'Best_parameter_dict': parameter_dict
+    }
