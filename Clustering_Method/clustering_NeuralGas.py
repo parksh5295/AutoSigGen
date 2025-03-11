@@ -78,3 +78,19 @@ class NeuralGasWithParams(BaseEstimator, ClusterMixin):
     
     def predict(self, X):
         return self.clusters
+    
+
+def pre_clustering_NeuralGas(data, X, n_start_nodes, max_nodes, step, max_edge_age):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        clusters, num_clusters = clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max_edge_age)
+        clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
+
+        update_pbar(len(data))
+
+    predict_NeuralGas = clustering_data
+
+    return {
+        'Cluster_labeling' : predict_NeuralGas,
+        'n_clusters' : num_clusters,
+        'before_labeling' : clusters
+    }

@@ -1,5 +1,6 @@
 # Same interval length
 # Output file: A dataframe separated by groups, with group names substituted for feature values
+# The output is a dataframe and feature list divided into groups.
 
 import pandas as pd
 from Heterogeneous_Method.Feature_Encoding import Heterogeneous_Feature_named_featrues, Heterogeneous_Feature_named_combine
@@ -17,4 +18,4 @@ def Heterogeneous_Interval_Same(data, file_type):
         feature_semilist = feature_list[i]
         small_df = interval_length_same(data_semilist, feature_semilist)
         df = pd.concat([df, small_df], ignore_index=True)
-    return df
+    return df, feature_list

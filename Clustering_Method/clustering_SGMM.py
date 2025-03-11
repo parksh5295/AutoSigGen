@@ -33,10 +33,14 @@ def clustering_SGMM(data, X, max_clusters):
 def pre_clustering_SGMM(data, X, n_clusters, state):
     sgmm = GaussianMixture(n_components=n_clusters, covariance_type='spherical', random_state=state)   # default; randomm_state=42
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        data['cluster'] = sgmm.fit_predict(X)
+        cluster_labels = sgmm.fit_predict(X)
         update_pbar(len(data))
 
-    predict_SGMM = data['cluster']
+    predict_SGMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_SGMM))  # Counting the number of clusters
 
-    return predict_SGMM, num_clusters, sgmm
+    return {
+        'Cluster_labeling' : predict_SGMM,
+        'n_clusters' : num_clusters,
+        'before_labeling' : sgmm
+    }

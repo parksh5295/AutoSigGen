@@ -56,7 +56,7 @@ class MeanShiftWithDynamicBandwidth(BaseEstimator, ClusterMixin):
         self.model = None
 
     def fit(self, X, y=None):
-        # 데이터에 따라 bandwidth 동적 설정
+        # Dynamically set bandwidth based on data
         self.bandwidth = estimate_bandwidth(X, quantile=self.quantile, n_samples=self.n_samples)
         self.model = MeanShift(bandwidth=self.bandwidth, bin_seeding=self.bin_seeding)
         self.model.fit(X)
@@ -64,3 +64,19 @@ class MeanShiftWithDynamicBandwidth(BaseEstimator, ClusterMixin):
 
     def predict(self, X):
         return self.model.predict(X)
+    
+
+def pre_clustering_MShift(data, X, random_state, quantile, n_samples):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        clusters, num_clusters, MShift = clustering_MShift_clustering(data, X, random_state, quantile, n_samples)
+        clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
+
+        update_pbar(len(data))
+
+    predict_MShift = clustering_data
+
+    return {
+        'Cluster_labeling' : predict_MShift,
+        'n_clusters' : num_clusters,
+        'before_labeling' : MShift
+    }

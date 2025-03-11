@@ -24,7 +24,7 @@ def clustering_FCM(data, X, max_clusters):
         # Assign clusters based on maximum membership
         cluster_labels = np.argmax(u, axis=0)
         data['cluster'] = clustering_nomal_identify(data, cluster_labels, n_clusters)
-    update_pbar(len(data))
+        update_pbar(len(data))
 
     predict_FCM = data['cluster']
 
@@ -43,10 +43,13 @@ def pre_clustering_FCM(data, X, n_clusters):
 
         # Assign clusters based on maximum membership
         cluster_labels = np.argmax(u, axis=0)
-        data['cluster'] = cluster_labels
-    update_pbar(len(data))
+        update_pbar(len(data))
 
-    predict_FCM = data['cluster']
+    predict_FCM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_FCM))  # Counting the number of clusters
 
-    return predict_FCM, num_clusters, cluster_labels
+    return {
+        'Cluster_labeling' : predict_FCM,
+        'n_clusters' : num_clusters,
+        'before_labeling' : cluster_labels
+    }

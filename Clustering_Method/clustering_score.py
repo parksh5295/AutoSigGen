@@ -56,7 +56,7 @@ def evaluate_clustering(y_true, y_pred, X_data):
         return {
             "average=macro": average_combination(y_true, y_pred, 'macro', X_data),
             "average=micro": average_combination(y_true, y_pred, 'micro', X_data),
-            "average=weighted": average_combination(y_true, y_pred, 'micro', X_data)
+            "average=weighted": average_combination(y_true, y_pred, 'weighted', X_data)
         }
     return {}
 
@@ -65,6 +65,6 @@ def evaluate_clustering_wos(y_true, y_pred):
         return {
             "average=macro": average_combination_wos(y_true, y_pred, 'macro'),
             "average=micro": average_combination_wos(y_true, y_pred, 'micro'),
-            "average=weighted": average_combination_wos(y_true, y_pred, 'micro')
+            "average=weighted": average_combination_wos(y_true, y_pred, 'weighted')
         }
     return {}

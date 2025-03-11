@@ -34,10 +34,14 @@ def pre_clustering_kmedians(data, X, n_clusters, state):
     kmedians = KMedoids(n_clusters=n_clusters, random_state=state)   # default; randomm_state=42
 
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        data['cluster'] = kmedians.fit_predict(X)
+        cluster_labels = kmedians.fit_predict(X)
         update_pbar(len(data))
 
-    predict_kmedians = data['cluster']
+    predict_kmedians = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_kmedians))  # Counting the number of clusters
 
-    return predict_kmedians, num_clusters, kmedians
+    return {
+        'Cluster_labeling' : predict_kmedians,
+        'n_clusters' : num_clusters,
+        'before_labeling' : kmedians
+    }

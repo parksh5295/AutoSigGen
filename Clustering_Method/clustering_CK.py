@@ -87,7 +87,7 @@ def clustering_CK(data, X, max_clusters):
         # Assign clusters based on maximum membership
         cluster_labels = np.argmax(u, axis=0)
         data['cluster'] = clustering_nomal_identify(data, cluster_labels, n_clusters)
-    update_pbar(len(data))
+        update_pbar(len(data))
 
     predict_CK = data['cluster']
 
@@ -104,10 +104,13 @@ def pre_clustering_CK(data, X, n_clusters):
 
         # Assign clusters based on maximum membership
         cluster_labels = np.argmax(u, axis=0)
-        data['cluster'] = cluster_labels
-    update_pbar(len(data))
+        update_pbar(len(data))
 
-    predict_CK = data['cluster']
+    predict_CK = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_CK))  # Counting the number of clusters
 
-    return predict_CK, num_clusters, cluster_labels
+    return {
+        'Cluster_labeling' : predict_CK,
+        'n_clusters' : num_clusters,
+        'before_labeling' : cluster_labels
+    }

@@ -39,3 +39,19 @@ def clustering_DBSCAN(data, X):
         'Cluster_labeling': predict_DBSCAN,
         'Best_parameter_dict': parameter_dict
     }
+
+
+def pre_clustering_DBSCAN(data, X, eps, count_samples):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        clusters, num_clusters, dbscan = clustering_DBSCAN_clustering(data, X, eps, count_samples)
+        clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
+
+        update_pbar(len(data))
+
+    predict_DBSCAN = clustering_data
+
+    return {
+        'Cluster_labeling' : predict_DBSCAN,
+        'n_clusters' : num_clusters,
+        'before_labeling' : dbscan
+    }

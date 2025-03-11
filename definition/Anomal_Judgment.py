@@ -1,7 +1,7 @@
 # Return needs to be received as 'data[label]='
 
 
-def anomal_judgment_nonlabel(data_type, data, data_line):
+def anomal_judgment_nonlabel(data_type, data):
     if data_type == "MiraiBotnet":
         data_line = ['reconnaissance', 'infection', 'action']
     '''

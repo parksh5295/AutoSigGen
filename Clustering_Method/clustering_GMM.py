@@ -112,64 +112,80 @@ def clustering_GMM(data, X, max_clusters, GMM_type):
 
 # Precept Function for Clustering Count Tuning Loop
 
-def pre_clustering_GMM_normal(data, state, X, n_clusters):
+def pre_clustering_GMM_normal(data, X, state, n_clusters):
     gmm = GaussianMixture(n_components=n_clusters, random_state=state)   # default; randomm_state=42
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        data['cluster'] = gmm.fit_predict(X)
+        cluster_labels = gmm.fit_predict(X)
         update_pbar(len(data))
 
-    predict_GMM = data['cluster']
+    predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
 
-    return predict_GMM, num_clusters, gmm
+    return {
+        'Cluster_labeling' : predict_GMM,
+        'n_clusters' : num_clusters,
+        'before_labeling' : gmm
+    }
 
 
-def pre_clustering_GMM_full(data, state, X, n_clusters):
+def pre_clustering_GMM_full(data, X, state, n_clusters):
     gmm = GaussianMixture(n_components=n_clusters, covariance_type='full', random_state=state)   # default; randomm_state=42
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        data['cluster'] = gmm.fit_predict(X)
+        cluster_labels = gmm.fit_predict(X)
         update_pbar(len(data))
 
-    predict_GMM = data['cluster']
+    predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
 
-    return predict_GMM, num_clusters, gmm
+    return {
+        'Cluster_labeling' : predict_GMM,
+        'n_clusters' : num_clusters,
+        'before_labeling' : gmm
+    }
 
 
-def pre_clustering_GMM_tied(data, state, X, n_clusters):
+def pre_clustering_GMM_tied(data, X, state, n_clusters):
     gmm = GaussianMixture(n_components=n_clusters, covariance_type='tied', random_state=state)   # default; randomm_state=42
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        data['cluster'] = gmm.fit_predict(X)
+        cluster_labels = gmm.fit_predict(X)
         update_pbar(len(data))
 
-    predict_GMM = data['cluster']
+    predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
 
-    return predict_GMM, num_clusters, gmm
+    return {
+        'Cluster_labeling' : predict_GMM,
+        'n_clusters' : num_clusters,
+        'before_labeling' : gmm
+    }
 
 
-def pre_clustering_GMM_diag(data, state, X, n_clusters):
+def pre_clustering_GMM_diag(data, X, state, n_clusters):
     gmm = GaussianMixture(n_components=n_clusters, covariance_type='diag', random_state=state)   # default; randomm_state=42
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        data['cluster'] = gmm.fit_predict(X)
+        cluster_labels = gmm.fit_predict(X)
         update_pbar(len(data))
 
-    predict_GMM = data['cluster']
+    predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
 
-    return predict_GMM, num_clusters, gmm
+    return {
+        'Cluster_labeling' : predict_GMM,
+        'n_clusters' : num_clusters,
+        'before_labeling' : gmm
+    }
 
 
 def pre_clustering_GMM(data, X, n_clusters, state, GMM_type):
     if GMM_type == 'normal':
-        predict_GMM, num_clusters, gmm = pre_clustering_GMM_normal(data, state, X, n_clusters)
+        clustering_gmm = pre_clustering_GMM_normal(data, state, X, n_clusters)
     elif GMM_type == 'full':
-        predict_GMM, num_clusters, gmm = pre_clustering_GMM_full(data, state, X, n_clusters)
+        clustering_gmm = pre_clustering_GMM_full(data, state, X, n_clusters)
     elif GMM_type == 'tied':
-        predict_GMM, num_clusters, gmm = pre_clustering_GMM_tied(data, state, X, n_clusters)
+        clustering_gmm = pre_clustering_GMM_tied(data, state, X, n_clusters)
     elif GMM_type == 'diag':
-        predict_GMM, num_clusters, gmm = pre_clustering_GMM_diag(data, state, X, n_clusters)
+        clustering_gmm = pre_clustering_GMM_diag(data, state, X, n_clusters)
     else:
         print("GMM type Error!! -In Clustering")
     
-    return predict_GMM, num_clusters, gmm
+    return clustering_gmm

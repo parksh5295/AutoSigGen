@@ -80,3 +80,21 @@ def clustering_Gmeans(data, X):
         'Cluster_labeling': predict_Gmeans,
         'Best_parameter_dict': parameter_dict
     }
+
+
+def pre_clustering_Gmeans(data, X, random_state, max_clusters, tol):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        # G-means Clustering (using GaussianMixture)
+        gmeans = GMeans(random_state, max_clusters, tol)
+        clusters = gmeans.fit_predict(X)
+        n_clusters = len(np.unique(clusters))  # Counting the number of clusters
+        clustering_data = clustering_nomal_identify(data, clusters, n_clusters)
+        update_pbar(len(data))
+
+    predict_Gmeans = clustering_data
+    
+    return {
+        'Cluster_labeling': predict_Gmeans,
+        'n_clusters' : n_clusters,
+        'before_labeling' : gmeans
+    }

@@ -1,5 +1,5 @@
 # input 'X' is X_reduced or X rows
-# (pre)Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional)
+# (pre)Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional) overall dictionary
 # (main)Return: dictionary{Cluster Information(0, 1 Classification), best_parameter_dict}
 
 import numpy as np
@@ -33,10 +33,14 @@ def pre_clustering_kmeans(data, X, n_clusters, random_state, n_init):
     kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=n_init)   # default; randomm_state=42, n_init=10
 
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        data['cluster'] = kmeans.fit_predict(X)
+        cluster_labels = kmeans.fit_predict(X)
         update_pbar(len(data))
 
-    predict_kmeans = data['cluster']
+    predict_kmeans = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_kmeans))  # Counting the number of clusters
 
-    return predict_kmeans, num_clusters, kmeans
+    return {
+        'Cluster_labeling' : predict_kmeans,
+        'n_clusters' : num_clusters,
+        'before_labeling' : kmeans
+    }

@@ -50,7 +50,8 @@ def clustering_CANNwKNN(data, X):
         features = model.predict(X)
 
         # Apply K-NN clustering
-        knn = KNeighborsClassifier(n_neighbors=parameter_dict['n_neighbors'])   # 
+        knn = KNeighborsClassifier(n_neighbors=parameter_dict['n_neighbors'])
+        # The number of nearest neighbors (K points) to reference when classifying new data points
         knn.fit(features, data['label'])
 
         # Predict
@@ -100,3 +101,37 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         # Use trained KNN to predict clusters
         features = self.model.predict(X)
         return self.knn.predict(features)
+    
+
+def pre_clustering_CANNwKNN(data, X, epochs, batch_size, n_neighbors):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        # Define model input shapes
+        input_shape = (X.shape[1],)
+
+        # Create CANN Model
+        model = CANN(input_shape)
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+        # Learning CANN Model
+        model.fit(X, data['label'], epochs, batch_size)
+
+        # Feature Extraction with CANN Models
+        features = model.predict(X)
+
+        # Apply K-NN clustering
+        knn = KNeighborsClassifier(n_neighbors)
+        # The number of nearest neighbors (K points) to reference when classifying new data points
+        knn.fit(features, data['label'])
+
+        # Predict
+        predictions = knn.predict(features)
+
+        update_pbar(len(data))
+
+    predict_CANNwKNN = predictions
+
+    return {
+        'Cluster_labeling' : predict_CANNwKNN,
+        'n_clusters' : 2,
+        'before_labeling' : predictions
+    }

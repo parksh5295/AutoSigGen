@@ -76,3 +76,19 @@ class XMeansWrapper(BaseEstimator, ClusterMixin):
     def fit_predict(self, X, y=None):
         self.fit(X)
         return self.predict(X)
+    
+
+def pre_clustering_Xmeans(data, X, random_state, max_clusters):
+    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+        clusters, num_clusters = clustering_Xmeans_clustering(data, X, random_state, max_clusters)
+        clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
+
+        update_pbar(len(data))
+
+    predict_Xmeans = clustering_data
+
+    return {
+        'Cluster_labeling': predict_Xmeans,
+        'n_clusters' : num_clusters,
+        'before_labeling' : clusters
+    }
