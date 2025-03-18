@@ -113,7 +113,7 @@ def main():
 
 
     # 7. Save the results to csv file
-    row_compare_df = csv_compare(file_type, clustering_algorithm, file_number, data)
+    row_compare_df = csv_compare(file_type, clustering_algorithm, file_number, data)    # Not called, but saved.
 
     metrics_original = eval_clustering
     metrics_adjusted = eval_clustering_adjust
