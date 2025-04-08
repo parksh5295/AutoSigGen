@@ -1,7 +1,7 @@
 import os
 
 def select_csv_file():
-    directory_path = '../../Dataset/load_dataset/CICIDS2017/MachineLearningCSV'
+    directory_path = '../Dataset/load_dataset/CICIDS2017/MachineLearningCSV'
     
     # Get a list of CSV files in a directory
     csv_files = [f for f in os.listdir(directory_path) if f.endswith('.csv')]

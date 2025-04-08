@@ -17,14 +17,14 @@ def loop_tuning(data, X, clustering_algorithm, max_clusters=10000):
                         }
     # First_parameter_dictionary
 
-    before_n_cluster = Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict)
+    before_n_cluster = Elbow_method(data, X, clustering_algorithm, max_clusters)
 
     while not 0.99 < before_n_cluster/after_n_cluster < 1.01:
-        parameter_dict = Grid_search_Kmeans(X, before_n_cluster, parameter_dict)
-        after_n_cluster = Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict)
+        new_parameter_dict = Grid_search_Kmeans(X, before_n_cluster, parameter_dict)
+        after_n_cluster = Elbow_method(data, X, clustering_algorithm, max_clusters, new_parameter_dict)
         before_n_cluster = after_n_cluster
 
     return {
         'optimul_cluster_n': after_n_cluster,
-        'best_parameter_dict': parameter_dict
+        'best_parameter_dict': new_parameter_dict
     }

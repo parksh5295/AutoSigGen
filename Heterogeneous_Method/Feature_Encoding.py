@@ -2,8 +2,9 @@
 # Output data is 'feature_list'
 # Encoding and Normalization
 
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 import numpy as np
+import pandas as pd
 
 
 def Heterogeneous_Feature_named_featrues(file_type):
@@ -17,6 +18,7 @@ def Heterogeneous_Feature_named_featrues(file_type):
             'backward_iat_max', 'backward_iat_min', 'backward_iat_mean', 'backward_iat_total', 'backward_iat_std'
             ]
         packet_length_features = [
+            'total_bhlen', 'total_fhlen',
             'forward_packet_length_mean', 'forward_packet_length_min', 'forward_packet_length_max', 'forward_packet_length_std',
             'backward_packet_length_mean', 'backward_packet_length_min', 'backward_packet_length_max', 'backward_packet_length_std'
         ]
@@ -111,34 +113,103 @@ def Heterogeneous_Feature_named_featrues(file_type):
 
 
 def Heterogeneous_Feature_named_combine(categorical_features, time_features, packet_length_features, count_features, binary_features, data):
+    encoder = LabelEncoder()
+
+    if not categorical_features:
+        categorical_data = np.empty((len(data), 0))
+    else:
+        categorical_data = pd.DataFrame()
+        categorical_mapping_info = {}
+        for col in categorical_features:
+            categorical_data[col] = encoder.fit_transform(data[col]) + 1  # Mapping to values starting at 1
+            categorical_mapping_info[col] = dict(zip(encoder.classes_, encoder.transform(encoder.classes_) + 1))
+
+        # Organize mapping information in a value=number format
+        max_len = max(len(mapping) for mapping in categorical_mapping_info.values())
+        formatted_columns = {}
+        for feature, mapping in categorical_mapping_info.items():
+            items = [f"{k}={v}" for k, v in mapping.items()]
+            items += [""] * (max_len - len(items))  # Align length
+            formatted_columns[feature] = items
+
+        categorical_mapping_df = pd.DataFrame(formatted_columns)
+
+    if not time_features:
+        time_data = np.empty((len(data), 0))
+    else:
+        time_data = data[time_features]
+
+    if not packet_length_features:
+        packet_length_data = np.empty((len(data), 0))
+    else:
+        packet_length_data = data[packet_length_features]
+
+    if not count_features:
+        packet_count_data = np.empty((len(data), 0))
+    else:
+        packet_count_data = data[count_features]
+
+    if not binary_features:
+        flow_flag_data = np.empty((len(data), 0))
+    else:
+        flow_flag_data = data[binary_features]
+        binary_mapping_info = {}
+        for col in binary_features:
+            binary_mapping_info[col] = {0: 0, 1: 1}
+
+        max_len = max(len(mapping) for mapping in binary_mapping_info.values())
+        formatted_binary = {}
+        for feature, mapping in binary_mapping_info.items():
+            items = [f"{k}={v}" for k, v in mapping.items()]
+            items += [""] * (max_len - len(items))
+            formatted_binary[feature] = items
+
+        binary_mapping_df = pd.DataFrame(formatted_binary)
+
+    # Combine all processed data into a list
+    data_list = [categorical_data, time_data, packet_length_data, packet_count_data, flow_flag_data]
+    category_mapping = {
+        'categorical': categorical_mapping_df,
+        'binary': binary_mapping_df
+    }
+
+    return data_list, category_mapping
+
+
+def Heterogeneous_Feature_named_combine_standard(categorical_features, time_features, packet_length_features, count_features, binary_features, data):
     encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
     scaler = StandardScaler()
 
     if not categorical_features:
         categorical_data = np.empty((len(data), 0))
     else:
-        categorical_data = encoder.fit_transform(data[categorical_features])
+        categorical_data = encoder.fit_transform(data[categorical_features])    # Returns as a numpy.ndarray type
+        categorical_data = pd.DataFrame(categorical_data, columns=encoder.get_feature_names_out(categorical_features))  # Switching to pandas dataframe
 
     if not time_features:
         time_data = np.empty((len(data), 0))
     else:
         time_data = scaler.fit_transform(data[time_features])
+        time_data = pd.DataFrame(time_data, columns=time_features)  # Using original feature names
 
     if not packet_length_features:
         packet_length_data = np.empty((len(data), 0))
     else:
         packet_length_data = scaler.fit_transform(data[packet_length_features])
+        packet_length_data = pd.DataFrame(packet_length_data, columns=packet_length_features)  # Using original feature names
 
     if not count_features:
         packet_count_data = np.empty((len(data), 0))
     else:
         packet_count_data = scaler.fit_transform(data[count_features])
+        packet_count_data = pd.DataFrame(packet_count_data, columns=count_features)  # Using original feature names
 
     if not binary_features:
         flow_flag_data = np.empty((len(data), 0))
     else:
-        flow_flag_data = data[binary_features].astype(int)
+        flow_flag_data = pd.DataFrame(data[binary_features].astype(int), columns=binary_features)
 
+    # Combine all processed data into a list
     data_list = [categorical_data, time_data, packet_length_data, packet_count_data, flow_flag_data]
 
     return data_list

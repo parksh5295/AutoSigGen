@@ -5,12 +5,13 @@ import numpy as np
 from Dataset_Choose_Rule.choose_amount_dataset import file_path_line_nonnumber, file_cut
 from definition.Anomal_Judgment import anomal_judgment_nonlabel, anomal_judment_label
 from Modules.Heterogeneous_module import choose_heterogeneous_method
+from Heterogeneous_Method.separate_group_mapping import map_intervals_to_groups
 from Modules.PCA import pca_func
 from Modules.Clustering_Algorithm_Autotune import choose_clustering_algorithm
 from Modules.Clustering_Algorithm_Nonautotune import choose_clustering_algorithm_Non_optimization
 from utils.cluster_adjust_mapping import cluster_mapping
 from Clustering_Method.clustering_score import evaluate_clustering, evaluate_clustering_wos
-from Dataset_Choose_Rule.save_csv import csv_compare, csv_compare_matrix
+from Dataset_Choose_Rule.save_csv import csv_compare_clustering, csv_compare_matrix_clustering
 
 
 def main():
@@ -22,7 +23,7 @@ def main():
     parser.add_argument('--file_type', type=str, default="MiraiBotnet")   # data file type
     parser.add_argument('--file_number', type=int, default=1)   # Detach files
     parser.add_argument('--train_test', type=int, default=0)    # train = 0, test = 1
-    parser.add_argument('--heterogeneous', type=str, default="Normalized")   # Heterogeneous(Embedding) Methods
+    parser.add_argument('--heterogeneous', type=str, default="Interval_inverse")   # Heterogeneous(Embedding) Methods
     parser.add_argument('--clustering', type=str, default="kmeans")   # Clustering Methods
     parser.add_argument('--eval_clustering_silhouette', type=str, default="n")
     parser.add_argument('--association', type=str, default="apriori")   # Association Rule
@@ -54,14 +55,20 @@ def main():
 
 
     # 3. Feature-specific embedding and preprocessing
-    embedded_dataframe, feature_list = choose_heterogeneous_method(data, file_type, heterogeneous_method)
+    regul = str(input("\nDo you want to Regulation? (Y/n): ")) # Whether to normalize or not
+
+    embedded_dataframe, feature_list, category_mapping = choose_heterogeneous_method(data, file_type, heterogeneous_method, regul)
+
+    group_mapped_df, mapped_info_df = map_intervals_to_groups(embedded_dataframe, category_mapping, regul)
+    print("mapped group: ", group_mapped_df)
+    print("mapped_info: ", mapped_info_df)
 
 
     # 4. Numpy(hstack) processing and PCA
-    X = np.hstack(feature_list)
+    X = group_mapped_df
 
     pca_want = str(input("\nDo you want to do PCA? (Y/n): "))
-    if pca_want == 'Y' or 'y':
+    if pca_want in ['Y', 'y']:
         X_reduced = pca_func(X)
     else:
         X_reduced = X
@@ -69,17 +76,19 @@ def main():
 
     # 5. Clustering and Mapping
     max_clusters_want = str(input("\nDo you need to enter the number of max_clusters? (Y/n): "))
-    if max_clusters_want == 'Y' or 'y':
+    if max_clusters_want in ['Y', 'y']:
         max_clusters = int(input("\nEnter the desired number of max_clusters: "))
     else:
         print("\nThe number of max_clusters is set to the default value of 1000.")
         max_clusters = 1000
     
     Hyperparameter_optimization = str(input("\nDo you need to do Hyperparameter_optimization? (Y/n): "))
-    if Hyperparameter_optimization == 'Y' or 'y':
+    if Hyperparameter_optimization in ['Y', 'y']:
         clustering = choose_clustering_algorithm(data, X_reduced, clustering_algorithm, max_clusters)
-    else:
+    elif Hyperparameter_optimization in ['N', 'n']:
         clustering = choose_clustering_algorithm_Non_optimization(data, X_reduced, clustering_algorithm)
+    else:
+        raise Exception("You can only express your intent to proceed with hyperparameter tuning with Y/N.")
     data['cluster'] = clustering['Cluster_labeling']
 
     cluster_mapping(data)   # To verify the effect of 'clustering_nomal_identify' def
@@ -113,11 +122,11 @@ def main():
 
 
     # 7. Save the results to csv file
-    row_compare_df = csv_compare(file_type, clustering_algorithm, file_number, data)    # Not called, but saved.
+    row_compare_df = csv_compare_clustering(file_type, clustering_algorithm, file_number, data)    # Not called, but saved.
 
     metrics_original = eval_clustering
     metrics_adjusted = eval_clustering_adjust
-    metrics_df = csv_compare_matrix(file_type, file_number, clustering_algorithm, metrics_original, metrics_adjusted)
+    metrics_df = csv_compare_matrix_clustering(file_type, file_number, clustering_algorithm, metrics_original, metrics_adjusted)
     print("\nThe result of the clustering score calculation: ")
     print(metrics_df)
 

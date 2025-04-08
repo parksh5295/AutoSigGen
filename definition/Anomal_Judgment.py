@@ -11,7 +11,7 @@ def anomal_judgment_nonlabel(data_type, data):
     result = data[data_line].any(axis=1).astype(int)
     # data_line: A collection of features for determining the label of nonlabel data  / e.i. ['reconnaissance', 'infection', 'action']
 
-    return result, data_line
+    return result
     
 
 def anomal_judment_label(data):

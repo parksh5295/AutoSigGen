@@ -1,8 +1,8 @@
 # Modules for determining how to cluster
 # Output: dictionary{Cluster Information(0, 1 Classification), best_parameter_dict}; Name: Clustering
 
-from Clustering_Method.clustering_kmeans import clustering_kmeans
-from Clustering_Method.clustering_kmedians import clustering_kmedians
+from Clustering_Method.clustering_Kmeans import clustering_Kmeans
+from Clustering_Method.clustering_Kmedians import clustering_Kmedians
 from Clustering_Method.clustering_GMM import clustering_GMM
 from Clustering_Method.clustering_SGMM import clustering_SGMM
 from Clustering_Method.clustering_Gmeans import clustering_Gmeans
@@ -24,11 +24,11 @@ def choose_clustering_algorithm(data, X, clustering_algorithm, max_clusters=1000
     }
     '''
 
-    if clustering_algorithm == 'Kmeans':
-        clustering = clustering_kmeans(data, X, max_clusters)
+    if clustering_algorithm in ['Kmeans', 'kmeans']:
+        clustering = clustering_Kmeans(data, X, max_clusters)
 
-    elif clustering_algorithm == 'Kmedians':
-        clustering = clustering_kmedians(data, X, max_clusters)
+    elif clustering_algorithm in ['Kmedians', 'kmedians']:
+        clustering = clustering_Kmedians(data, X, max_clusters)
 
     elif clustering_algorithm == 'GMM':
         GMM_type = input("Please enter the GMM type, i.e. normal, full, tied, diag: ")
@@ -37,10 +37,10 @@ def choose_clustering_algorithm(data, X, clustering_algorithm, max_clusters=1000
     elif clustering_algorithm == 'SGMM':
         clustering = clustering_SGMM(data, X, max_clusters)
 
-    elif clustering_algorithm == 'Gmeans':
+    elif clustering_algorithm in ['Gmeans', 'gmeans']:
         clustering = clustering_Gmeans(data, X)
 
-    elif clustering_algorithm == 'Xmeans':
+    elif clustering_algorithm in ['Xmeans', 'xmeans']:
         clustering = clustering_Xmeans(data, X)
 
     elif clustering_algorithm == 'DBSCAN':
@@ -58,7 +58,11 @@ def choose_clustering_algorithm(data, X, clustering_algorithm, max_clusters=1000
     elif clustering_algorithm == 'NeuralGas':
         clustering = clustering_NeuralGas(data, X)
 
-    elif clustering_algorithm == 'CANNwKNN':
+    elif clustering_algorithm in ['CANNwKNN', 'CANN']:
         clustering = clustering_CANNwKNN(data, X)
+
+    else:
+        print("Unsupported algorithm")
+        raise Exception("Unsupported clustering algorithms")
 
     return clustering

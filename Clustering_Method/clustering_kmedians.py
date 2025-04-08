@@ -10,7 +10,7 @@ from Tuning_hyperparameter.Elbow_method import Elbow_method
 from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
 
-def clustering_kmedians(data, X, max_clusters):
+def clustering_Kmedians(data, X, max_clusters):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         after_elbow = Elbow_method(data, X, 'Kmedians', max_clusters)
         n_clusters = after_elbow['optimul_cluster_n']
@@ -30,7 +30,7 @@ def clustering_kmedians(data, X, max_clusters):
     }
 
 
-def pre_clustering_kmedians(data, X, n_clusters, state):
+def pre_clustering_Kmedians(data, X, n_clusters, state):
     kmedians = KMedoids(n_clusters=n_clusters, random_state=state)   # default; randomm_state=42
 
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
