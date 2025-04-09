@@ -66,6 +66,9 @@ class MeanShiftWithDynamicBandwidth(BaseEstimator, ClusterMixin):
 
         self.model = MeanShift(bandwidth=self.bandwidth, bin_seeding=self.bin_seeding)
         self.model.fit(X)
+
+        self.labels_ = self.model.labels_
+        
         return self
 
     def predict(self, X):
