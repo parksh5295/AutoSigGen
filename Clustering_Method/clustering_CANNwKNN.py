@@ -102,6 +102,10 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         features = self.model.predict(X)
         return self.knn.predict(features)
     
+    def fit_predict(self, X, y=None):
+        self.fit(X, y)
+        return self.predict(X)
+    
 
 def pre_clustering_CANNwKNN(data, X, epochs, batch_size, n_neighbors):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
