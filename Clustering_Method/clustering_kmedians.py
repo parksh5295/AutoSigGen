@@ -30,8 +30,8 @@ def clustering_Kmedians(data, X, max_clusters):
     }
 
 
-def pre_clustering_Kmedians(data, X, n_clusters, state):
-    kmedians = KMedoids(n_clusters=n_clusters, random_state=state)   # default; randomm_state=42
+def pre_clustering_Kmedians(data, X, n_clusters, random_state=42):
+    kmedians = KMedoids(n_clusters=n_clusters, random_state=random_state)   # default; randomm_state=42
 
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         cluster_labels = kmedians.fit_predict(X)

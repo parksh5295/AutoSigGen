@@ -32,7 +32,7 @@ def pre_clustering_Kmeans(data, X, n_clusters, random_state, n_init):
     # Apply KMeans Clustering
     kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=n_init)   # default; randomm_state=42, n_init=10
 
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
+    with progress_bar(len(data), desc=f"KMeans ({n_clusters} clusters)", unit="samples") as update_pbar:
         cluster_labels = kmeans.fit_predict(X)
         update_pbar(len(data))
 

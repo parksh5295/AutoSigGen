@@ -30,8 +30,8 @@ def clustering_SGMM(data, X, max_clusters):
     }
 
 
-def pre_clustering_SGMM(data, X, n_clusters, state):
-    sgmm = GaussianMixture(n_components=n_clusters, covariance_type='spherical', random_state=state)   # default; randomm_state=42
+def pre_clustering_SGMM(data, X, n_clusters, random_state):
+    sgmm = GaussianMixture(n_components=n_clusters, covariance_type='spherical', random_state=random_state)   # default; randomm_state=42
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         cluster_labels = sgmm.fit_predict(X)
         update_pbar(len(data))

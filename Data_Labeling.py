@@ -99,8 +99,8 @@ def main():
         eval_clustering = evaluate_clustering(data['label'], data['cluster'], X_reduced)
         eval_clustering_adjust = evaluate_clustering(data['label'], data['adjusted_cluster'], X_reduced)
     elif eval_clustering_silhouette == 'n':
-        eval_clustering = evaluate_clustering_wos(data['label'], data['cluster'], X_reduced)
-        eval_clustering_adjust = evaluate_clustering_wos(data['label'], data['adjusted_cluster'], X_reduced)
+        eval_clustering = evaluate_clustering_wos(data['label'], data['cluster'])
+        eval_clustering_adjust = evaluate_clustering_wos(data['label'], data['adjusted_cluster'])
 
     ''' # If input data has NaNs, we should consider the following fill-in-the-blank code
     data['adjusted_cluster'] = data['cluster'].map(cluster_mapping).fillna(-1).astype(int)

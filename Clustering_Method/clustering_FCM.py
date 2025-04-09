@@ -48,8 +48,33 @@ def pre_clustering_FCM(data, X, n_clusters):
     predict_FCM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_FCM))  # Counting the number of clusters
 
+    # Wrapped FCM Model Classes
+    fuzzy_model = FCMFakeModel(cntr, u, fpc)
+
     return {
         'Cluster_labeling' : predict_FCM,
         'n_clusters' : num_clusters,
-        'before_labeling' : cluster_labels
+        'before_labeling' : fuzzy_model
     }
+
+class FCMFakeModel:
+    def __init__(self, cntr, u, fpc):
+        self.cntr = cntr
+        self.u = u
+        self.fpc = fpc
+
+    def fit(self, X):
+        # Do nothing because Fit is already over
+        return self
+
+    @property
+    def inertia_(self):
+        # The higher the FPC, the better, so invert the sign to match the inertia logic
+        return -self.fpc
+
+    def predict(self, X_new):
+        # argmax after soft prediction with cmeans_predict
+        return np.argmax(
+            fuzz.cluster.cmeans_predict(X_new.T, self.cntr, m=2, error=0.005, maxiter=1000)[0],
+            axis=0
+        )

@@ -28,19 +28,27 @@ def Grid_search_Kmeans(X, n_clusters, parameter_dict=None):
             'batch_size': 256, 'n_neighbors': 5
         }
 
-    silhouette_scorer = make_scorer(silhouette_score, greater_is_better=True)
+    n_init_values = list(range(2, 102, 3))
+    best_score = -1
+    best_params = None
 
-    param_grid = {
-        'n_init': list(range(2, 102, 3))
-    }
-    clustering_al = KMeans(random_state=parameter_dict['random_state'], n_clusters=n_clusters)
+    for n_init in n_init_values:
+        kmeans = KMeans(n_clusters=n_clusters, random_state=parameter_dict['random_state'], n_init=n_init)
+        labels = kmeans.fit_predict(X)
 
-    grid_search = GridSearchCV(clustering_al, param_grid, scoring=silhouette_scorer, cv=5)
-    grid_search.fit(X)
+        # Make sure Silhouette score is calculable
+        if len(set(labels)) > 1:
+            score = silhouette_score(X, labels)
+            if score > best_score:
+                best_score = score
+                best_params = {'n_init': n_init}
 
-    Best_parameter_dict = grid_search.best_params
+    # Merge with default parameters
+    best_param_full = parameter_dict.copy()
+    if best_params:
+        best_param_full.update(best_params)
 
-    return Best_parameter_dict
+    return best_param_full
 
 
 '''

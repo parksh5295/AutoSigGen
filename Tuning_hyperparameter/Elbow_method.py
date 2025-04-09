@@ -9,14 +9,15 @@ import numpy as np
 from Clustering_Method.common_clustering import get_clustering_function
 
 
-def Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, n_clusters, parameter_dict):   # X: Encoding and embedding, post-PCA, post-delivery
+def Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, n_clusters, parameter_dict, GMM_type="normal"):   # X: Encoding and embedding, post-PCA, post-delivery
     pre_clustering_func = get_clustering_function(clustering_algorithm)
 
     if clustering_algorithm == 'Kmeans':
         clustering = pre_clustering_func(data, X, n_clusters, random_state=parameter_dict['random_state'], n_init=parameter_dict['n_init'])
     elif clustering_algorithm == 'GMM':
-        GMM_type = input("Please enter the GMM type, i.e. normal, full, tied, diag: ")
         clustering = pre_clustering_func(data, X, n_clusters, random_state=parameter_dict['random_state'], GMM_type=GMM_type)
+    elif clustering_algorithm in ['FCM', 'CK']:
+        clustering = pre_clustering_func(data, X, n_clusters)
     else:
         clustering = pre_clustering_func(data, X, n_clusters, random_state=parameter_dict['random_state'])
 
@@ -36,10 +37,22 @@ def Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict=Non
         clustering = Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, k, parameter_dict)
         clustering_before_label = clustering['before_labeling']
         clustering_before_label.fit(data)
-        wcss.append(clustering_before_label.inertia_)
+
+        # Use appropriate score
+        if clustering_algorithm in ['GMM', 'SGMM']:
+            # For GMM, use BIC instead of inertia
+            score = clustering_before_label.bic(data)
+        else:
+            # Default for KMeans and similar
+            score = clustering_before_label.inertia_
+
+        wcss.append(score)
     
-    # Rate of change of slope
-    second_diff = np.diff(np.diff(wcss))
+    # Rate of change of slope; For GMM, lower BIC is better → so reverse slope logic
+    if clustering_algorithm in ['GMM', 'SGMM']:
+        second_diff = -np.diff(np.diff(wcss))  # Reverse sign for elbow detection
+    else:
+        second_diff = np.diff(np.diff(wcss))
 
     # Choose the point with the largest quadratic difference as the optimal k
     optimal_k = np.argmax(second_diff) + 2  # Index calibration (+2 reason: fewer indexes when using np.diff)

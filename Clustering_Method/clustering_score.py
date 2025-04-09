@@ -3,53 +3,51 @@ import numpy as np
 
 
 def accuracy_basic(t, p):
-    return{
-        "accuracy": accuracy_score(t, p)
-    }
+    metric = accuracy_score(t, p)
+    return metric
 
 def precision_basic(t, p, average):
-    return{
-        "precision": precision_score(t, p, average=average, zero_division=0)
-    }
+    metric = precision_score(t, p, average=average, zero_division=0)
+    return metric
 
 def recall_basic(t, p, average):
-    return{
-        "recall": recall_score(t, p, average=average, zero_division=0)
-    }
+    metric = recall_score(t, p, average=average, zero_division=0)
+    return metric
 
 def f1_basic(t, p, average):
-    return{
-        "f1_score": f1_score(t, p, average=average, zero_division=0)
-    }
+    metric = f1_score(t, p, average=average, zero_division=0)
+    return metric
 
 def jaccard_basic(t, p, average):
-    return{
-        "jaccard": jaccard_score(t, p, average=average, zero_division=0)
-    }
+    metric = jaccard_score(t, p, average=average, zero_division=0)
+    return metric
 
 def silhouette_basic(x_data, p):
-    return{
-        "silhouette": silhouette_score(x_data, p) if len(set(p)) > 1 else np.nan
-    }
+    metric = silhouette_score(x_data, p) if len(set(p)) > 1 else np.nan
+    return metric
+
 
 def average_combination(t, p, average, x_data):
-    return{
-        accuracy_basic(t, p),
-        precision_basic(t, p, average),
-        recall_basic(t, p, average),
-        f1_basic(t, p, average),
-        jaccard_basic(t, p, average),
-        silhouette_basic(x_data, p)
+    all_metrics = {
+        "accuracy" : accuracy_basic(t, p),
+        "precision" : precision_basic(t, p, average),
+        "recall" : recall_basic(t, p, average),
+        "f1" : f1_basic(t, p, average),
+        "jaccard" : jaccard_basic(t, p, average),
+        "silhouette" : silhouette_basic(x_data, p)
     }
+    return all_metrics
 
 def average_combination_wos(t, p, average):
-    return{
-        accuracy_basic(t, p),
-        precision_basic(t, p, average),
-        recall_basic(t, p, average),
-        f1_basic(t, p, average),
-        jaccard_basic(t, p, average)
+    all_metrics = {
+        "accuracy" : accuracy_basic(t, p),
+        "precision" : precision_basic(t, p, average),
+        "recall" : recall_basic(t, p, average),
+        "f1" : f1_basic(t, p, average),
+        "jaccard" : jaccard_basic(t, p, average)
     }
+    return all_metrics
+
 
 def evaluate_clustering(y_true, y_pred, X_data):
     if not y_true.empty:
