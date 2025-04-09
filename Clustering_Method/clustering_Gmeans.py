@@ -43,7 +43,7 @@ class GMeans:
 
                 _, p_value = normaltest(sub_data)  # Normality test (calculate p-value)
 
-                if p_value < 0.05:  # More granularity when regularity is not followed
+                if np.any(p_value < 0.05):  # More granularity when regularity is not followed
                     clusters.append((sub_data, cluster_id))
                 else:  # Follow regularity to confirm clusters
                     self.labels_[self.labels_ == cluster_idx] = cluster_id
