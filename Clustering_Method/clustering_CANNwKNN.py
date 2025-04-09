@@ -102,7 +102,7 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         features = self.model.predict(X)
         return self.knn.predict(features)
     
-    def fit_predict(self, X, y=None):
+    def fit_predict(self, X, y):
         self.fit(X, y)
         return self.predict(X)
     
