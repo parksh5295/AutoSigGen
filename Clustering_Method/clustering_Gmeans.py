@@ -4,6 +4,8 @@
 # (main)Return: dictionary{Cluster Information(0, 1 Classification), best_parameter_dict}
 
 import numpy as np
+import warnings
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.cluster import KMeans
 from scipy.stats import normaltest
 from utils.progressing_bar import progress_bar
@@ -20,12 +22,22 @@ class GMeans:
         self.cluster_centers_ = None
 
     def fit(self, X):
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+
         self.labels_ = np.zeros(X.shape[0], dtype=int)  # Initial cluster label
         clusters = [(X, 0)]  # Initial cluster list (data, cluster ID)
         cluster_id = 1  # Cluster ID
 
         while clusters:
             data, cluster_idx = clusters.pop(0)
+
+            # Skip if cluster is too small or nearly identical
+            if len(data) < 8 or np.all(np.std(data, axis=0) < 1e-8):
+                self.labels_[self.labels_ == cluster_idx] = cluster_id
+                cluster_id += 1
+                continue
 
             # Clustering with K-means (k=2)
             kmeans = KMeans(n_clusters=2, tol=self.tol, random_state=self.random_state)
