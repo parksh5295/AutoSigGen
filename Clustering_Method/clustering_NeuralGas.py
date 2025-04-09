@@ -35,6 +35,7 @@ def clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max
 def clustering_NeuralGas(data, X):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         tune_parameters = Grid_search_all(X, 'NeuralGas')
+        print('tune_params: ', tune_parameters)
         best_params = tune_parameters['NeuralGas']['best_params']
         parameter_dict = tune_parameters['NeuralGas']['all_params']
         parameter_dict.update(best_params)

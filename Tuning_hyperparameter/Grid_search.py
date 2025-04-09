@@ -65,7 +65,7 @@ def evaluate_clustering(X, labels):
     return sil_score, db_score
 
 
-def Grid_search_all(X, algorithms, parameter_dict=None):
+def Grid_search_all(X, clustering_algorithm, parameter_dict=None):
     if parameter_dict is None:
         parameter_dict = {
             'random_state': 42, 'n_init': 30, 'max_clusters': 1000, 'tol': 1e-4, 'eps': 0.5, 'count_samples': 5, 'quantile': 0.2, 
@@ -75,84 +75,83 @@ def Grid_search_all(X, algorithms, parameter_dict=None):
 
     best_results = {}  # Dictionary for storing the best result of each algorithm
 
-    for clustering_algorithm in algorithms:
-        print(f"\n{clustering_algorithm} Performing clustering...")
+    print(f"\n{clustering_algorithm} Performing clustering...")
 
-        if clustering_algorithm in ['Xmeans', 'xmeans']:
-            XMeansWrapper = dynamic_import("Clustering_Method.clustering_Xmeans", "XMeansWrapper")
-            param_grid = {'max_clusters': list(range(10, 101, 10))}
-            def create_model(params):
-                return XMeansWrapper(random_state=parameter_dict['random_state'], **params)
+    if clustering_algorithm in ['Xmeans', 'xmeans']:
+        XMeansWrapper = dynamic_import("Clustering_Method.clustering_Xmeans", "XMeansWrapper")
+        param_grid = {'max_clusters': list(range(10, 101, 10))}
+        def create_model(params):
+            return XMeansWrapper(random_state=parameter_dict['random_state'], **params)
 
-        elif clustering_algorithm in ['Gmeans', 'gmeans']:
-            GMeans = dynamic_import("Clustering_Method.clustering_Gmeans", "GMeans")
-            log_range = np.logspace(-6, -1, num=10)
-            lin_range = np.linspace(min(log_range), max(log_range), num=10)
-            combined_range = np.unique(np.concatenate((log_range, lin_range)))
+    elif clustering_algorithm in ['Gmeans', 'gmeans']:
+        GMeans = dynamic_import("Clustering_Method.clustering_Gmeans", "GMeans")
+        log_range = np.logspace(-6, -1, num=10)
+        lin_range = np.linspace(min(log_range), max(log_range), num=10)
+        combined_range = np.unique(np.concatenate((log_range, lin_range)))
 
-            param_grid = {'max_clusters': list(range(10, 1001, 10)), 'tol': combined_range}
-            def create_model(params):
-                return GMeans(random_state=parameter_dict['random_state'], **params)
+        param_grid = {'max_clusters': list(range(10, 1001, 10)), 'tol': combined_range}
+        def create_model(params):
+            return GMeans(random_state=parameter_dict['random_state'], **params)
 
-        elif clustering_algorithm == 'DBSCAN':
-            param_grid = {'eps': np.arange(0.05, 1, 0.02), 'min_samples': list(range(3, 20, 2))}
-            def create_model(params):
-                return DBSCAN(**params)
+    elif clustering_algorithm == 'DBSCAN':
+        param_grid = {'eps': np.arange(0.05, 1, 0.02), 'min_samples': list(range(3, 20, 2))}
+        def create_model(params):
+            return DBSCAN(**params)
 
-        elif clustering_algorithm == 'MShift':
-            MeanShiftWithDynamicBandwidth = dynamic_import("Clustering_Method.clustering_Mshift", "MeanShiftWithDynamicBandwidth")
-            param_grid = {'quantile': np.arange(0.01, 0.95, 0.02), 'n_samples': list(range(50, 1000, 50))}
-            def create_model(params):
-                return MeanShiftWithDynamicBandwidth(**params)
+    elif clustering_algorithm == 'MShift':
+        MeanShiftWithDynamicBandwidth = dynamic_import("Clustering_Method.clustering_Mshift", "MeanShiftWithDynamicBandwidth")
+        param_grid = {'quantile': np.arange(0.01, 0.95, 0.02), 'n_samples': list(range(50, 1000, 50))}
+        def create_model(params):
+            return MeanShiftWithDynamicBandwidth(**params)
 
-        elif clustering_algorithm == 'NeuralGas':
-            NeuralGasWithParams = dynamic_import("Clustering_Method.clustering_NeuralGas", "NeuralGasWithParams")
-            param_grid = {'n_start_nodes': list(range(1, 11, 1)), 'max_nodes': list(range(10, 101, 5)),
-                          'step': np.arange(0.05, 1, 0.05), 'max_edge_age': list(range(5, 301, 10))}
-            def create_model(params):
-                return NeuralGasWithParams(**params)
+    elif clustering_algorithm == 'NeuralGas':
+        NeuralGasWithParams = dynamic_import("Clustering_Method.clustering_NeuralGas", "NeuralGasWithParams")
+        param_grid = {'n_start_nodes': list(range(1, 11, 1)), 'max_nodes': list(range(10, 101, 5)),
+                        'step': np.arange(0.05, 1, 0.05), 'max_edge_age': list(range(5, 301, 10))}
+        def create_model(params):
+            return NeuralGasWithParams(**params)
 
-        elif clustering_algorithm in ['CANNwKNN', 'CANN']:
-            CANNWithKNN = dynamic_import("Clustering_Method.clustering_CANNwKNN", "CANNWithKNN")
-            param_grid = {'epochs': list(range(10, 501, 10)), 'batch_size': list(range(32, 257, 32)), 
-                          'n_neighbors': list(range(5, 51, 1))}
-            input_shape = (X.shape[1],)
-            def create_model(params):
-                return CANNWithKNN(input_shape=input_shape, **params)
+    elif clustering_algorithm in ['CANNwKNN', 'CANN']:
+        CANNWithKNN = dynamic_import("Clustering_Method.clustering_CANNwKNN", "CANNWithKNN")
+        param_grid = {'epochs': list(range(10, 501, 10)), 'batch_size': list(range(32, 257, 32)), 
+                        'n_neighbors': list(range(5, 51, 1))}
+        input_shape = (X.shape[1],)
+        def create_model(params):
+            return CANNWithKNN(input_shape=input_shape, **params)
 
-        else:
-            print(f"Unsupported algorithm: {clustering_algorithm}")
-            continue
+    else:
+        print(f"Unsupported algorithm: {clustering_algorithm}")
+        pass
 
-        # Generate all hyperparameter combinations
-        param_keys = list(param_grid.keys())
-        param_values = list(param_grid.values())
-        param_combinations = list(product(*param_values))
+    # Generate all hyperparameter combinations
+    param_keys = list(param_grid.keys())
+    param_values = list(param_grid.values())
+    param_combinations = list(product(*param_values))
 
-        best_score = -1
-        best_db_score = float('inf')
-        best_params = None
+    best_score = -1
+    best_db_score = float('inf')
+    best_params = None
 
-        for param_set in param_combinations:
-            params = dict(zip(param_keys, param_set))
-            model = create_model(params)
+    for param_set in param_combinations:
+        params = dict(zip(param_keys, param_set))
+        model = create_model(params)
 
-            labels = model.fit_predict(X)
-            sil_score, db_score = evaluate_clustering(X, labels)
+        labels = model.fit_predict(X)
+        sil_score, db_score = evaluate_clustering(X, labels)
 
-            print(f"{clustering_algorithm}: {params} → Silhouette: {sil_score:.4f}, Davies-Bouldin: {db_score:.4f}")
+        print(f"{clustering_algorithm}: {params} → Silhouette: {sil_score:.4f}, Davies-Bouldin: {db_score:.4f}")
 
-            # Select if you have a high Silhouette Score and a low Davies-Bouldin Score
-            if sil_score > best_score or (sil_score == best_score and db_score < best_db_score):
-                best_score = sil_score
-                best_db_score = db_score
-                best_params = params
+        # Select if you have a high Silhouette Score and a low Davies-Bouldin Score
+        if sil_score > best_score or (sil_score == best_score and db_score < best_db_score):
+            best_score = sil_score
+            best_db_score = db_score
+            best_params = params
 
-        best_results[clustering_algorithm] = {
-            'best_params': best_params,
-            'all_params' : parameter_dict,
-            'silhouette_score': best_score,
-            'davies_bouldin_score': best_db_score
-        }
+    best_results[clustering_algorithm] = {
+        'best_params': best_params,
+        'all_params' : parameter_dict,
+        'silhouette_score': best_score,
+        'davies_bouldin_score': best_db_score
+    }
 
     return best_results

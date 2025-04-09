@@ -58,6 +58,12 @@ class MeanShiftWithDynamicBandwidth(BaseEstimator, ClusterMixin):
     def fit(self, X, y=None):
         # Dynamically set bandwidth based on data
         self.bandwidth = estimate_bandwidth(X, quantile=self.quantile, n_samples=self.n_samples)
+
+        # Set a stable minimum
+        if self.bandwidth < 1e-3:
+            print(f"Estimated bandwidth too small ({self.bandwidth:.5f}) → Adjusted to 0.001")
+            self.bandwidth = 1e-3
+
         self.model = MeanShift(bandwidth=self.bandwidth, bin_seeding=self.bin_seeding)
         self.model.fit(X)
         return self
