@@ -4,3 +4,4 @@ b = ['flow_protocol', 'flow_iat_max', 'flow_iat_min', 'flow_iat_mean', 'flow_iat
 
 print(len(a))
 print(len(b))
+print (a)
