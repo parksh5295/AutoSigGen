@@ -10,8 +10,10 @@ import numpy as np
 import importlib
 from sklearn.model_selection import GridSearchCV
 from itertools import product
-from sklearn.metrics import make_scorer, silhouette_score, davies_bouldin_score
+from sklearn.metrics import make_scorer, silhouette_score, davies_bouldin_score, f1_score, accuracy_score
 from sklearn.cluster import KMeans, DBSCAN
+from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
+from utils.class_row import nomal_class_data
 
 
 # Dynamic import functions (using importlib)
@@ -63,6 +65,23 @@ def evaluate_clustering(X, labels):
     sil_score = silhouette_score(X, labels)
     db_score = davies_bouldin_score(X, labels)
     return sil_score, db_score
+
+
+# Discriminate Functions for CANNwKNN
+def evaluate_clustering_with_known_benign(data, clusters, num_clusters):
+    # 0: benign, 1: attack (criteria: same as clustering_nomal_identify)
+    benign_data = nomal_class_data(data).to_numpy() # Assuming that we only know benign data
+
+    inferred_labels = clustering_nomal_identify(data.copy(), clusters, num_clusters)
+
+    # 실제 benign이 어디 있는지 ground truth 만들기
+    ground_truth = np.ones(len(data))  # 기본은 attack(1)
+    benign_idx = data.index.isin(benign_data.index)
+    ground_truth[benign_idx] = 0
+
+    f1 = f1_score(ground_truth, inferred_labels)
+    acc = accuracy_score(ground_truth, inferred_labels)
+    return f1, acc
 
 
 def Grid_search_all(X, clustering_algorithm, parameter_dict=None):

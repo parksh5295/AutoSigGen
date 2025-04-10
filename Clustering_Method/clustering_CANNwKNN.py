@@ -3,11 +3,13 @@
 # (pre)Return: Cluster Information(0, 1 Classification), num_clusters(result), Cluster Information(not fit, Non-classification, optional)
 # (main)Return: dictionary{Cluster Information(0, 1 Classification), best_parameter_dict}
 
+import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from keras.layers import Dense, Flatten, Attention
 import tensorflow as tf
 from sklearn.base import BaseEstimator, ClassifierMixin
 from utils.progressing_bar import progress_bar
+from utils.class_row import nomal_class_data
 from Tuning_hyperparameter.Grid_search import Grid_search_all
 
 
@@ -34,29 +36,35 @@ def clustering_CANNwKNN(data, X):
         # Define model input shapes
         input_shape = (X.shape[1],)
 
-        # Create CANN Model
-        model = CANN(input_shape)
-        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+        benign_data = nomal_class_data(data).to_numpy() # Assuming that we only know benign data
 
-        tune_parameters = Grid_search_all(X, 'CANNwKNN')
+        # Prepare data
+        X_benign = benign_data.drop(columns=['label'], errors='ignore').values
+        y_benign = np.zeros(len(X_benign))  # benign is considered label 0
+
+        # Create & tune model
+        tune_parameters = Grid_search_all(X_benign, 'CANNwKNN')  # ONLY benign!
         best_params = tune_parameters['CANNwKNN']['best_params']
         parameter_dict = tune_parameters['CANNwKNN']['all_params']
         parameter_dict.update(best_params)
 
-        # Learning CANN Model
-        model.fit(X, data['label'], epochs=parameter_dict['epochs'], batch_size=parameter_dict['batch_size'])
+        # Train CANN on benign only
+        cann = create_cann_model(input_shape)
+        cann.fit(X_benign, y_benign, epochs=parameter_dict['epochs'], batch_size=parameter_dict['batch_size'])
 
-        # Feature Extraction with CANN Models
-        features = model.predict(X)
+        # Feature extraction
+        features_all = cann.predict(X)  # Extract for all data
+        features_benign = cann.predict(X_benign)
 
-        # Apply K-NN clustering
+        # Train KNN on benign features only
         knn = KNeighborsClassifier(n_neighbors=parameter_dict['n_neighbors'])
-        # The number of nearest neighbors (K points) to reference when classifying new data points
-        knn.fit(features, data['label'])
+        knn.fit(features_benign, y_benign)
 
-        # Predict
-        predictions = knn.predict(features)
-        data['cluster'] = predictions
+        # Predict for all data
+        predicted = knn.predict(features_all)
+
+        # Save cluster labels
+        data['cluster'] = predicted  # Determined as benign=0, unknown→0/1
 
         update_pbar(len(data))
 

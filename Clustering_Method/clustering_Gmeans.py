@@ -75,6 +75,10 @@ class GMeans:
 def clustering_Gmeans(data, X):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         tune_parameters = Grid_search_all(X, 'Gmeans')
+
+        if not tune_parameters or 'Gmeans' not in tune_parameters or not tune_parameters['Gmeans']['best_params']:
+            raise ValueError("Grid search for GMeans failed: No best parameters found.")
+
         best_params = tune_parameters['Gmeans']['best_params']
         parameter_dict = tune_parameters['Gmeans']['all_params']
         parameter_dict.update(best_params)
