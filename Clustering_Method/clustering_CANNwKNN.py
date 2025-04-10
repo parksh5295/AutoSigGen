@@ -18,14 +18,12 @@ class CANN(tf.keras.Model):
     def __init__(self, input_shape):
         super(CANN, self).__init__()
         self.dense1 = Dense(64, activation='relu', input_shape=input_shape)
-        self.attention = Attention()
         self.flatten = Flatten()
         self.dense2 = Dense(32, activation='relu')
         self.dense3 = Dense(1, activation='sigmoid')
     
     def call(self, inputs):
         x = self.dense1(inputs)
-        x = self.attention([x, x])  # Applying the Attention mechanism
         x = self.flatten(x)
         x = self.dense2(x)
         return self.dense3(x)
