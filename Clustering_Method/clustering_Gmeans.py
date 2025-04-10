@@ -46,11 +46,10 @@ class GMeans:
 
             # Test if each subcluster follows normality
             for new_cluster_id in range(2):
-                sub_indices = indices[new_labels == new_cluster_id]
                 sub_data = data[new_labels == new_cluster_id]
 
                 if len(sub_data) < 8:
-                    self.labels_[sub_indices] = cluster_id
+                    self.labels_[indices[new_labels == new_cluster_id]] = cluster_id
                     cluster_id += 1
                     continue
 
@@ -62,10 +61,10 @@ class GMeans:
                 _, p_value = normaltest(sub_data[:, 0])  # Use only the first PCA principal component
 
                 if np.any(p_value < 0.01):  # More granularity when regularity is not followed
-                    clusters.append((sub_data, cluster_id))
-                else:  # Follow regularity to confirm clusters
-                    self.labels_[sub_indices] = cluster_id
-                    print(f"Cluster ID: {cluster_id}, Sub-data size: {len(sub_data)}, p-value: {p_value:.4f}")
+                    new_indices = indices[new_labels == new_cluster_id]
+                    clusters.append((new_indices, sub_data, cluster_id))
+                else:
+                    self.labels_[indices[new_labels == new_cluster_id]] = cluster_id
                 
                 cluster_id += 1
 

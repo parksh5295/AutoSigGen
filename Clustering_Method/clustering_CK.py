@@ -120,19 +120,17 @@ def ck_predict(X_new, cntr, cov_matrices, m=2):
 
 
 def clustering_CK(data, X, max_clusters):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        after_elbow = Elbow_method(data, X, 'CK', max_clusters)
-        n_clusters = after_elbow['optimul_cluster_n']
-        parameter_dict = after_elbow['parameter_dict']
+    after_elbow = Elbow_method(data, X, 'CK', max_clusters)
+    n_clusters = after_elbow['optimul_cluster_n']
+    parameter_dict = after_elbow['parameter_dict']
 
-        # Perform Gustafson-Kessel Clustering; Performing with auto-tuned epsilon included
-        cntr, u, d, fpc, cov_matrices, best_epsilon = tune_epsilon_for_ck(X, c=n_clusters)
-        parameter_dict['epsilon_scale'] = best_epsilon  # Save selected values
+    # Perform Gustafson-Kessel Clustering; Performing with auto-tuned epsilon included
+    cntr, u, d, fpc, cov_matrices, best_epsilon = tune_epsilon_for_ck(X, c=n_clusters)
+    parameter_dict['epsilon_scale'] = best_epsilon  # Save selected values
 
-        # Assign clusters based on maximum membership
-        cluster_labels = np.argmax(u, axis=0)
-        data['cluster'] = clustering_nomal_identify(data, cluster_labels, n_clusters)
-        update_pbar(len(data))
+    # Assign clusters based on maximum membership
+    cluster_labels = np.argmax(u, axis=0)
+    data['cluster'] = clustering_nomal_identify(data, cluster_labels, n_clusters)
 
     predict_CK = data['cluster']
 
@@ -143,13 +141,11 @@ def clustering_CK(data, X, max_clusters):
 
 
 def pre_clustering_CK(data, X, n_clusters):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        # Perform Gustafson-Kessel Clustering
-        cntr, u, d, fpc, cov_matrices = ck_cluster(X, c=n_clusters, m=2)
+    # Perform Gustafson-Kessel Clustering
+    cntr, u, d, fpc, cov_matrices = ck_cluster(X, c=n_clusters, m=2)
 
-        # Assign clusters based on maximum membership
-        cluster_labels = np.argmax(u, axis=0)
-        update_pbar(len(data))
+    # Assign clusters based on maximum membership
+    cluster_labels = np.argmax(u, axis=0)
 
     predict_CK = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_CK))  # Counting the number of clusters
