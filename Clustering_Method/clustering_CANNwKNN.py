@@ -43,7 +43,7 @@ def clustering_CANNwKNN(data, X):
         y_benign = np.zeros(len(X_benign))  # benign is considered label 0
 
         # Create & tune model
-        tune_parameters = Grid_search_all(X, 'CANNwKNN')  # ONLY benign!
+        tune_parameters = Grid_search_all(X, 'CANNwKNN', None, data)  # ONLY benign!
         best_params = tune_parameters['CANNwKNN']['best_params']
         parameter_dict = tune_parameters['CANNwKNN']['all_params']
         parameter_dict.update(best_params)
