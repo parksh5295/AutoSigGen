@@ -11,21 +11,18 @@ from Clustering_Method.clustering_nomal_identify import clustering_nomal_identif
 
 
 def clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max_edge_age):  # Fundamental NeuralGas clustering
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        # Apply Neural Gas clustering
-        neural_gas = GrowingNeuralGas(n_inputs = X.shape[1], n_start_nodes=n_start_nodes, max_nodes=max_nodes, step=step, max_edge_age=max_edge_age)
-        # default; n_start_nodes=2, max_nodes=50, step=0.2, max_edge_age=50
-        neural_gas.train(X, epochs=100)
+    # Apply Neural Gas clustering
+    neural_gas = GrowingNeuralGas(n_inputs = X.shape[1], n_start_nodes=n_start_nodes, max_nodes=max_nodes, step=step, max_edge_age=max_edge_age)
+    # default; n_start_nodes=2, max_nodes=50, step=0.2, max_edge_age=50
+    neural_gas.train(X, epochs=100)
 
-        # Find the closest node for each data point
-        def assign_cluster(data_point, graph):
-            distances = [np.linalg.norm(data_point - node.weight) for node in graph.nodes]
-            return np.argmin(distances)
-        
-        # Assign clusters to data points
-        clusters = np.array([assign_cluster(x, neural_gas.graph) for x in X])
-
-        update_pbar(len(data))
+    # Find the closest node for each data point
+    def assign_cluster(data_point, graph):
+        distances = [np.linalg.norm(data_point - node.weight) for node in graph.nodes]
+        return np.argmin(distances)
+    
+    # Assign clusters to data points
+    clusters = np.array([assign_cluster(x, neural_gas.graph) for x in X])
 
     num_clusters = len(np.unique(clusters))  # Counting the number of clusters
 
@@ -33,17 +30,14 @@ def clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max
 
 
 def clustering_NeuralGas(data, X):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        tune_parameters = Grid_search_all(X, 'NeuralGas')
-        print('tune_params: ', tune_parameters)
-        best_params = tune_parameters['NeuralGas']['best_params']
-        parameter_dict = tune_parameters['NeuralGas']['all_params']
-        parameter_dict.update(best_params)
+    tune_parameters = Grid_search_all(X, 'NeuralGas')
+    print('tune_params: ', tune_parameters)
+    best_params = tune_parameters['NeuralGas']['best_params']
+    parameter_dict = tune_parameters['NeuralGas']['all_params']
+    parameter_dict.update(best_params)
 
-        clusters, num_clusters = clustering_NeuralGas_clustering(data, X, n_start_nodes=parameter_dict['n_start_nodes'], max_nodes=parameter_dict['max_nodes'], step=parameter_dict['step'], max_edge_age=parameter_dict['max_edge_age'])
-        data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
-
-        update_pbar(len(data))
+    clusters, num_clusters = clustering_NeuralGas_clustering(data, X, n_start_nodes=parameter_dict['n_start_nodes'], max_nodes=parameter_dict['max_nodes'], step=parameter_dict['step'], max_edge_age=parameter_dict['max_edge_age'])
+    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
 
     predict_NeuralGas = data['cluster']
 
@@ -82,11 +76,8 @@ class NeuralGasWithParams(BaseEstimator, ClusterMixin):
     
 
 def pre_clustering_NeuralGas(data, X, n_start_nodes, max_nodes, step, max_edge_age):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        clusters, num_clusters = clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max_edge_age)
-        clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
-
-        update_pbar(len(data))
+    clusters, num_clusters = clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max_edge_age)
+    clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
 
     predict_NeuralGas = clustering_data
 

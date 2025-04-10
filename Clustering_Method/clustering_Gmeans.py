@@ -53,7 +53,11 @@ class GMeans:
                     cluster_id += 1
                     continue
 
-                _, p_value = normaltest(sub_data)  # Normality test (calculate p-value)
+                # Instead of: _, p_value = normaltest(sub_data)
+                # Use a 1D projection:
+                sub_data_1d = sub_data.mean(axis=1)
+                # _, p_value = normaltest(sub_data)  # Normality test (calculate p-value)
+                _, p_value = normaltest(sub_data_1d)    # Because normaltest() is sensitive, it's safe to only run it on 1D vectors
 
                 if np.any(p_value < 0.05):  # More granularity when regularity is not followed
                     clusters.append((sub_data, cluster_id))

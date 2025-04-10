@@ -15,11 +15,9 @@ def clustering_MShift_clustering(data, X, state, quantile, n_samples):  # Fundam
     # Estimate bandwidth based on the data
     bandwidth = estimate_bandwidth(X, quantile=quantile, n_samples=n_samples, random_state=state) # default; randomm_state=42, n_samples=500, quantile=0.2
     
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        # Apply MeanShift with the estimated bandwidth
-        MShift = MeanShift(bandwidth=bandwidth, bin_seeding=True)
-        clusters = MShift.fit_predict(X)
-        update_pbar(len(data))
+    # Apply MeanShift with the estimated bandwidth
+    MShift = MeanShift(bandwidth=bandwidth, bin_seeding=True)
+    clusters = MShift.fit_predict(X)
 
     num_clusters = len(np.unique(clusters))  # Counting the number of clusters
     
@@ -27,16 +25,13 @@ def clustering_MShift_clustering(data, X, state, quantile, n_samples):  # Fundam
 
 
 def clustering_MShift(data, X):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        tune_parameters = Grid_search_all(X, 'MShift')
-        best_params = tune_parameters['MShift']['best_params']
-        parameter_dict = tune_parameters['MShift']['all_params']
-        parameter_dict.update(best_params)
+    tune_parameters = Grid_search_all(X, 'MShift')
+    best_params = tune_parameters['MShift']['best_params']
+    parameter_dict = tune_parameters['MShift']['all_params']
+    parameter_dict.update(best_params)
 
-        clusters, num_clusters, MShift = clustering_MShift_clustering(data, X, state=parameter_dict['random_state'], quantile=parameter_dict['quantile'], n_samples=parameter_dict['n_samples'])
-        data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
-
-        update_pbar(len(data))
+    clusters, num_clusters, MShift = clustering_MShift_clustering(data, X, state=parameter_dict['random_state'], quantile=parameter_dict['quantile'], n_samples=parameter_dict['n_samples'])
+    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
 
     predict_MShift = data['cluster']
 
@@ -76,11 +71,8 @@ class MeanShiftWithDynamicBandwidth(BaseEstimator, ClusterMixin):
     
 
 def pre_clustering_MShift(data, X, random_state, quantile, n_samples):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        clusters, num_clusters, MShift = clustering_MShift_clustering(data, X, random_state, quantile, n_samples)
-        clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
-
-        update_pbar(len(data))
+    clusters, num_clusters, MShift = clustering_MShift_clustering(data, X, random_state, quantile, n_samples)
+    clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
 
     predict_MShift = clustering_data
 
