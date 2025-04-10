@@ -64,6 +64,7 @@ class GMeans:
                     clusters.append((sub_data, cluster_id))
                 else:  # Follow regularity to confirm clusters
                     self.labels_[self.labels_ == cluster_idx] = cluster_id
+                    print(f"regul cluster ID: {cluster_id}")
                 
                 cluster_id += 1
 
