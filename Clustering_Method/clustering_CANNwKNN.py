@@ -96,10 +96,11 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         self.knn = None
 
     def fit(self, X, y):
-        self.input_shape = X.shape[1]
-
+        current_shape = X.shape[1]
         # Create and train the CANN model
-        self.model = create_cann_model(self.input_shape)
+        if self.input_shape != current_shape or self.model is None:
+            self.input_shape = current_shape
+            self.model = create_cann_model(self.input_shape)
         self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size)
 
         # Extract features from the trained model
@@ -113,8 +114,11 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
 
     def predict(self, X):
         # Use trained KNN to predict clusters
-        features = self.model.predict(X)
-        return self.knn.predict(features)
+        current_shape = X.shape[1]
+        if self.input_shape != current_shape:
+            raise ValueError(f"Shape mismatch! Model was built with input_shape={self.input_shape}, "
+                             f"but got input with shape={current_shape}. You should re-train the model.")
+        return self.model.predict(X)
     
     def fit_predict(self, X, data):
         # Step 1: Get benign data from full dataframe
