@@ -84,7 +84,7 @@ def evaluate_clustering_with_known_benign(data, clusters, num_clusters):
     return f1, acc
 
 
-def Grid_search_all(X, clustering_algorithm, parameter_dict=None):
+def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
     if parameter_dict is None:
         parameter_dict = {
             'random_state': 42, 'n_init': 30, 'max_clusters': 1000, 'tol': 1e-4, 'eps': 0.5, 'count_samples': 5, 'quantile': 0.2, 
@@ -155,7 +155,10 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None):
         params = dict(zip(param_keys, param_set))
         model = create_model(params)
 
-        labels = model.fit_predict(X)
+        if clustering_algorithm in ['CANNwKNN', 'CANN']:
+            labels = model.fit_predict(X, data)
+        else:
+            labels = model.fit_predict(X)
         sil_score, db_score = evaluate_clustering(X, labels)
 
         print(f"{clustering_algorithm}: {params} → Silhouette: {sil_score:.4f}, Davies-Bouldin: {db_score:.4f}")

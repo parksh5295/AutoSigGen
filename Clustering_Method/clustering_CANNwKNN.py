@@ -43,7 +43,7 @@ def clustering_CANNwKNN(data, X):
         y_benign = np.zeros(len(X_benign))  # benign is considered label 0
 
         # Create & tune model
-        tune_parameters = Grid_search_all(X_benign, 'CANNwKNN')  # ONLY benign!
+        tune_parameters = Grid_search_all(X, 'CANNwKNN')  # ONLY benign!
         best_params = tune_parameters['CANNwKNN']['best_params']
         parameter_dict = tune_parameters['CANNwKNN']['all_params']
         parameter_dict.update(best_params)
@@ -103,6 +103,7 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         # Apply KNN on the extracted features
         self.knn = KNeighborsClassifier(n_neighbors=self.n_neighbors)
         self.knn.fit(features, y)
+
         return self
 
     def predict(self, X):
@@ -110,8 +111,16 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         features = self.model.predict(X)
         return self.knn.predict(features)
     
-    def fit_predict(self, X, y):
-        self.fit(X, y)
+    def fit_predict(self, X, data):
+        # Step 1: Get benign data from full dataframe
+        benign_data = nomal_class_data(data)
+        X_benign = benign_data.drop(columns=['label']).to_numpy()
+        y_benign = np.zeros(len(X_benign))  # All benign = 0
+
+        # Step 2: Fit using benign only
+        self.fit(X_benign, y_benign)
+
+        # Step 3: Predict for all data
         return self.predict(X)
     
 
