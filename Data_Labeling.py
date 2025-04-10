@@ -69,7 +69,11 @@ def main():
 
     pca_want = str(input("\nDo you want to do PCA? (Y/n): "))
     if pca_want in ['Y', 'y']:
-        X_reduced = pca_func(X)
+        if clustering_algorithm in ['CANNwKNN', 'CANN']:
+            print("CANN is a classification, which means you need to use the full data.")
+            X_reduced = X
+        else:
+            X_reduced = pca_func(X)
     else:
         X_reduced = X
 
