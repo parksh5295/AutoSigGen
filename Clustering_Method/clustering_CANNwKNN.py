@@ -96,6 +96,7 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         self.knn = None
 
     def fit(self, X, y):
+        print(f"[DEBUG] Creating new model with input_shape={X.shape[1]}")
         self.input_shape = X.shape[1]
         self.model = create_cann_model(self.input_shape)
         self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size)
@@ -107,7 +108,7 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
-        print("[DEBUG] predict() - input X shape:", X.shape)
+        print(f"[DEBUG] Predict input shape={X.shape[1]}, expected={self.input_shape}")
         # Use trained KNN to predict clusters
         current_shape = X.shape[1]
         if self.input_shape != current_shape:
