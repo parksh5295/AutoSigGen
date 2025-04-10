@@ -125,7 +125,7 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None):
 
     elif clustering_algorithm == 'NeuralGas':
         NeuralGasWithParams = dynamic_import("Clustering_Method.clustering_NeuralGas", "NeuralGasWithParams")
-        param_grid = {'n_start_nodes': list(range(1, 11, 1)), 'max_nodes': list(range(10, 101, 5)),
+        param_grid = {'n_start_nodes': list(range(2, 11, 1)), 'max_nodes': list(range(10, 101, 5)),
                         'step': np.arange(0.05, 1, 0.05), 'max_edge_age': list(range(5, 301, 10))}
         def create_model(params):
             return NeuralGasWithParams(**params)

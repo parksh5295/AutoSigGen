@@ -36,10 +36,10 @@ def clustering_CANNwKNN(data, X):
         # Define model input shapes
         input_shape = (X.shape[1],)
 
-        benign_data = nomal_class_data(data).to_numpy() # Assuming that we only know benign data
+        benign_data = nomal_class_data(data) # Assuming that we only know benign data
 
         # Prepare data
-        X_benign = benign_data.drop(columns=['label'], errors='ignore').values
+        X_benign = benign_data.drop(columns=['label'], errors='ignore').to_numpy()
         y_benign = np.zeros(len(X_benign))  # benign is considered label 0
 
         # Create & tune model

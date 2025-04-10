@@ -69,6 +69,7 @@ class NeuralGasWithParams(BaseEstimator, ClusterMixin):
             return np.argmin(distances)
 
         self.clusters = np.array([assign_cluster(x, neural_gas.graph) for x in X])
+        self.labels_ = self.clusters
         return self
     
     def predict(self, X):
