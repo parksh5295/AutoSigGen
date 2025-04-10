@@ -77,7 +77,7 @@ def clustering_CANNwKNN(data, X):
 # Function to wrap CANN in a sklearn-compatible classifier
 def create_cann_model(input_shape):
     model = CANN()
-    model.build(input_shape=(None, input_shape))  # <-- build here with correct shape
+    model.build(input_shape=(None, *input_shape))  # <-- build here with correct shape
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return model
 
