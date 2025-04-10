@@ -134,7 +134,7 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
         CANNWithKNN = dynamic_import("Clustering_Method.clustering_CANNwKNN", "CANNWithKNN")
         param_grid = {'epochs': list(range(10, 501, 10)), 'batch_size': list(range(32, 257, 32)), 
                         'n_neighbors': list(range(5, 51, 1))}
-        input_shape = (X.shape[1],)
+        input_shape = X.shape[1]
         def create_model(params):
             return CANNWithKNN(input_shape=input_shape, **params)
 
