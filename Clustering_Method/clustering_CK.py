@@ -11,7 +11,7 @@ from sklearn.metrics import silhouette_score
 
 
 # Gustafson-Kessel Clustering Implementation
-def ck_cluster(X, c, m=2, error=0.005, maxiter=1000, epsilon_scale=1e-5):
+def ck_cluster(X, c, m=2, error=0.01, maxiter=500, epsilon_scale=1e-5): # Fix. Origin; error=0.005, maxiter=1000
     """
     Gustafson-Kessel Clustering Algorithm.
     

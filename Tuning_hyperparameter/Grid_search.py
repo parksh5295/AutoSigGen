@@ -98,7 +98,7 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
 
     if clustering_algorithm in ['Xmeans', 'xmeans']:
         XMeansWrapper = dynamic_import("Clustering_Method.clustering_Xmeans", "XMeansWrapper")
-        param_grid = {'max_clusters': list(range(2, 50, 1))}
+        param_grid = {'max_clusters': list(range(2, 31, 3))}
         def create_model(params):
             return XMeansWrapper(random_state=parameter_dict['random_state'], **params)
 
@@ -108,32 +108,32 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
         lin_range = np.linspace(min(log_range), max(log_range), num=10)
         combined_range = np.unique(np.concatenate((log_range, lin_range)))
 
-        param_grid = {'max_clusters': list(range(2, 50, 1)), 'tol': combined_range}
+        param_grid = {'max_clusters': list(range(2, 31, 3)), 'tol': combined_range}
         def create_model(params):
             return GMeans(random_state=parameter_dict['random_state'], **params)
 
     elif clustering_algorithm == 'DBSCAN':
-        param_grid = {'eps': np.arange(0.05, 1, 0.02), 'min_samples': list(range(3, 20, 2))}
+        param_grid = {'eps': np.arange(0.1, 1, 0.02), 'min_samples': list(range(3, 20, 2))}
         def create_model(params):
             return DBSCAN(**params)
 
     elif clustering_algorithm == 'MShift':
         MeanShiftWithDynamicBandwidth = dynamic_import("Clustering_Method.clustering_Mshift", "MeanShiftWithDynamicBandwidth")
-        param_grid = {'quantile': np.arange(0.01, 0.95, 0.02), 'n_samples': list(range(50, 1000, 50))}
+        param_grid = {'quantile': np.arange(0.01, 0.5, 0.05), 'n_samples': list(range(50, 1000, 50))}
         def create_model(params):
             return MeanShiftWithDynamicBandwidth(**params)
 
     elif clustering_algorithm == 'NeuralGas':
         NeuralGasWithParams = dynamic_import("Clustering_Method.clustering_NeuralGas", "NeuralGasWithParams")
-        param_grid = {'n_start_nodes': list(range(2, 11, 1)), 'max_nodes': list(range(10, 101, 5)),
-                        'step': np.arange(0.05, 1, 0.05), 'max_edge_age': list(range(5, 301, 10))}
+        param_grid = {'n_start_nodes': [2, 5, 7, 10, 15, 20, 35, 50], 'max_nodes': list(range(50, 501, 50)),
+                        'step': np.arange(0.05, 0.51, 0.05), 'max_edge_age': list(range(50, 301, 30))}
         def create_model(params):
             return NeuralGasWithParams(**params)
 
     elif clustering_algorithm in ['CANNwKNN', 'CANN']:
         CANNWithKNN = dynamic_import("Clustering_Method.clustering_CANNwKNN", "CANNWithKNN")
-        param_grid = {'epochs': list(range(10, 501, 10)), 'batch_size': list(range(32, 257, 32)), 
-                        'n_neighbors': list(range(5, 51, 1))}
+        param_grid = {'epochs': list(range(20, 501, 20)), 'batch_size': list(range(32, 257, 32)), 
+                        'n_neighbors': list(range(3, 51, 5))}
         input_shape = X.shape[1]
         def create_model(params):
             return CANNWithKNN(input_shape=input_shape, **params)
