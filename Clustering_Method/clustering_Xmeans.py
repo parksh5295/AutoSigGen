@@ -26,28 +26,22 @@ def x_means_clustering(X, random_state, max_clusters):
     return best_model, best_k
 
 def clustering_Xmeans_clustering(data, X, random_state, max_clusters):  # Fundamental Xmeans clustering
-    # default; max=clusters=10, 
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        # Perform Y-Means Clustering
-        model, optimal_k = x_means_clustering(X, random_state, max_clusters)
-        clusters = model.labels_
-
-        update_pbar(len(data))
+    # default; max=clusters=10,
+    # Perform Y-Means Clustering
+    model, optimal_k = x_means_clustering(X, random_state, max_clusters)
+    clusters = model.labels_
 
     return clusters, optimal_k
 
 
 def clustering_Xmeans(data, X):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        tune_parameters = Grid_search_all(X, 'Xmeans')
-        best_params = tune_parameters['Xmeans']['best_params']
-        parameter_dict = tune_parameters['Xmeans']['all_params']
-        parameter_dict.update(best_params)
+    tune_parameters = Grid_search_all(X, 'Xmeans')
+    best_params = tune_parameters['Xmeans']['best_params']
+    parameter_dict = tune_parameters['Xmeans']['all_params']
+    parameter_dict.update(best_params)
 
-        clusters, num_clusters = clustering_Xmeans_clustering(data, X, random_state=parameter_dict['random_state'], max_clusters=parameter_dict['max_clusters'])
-        data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
-
-        update_pbar(len(data))
+    clusters, num_clusters = clustering_Xmeans_clustering(data, X, random_state=parameter_dict['random_state'], max_clusters=parameter_dict['max_clusters'])
+    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
 
     predict_Xmeans = data['cluster']
 
@@ -79,11 +73,8 @@ class XMeansWrapper(BaseEstimator, ClusterMixin):
     
 
 def pre_clustering_Xmeans(data, X, random_state, max_clusters):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        clusters, num_clusters = clustering_Xmeans_clustering(data, X, random_state, max_clusters)
-        clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
-
-        update_pbar(len(data))
+    clusters, num_clusters = clustering_Xmeans_clustering(data, X, random_state, max_clusters)
+    clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
 
     predict_Xmeans = clustering_data
 
