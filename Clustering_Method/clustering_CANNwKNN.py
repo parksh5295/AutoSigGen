@@ -96,17 +96,11 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         self.knn = None
 
     def fit(self, X, y):
-        current_shape = X.shape[1]
-        # Create and train the CANN model
-        if self.input_shape != current_shape or self.model is None:
-            self.input_shape = current_shape
-            self.model = create_cann_model(self.input_shape)
+        self.input_shape = X.shape[1]
+        self.model = create_cann_model(self.input_shape)
         self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size)
 
-        # Extract features from the trained model
         features = self.model.predict(X)
-
-        # Apply KNN on the extracted features
         self.knn = KNeighborsClassifier(n_neighbors=self.n_neighbors)
         self.knn.fit(features, y)
 
