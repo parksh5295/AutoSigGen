@@ -15,9 +15,9 @@ from Tuning_hyperparameter.Grid_search import Grid_search_all
 
 # Defining the CANN model
 class CANN(tf.keras.Model):
-    def __init__(self, input_shape):
+    def __init__(self, input_dim):
         super(CANN, self).__init__()
-        self.dense1 = Dense(64, activation='relu', input_shape=input_shape)
+        self.dense1 = Dense(64, activation='relu', input_shape=(input_dim,))
         self.flatten = Flatten()
         self.dense2 = Dense(32, activation='relu')
         self.dense3 = Dense(1, activation='sigmoid')
@@ -32,7 +32,7 @@ class CANN(tf.keras.Model):
 def clustering_CANNwKNN(data, X):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         # Define model input shapes
-        input_shape = (X.shape[1],)
+        input_shape = (X.shape[1])
 
         benign_data = nomal_class_data(data) # Assuming that we only know benign data
 
@@ -125,10 +125,10 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
 def pre_clustering_CANNwKNN(data, X, epochs, batch_size, n_neighbors):
     with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
         # Define model input shapes
-        input_shape = (X.shape[1],)
+        input_shape = (X.shape[1])
 
         # Create CANN Model
-        model = CANN(input_shape)
+        model = create_cann_model(input_shape)
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
         # Learning CANN Model
