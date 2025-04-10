@@ -11,16 +11,14 @@ from Clustering_Method.clustering_nomal_identify import clustering_nomal_identif
 
 
 def clustering_SGMM(data, X, max_clusters):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        after_elbow = Elbow_method(data, X, 'SGMM', max_clusters)
-        n_clusters = after_elbow['optimul_cluster_n']
-        parameter_dict = after_elbow['parameter_dict']
+    after_elbow = Elbow_method(data, X, 'SGMM', max_clusters)
+    n_clusters = after_elbow['optimul_cluster_n']
+    parameter_dict = after_elbow['parameter_dict']
 
-        sgmm = GaussianMixture(n_components=n_clusters, covariance_type='spherical', random_state=parameter_dict['random_state'])   # default; randomm_state=42
-    
-        clusters = sgmm.fit_predict(X)
-        data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
-        update_pbar(len(data))
+    sgmm = GaussianMixture(n_components=n_clusters, covariance_type='spherical', random_state=parameter_dict['random_state'])   # default; randomm_state=42
+
+    clusters = sgmm.fit_predict(X)
+    data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_SGMM = data['cluster']
 
@@ -32,9 +30,8 @@ def clustering_SGMM(data, X, max_clusters):
 
 def pre_clustering_SGMM(data, X, n_clusters, random_state):
     sgmm = GaussianMixture(n_components=n_clusters, covariance_type='spherical', random_state=random_state)   # default; randomm_state=42
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        cluster_labels = sgmm.fit_predict(X)
-        update_pbar(len(data))
+
+    cluster_labels = sgmm.fit_predict(X)
 
     predict_SGMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_SGMM))  # Counting the number of clusters

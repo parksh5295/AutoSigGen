@@ -79,22 +79,20 @@ class GMeans:
 
 
 def clustering_Gmeans(data, X):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        tune_parameters = Grid_search_all(X, 'Gmeans')
+    tune_parameters = Grid_search_all(X, 'Gmeans')
 
-        if not tune_parameters or 'Gmeans' not in tune_parameters or not tune_parameters['Gmeans']['best_params']:
-            raise ValueError("Grid search for GMeans failed: No best parameters found.")
+    if not tune_parameters or 'Gmeans' not in tune_parameters or not tune_parameters['Gmeans']['best_params']:
+        raise ValueError("Grid search for GMeans failed: No best parameters found.")
 
-        best_params = tune_parameters['Gmeans']['best_params']
-        parameter_dict = tune_parameters['Gmeans']['all_params']
-        parameter_dict.update(best_params)
+    best_params = tune_parameters['Gmeans']['best_params']
+    parameter_dict = tune_parameters['Gmeans']['all_params']
+    parameter_dict.update(best_params)
 
-        # G-means Clustering (using GaussianMixture)
-        gmeans = GMeans(random_state=parameter_dict['random_state'], max_clusters=parameter_dict['max_clusters'], tol=parameter_dict['tol'])
-        clusters = gmeans.fit_predict(X)
-        n_clusters = len(np.unique(clusters))  # Counting the number of clusters
-        data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
-        update_pbar(len(data))
+    # G-means Clustering (using GaussianMixture)
+    gmeans = GMeans(random_state=parameter_dict['random_state'], max_clusters=parameter_dict['max_clusters'], tol=parameter_dict['tol'])
+    clusters = gmeans.fit_predict(X)
+    n_clusters = len(np.unique(clusters))  # Counting the number of clusters
+    data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_Gmeans = data['cluster']
     
@@ -105,13 +103,11 @@ def clustering_Gmeans(data, X):
 
 
 def pre_clustering_Gmeans(data, X, random_state, max_clusters, tol):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        # G-means Clustering (using GaussianMixture)
-        gmeans = GMeans(random_state, max_clusters, tol)
-        clusters = gmeans.fit_predict(X)
-        n_clusters = len(np.unique(clusters))  # Counting the number of clusters
-        clustering_data = clustering_nomal_identify(data, clusters, n_clusters)
-        update_pbar(len(data))
+    # G-means Clustering (using GaussianMixture)
+    gmeans = GMeans(random_state, max_clusters, tol)
+    clusters = gmeans.fit_predict(X)
+    n_clusters = len(np.unique(clusters))  # Counting the number of clusters
+    clustering_data = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_Gmeans = clustering_data
     

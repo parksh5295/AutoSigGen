@@ -11,20 +11,18 @@ from Clustering_Method.clustering_nomal_identify import clustering_nomal_identif
 
 
 def clustering_FCM(data, X, max_clusters):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        after_elbow = Elbow_method(data, X, 'FCM', max_clusters)
-        n_clusters = after_elbow['optimul_cluster_n']
-        parameter_dict = after_elbow['parameter_dict']
+    after_elbow = Elbow_method(data, X, 'FCM', max_clusters)
+    n_clusters = after_elbow['optimul_cluster_n']
+    parameter_dict = after_elbow['parameter_dict']
 
-        # Fuzzy C-Means Clustering
-        cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
-            X.T, c=n_clusters, m=2, error=0.005, maxiter=1000, init=None
-        )
+    # Fuzzy C-Means Clustering
+    cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
+        X.T, c=n_clusters, m=2, error=0.005, maxiter=1000, init=None
+    )
 
-        # Assign clusters based on maximum membership
-        cluster_labels = np.argmax(u, axis=0)
-        data['cluster'] = clustering_nomal_identify(data, cluster_labels, n_clusters)
-        update_pbar(len(data))
+    # Assign clusters based on maximum membership
+    cluster_labels = np.argmax(u, axis=0)
+    data['cluster'] = clustering_nomal_identify(data, cluster_labels, n_clusters)
 
     predict_FCM = data['cluster']
 
@@ -35,15 +33,13 @@ def clustering_FCM(data, X, max_clusters):
 
 
 def pre_clustering_FCM(data, X, n_clusters):
-    with progress_bar(len(data), desc="Clustering", unit="samples") as update_pbar:
-        # Fuzzy C-Means Clustering
-        cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
-            X.T, c=n_clusters, m=2, error=0.005, maxiter=1000, init=None
-        )
+    # Fuzzy C-Means Clustering
+    cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
+        X.T, c=n_clusters, m=2, error=0.005, maxiter=1000, init=None
+    )
 
-        # Assign clusters based on maximum membership
-        cluster_labels = np.argmax(u, axis=0)
-        update_pbar(len(data))
+    # Assign clusters based on maximum membership
+    cluster_labels = np.argmax(u, axis=0)
 
     predict_FCM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_FCM))  # Counting the number of clusters
