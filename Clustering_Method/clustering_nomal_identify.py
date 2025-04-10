@@ -9,7 +9,7 @@ def clustering_nomal_identify(data, clusters, num_clusters):
     known_nomal_samples = nomal_class_data(data).to_numpy()
 
     final_labels = np.zeros(len(data))   # Create an array (list) to store cluster labels
-    threshold = 0.5 # Similar to Confidence
+    threshold = 0.1 # Similar to Confidence
 
     for cluster_id in range(num_clusters):  # Repeat for the number of clusters
         cluster_mask = (clusters == cluster_id)  # Select data from that cluster
