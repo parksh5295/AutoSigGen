@@ -26,16 +26,16 @@ class GMeans:
         warnings.filterwarnings("ignore", category=RuntimeWarning)
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
-        self.labels_ = np.zeros(X.shape[0], dtype=int)  # Initial cluster label
-        clusters = [(X, 0)]  # Initial cluster list (data, cluster ID)
-        cluster_id = 1  # Cluster ID
+        self.labels_ = -np.ones(X.shape[0], dtype=int)  # Initial cluster label
+        clusters = [(np.arange(X.shape[0]), X, 0)]  # Initial cluster list (index_in_X, data, cluster_idx)
+        cluster_id = 0  # Cluster ID
 
         while clusters:
-            data, cluster_idx = clusters.pop(0)
+            indices, data, cluster_idx = clusters.pop(0)
 
             # Skip if cluster is too small or nearly identical
             if len(data) < 8 or np.all(np.std(data, axis=0) < 1e-8):
-                self.labels_[self.labels_ == cluster_idx] = cluster_id
+                self.labels_[indices] = cluster_id
                 cluster_id += 1
                 continue
 
@@ -46,25 +46,26 @@ class GMeans:
 
             # Test if each subcluster follows normality
             for new_cluster_id in range(2):
+                sub_indices = indices[new_labels == new_cluster_id]
                 sub_data = data[new_labels == new_cluster_id]
 
-                if len(sub_data) < 8:  # Not testing clusters that are too small
-                    self.labels_[self.labels_ == cluster_idx] = cluster_id
+                if len(sub_data) < 8:
+                    self.labels_[sub_indices] = cluster_id
                     cluster_id += 1
                     continue
 
                 # Instead of: _, p_value = normaltest(sub_data)
                 # Use a 1D projection:
-                sub_data_1d = sub_data.mean(axis=1)
+                # sub_data_1d = sub_data.mean(axis=1)
                 # _, p_value = normaltest(sub_data)  # Normality test (calculate p-value)
                 # _, p_value = normaltest(sub_data_1d)    # Because normaltest() is sensitive, it's safe to only run it on 1D vectors
                 _, p_value = normaltest(sub_data[:, 0])  # Use only the first PCA principal component
 
-                if np.any(p_value < 0.001):  # More granularity when regularity is not followed
+                if np.any(p_value < 0.01):  # More granularity when regularity is not followed
                     clusters.append((sub_data, cluster_id))
                 else:  # Follow regularity to confirm clusters
-                    self.labels_[self.labels_ == cluster_idx] = cluster_id
-                    print(f"Cluster ID: {cluster_id}, Sub-data size: {len(sub_data)}, p-value: {p_value}")
+                    self.labels_[sub_indices] = cluster_id
+                    print(f"Cluster ID: {cluster_id}, Sub-data size: {len(sub_data)}, p-value: {p_value:.4f}")
                 
                 cluster_id += 1
 
