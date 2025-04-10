@@ -157,6 +157,7 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
 
         print("[DEBUG] Grid_search_all() - X for training:", X.shape)
         if clustering_algorithm in ['CANNwKNN', 'CANN']:
+            print("type of X, data: ", type(X), type(data))
             labels = model.fit_predict(X, data)
         else:
             labels = model.fit_predict(X)
