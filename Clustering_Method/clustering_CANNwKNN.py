@@ -5,7 +5,7 @@
 
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
-from keras.layers import Dense, Flatten, Attention
+from keras.layers import Dense, Flatten
 import tensorflow as tf
 from sklearn.base import BaseEstimator, ClassifierMixin
 from utils.progressing_bar import progress_bar
@@ -15,13 +15,13 @@ from Tuning_hyperparameter.Grid_search import Grid_search_all
 
 # Defining the CANN model
 class CANN(tf.keras.Model):
-    def __init__(self, input_dim):
+    def __init__(self):
         super(CANN, self).__init__()
-        self.dense1 = Dense(64, activation='relu', input_shape=(input_dim,))
+        self.dense1 = Dense(64, activation='relu')  # remove input_shape here
         self.flatten = Flatten()
         self.dense2 = Dense(32, activation='relu')
         self.dense3 = Dense(1, activation='sigmoid')
-    
+
     def call(self, inputs):
         x = self.dense1(inputs)
         x = self.flatten(x)
@@ -76,7 +76,8 @@ def clustering_CANNwKNN(data, X):
 
 # Function to wrap CANN in a sklearn-compatible classifier
 def create_cann_model(input_shape):
-    model = CANN(input_shape)
+    model = CANN()
+    model.build(input_shape=(None, input_shape))  # <-- build here with correct shape
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return model
 
@@ -129,6 +130,7 @@ def pre_clustering_CANNwKNN(data, X, epochs, batch_size, n_neighbors):
 
         # Create CANN Model
         model = create_cann_model(input_shape)
+        model.build(input_shape=(None, input_shape))
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
         # Learning CANN Model
