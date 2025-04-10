@@ -98,7 +98,7 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None):
 
     if clustering_algorithm in ['Xmeans', 'xmeans']:
         XMeansWrapper = dynamic_import("Clustering_Method.clustering_Xmeans", "XMeansWrapper")
-        param_grid = {'max_clusters': list(range(10, 101, 10))}
+        param_grid = {'max_clusters': list(range(2, 50, 1))}
         def create_model(params):
             return XMeansWrapper(random_state=parameter_dict['random_state'], **params)
 
@@ -108,7 +108,7 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None):
         lin_range = np.linspace(min(log_range), max(log_range), num=10)
         combined_range = np.unique(np.concatenate((log_range, lin_range)))
 
-        param_grid = {'max_clusters': list(range(10, 1001, 10)), 'tol': combined_range}
+        param_grid = {'max_clusters': list(range(2, 50, 1)), 'tol': combined_range}
         def create_model(params):
             return GMeans(random_state=parameter_dict['random_state'], **params)
 
