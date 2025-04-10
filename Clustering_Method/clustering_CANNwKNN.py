@@ -113,6 +113,7 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
+        print("[DEBUG] predict() - input X shape:", X.shape)
         # Use trained KNN to predict clusters
         current_shape = X.shape[1]
         if self.input_shape != current_shape:
