@@ -60,7 +60,7 @@ class GMeans:
                 # _, p_value = normaltest(sub_data_1d)    # Because normaltest() is sensitive, it's safe to only run it on 1D vectors
                 _, p_value = normaltest(sub_data[:, 0])  # Use only the first PCA principal component
 
-                if np.any(p_value < 0.05):  # More granularity when regularity is not followed
+                if np.any(p_value < 0.01):  # More granularity when regularity is not followed
                     clusters.append((sub_data, cluster_id))
                 else:  # Follow regularity to confirm clusters
                     self.labels_[self.labels_ == cluster_idx] = cluster_id
