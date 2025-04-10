@@ -87,8 +87,8 @@ def create_cann_model(input_shape):
 
 # Define a wrapper class for GridSearchCV
 class CANNWithKNN(BaseEstimator, ClassifierMixin):
-    def __init__(self, epochs=100, batch_size=32, n_neighbors=5):
-        self.input_shape = None
+    def __init__(self, input_shape, epochs=100, batch_size=32, n_neighbors=5):
+        self.input_shape = input_shape
         self.epochs = epochs
         self.batch_size = batch_size
         self.n_neighbors = n_neighbors
@@ -96,8 +96,8 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         self.knn = None
 
     def fit(self, X, y):
-        print(f"[DEBUG] Creating new model with input_shape={X.shape[1]}")
         self.input_shape = X.shape[1]
+        print(f"[DEBUG] Creating new model with input_shape={X.shape[1]}")
         self.model = create_cann_model(self.input_shape)
         self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size)
 
