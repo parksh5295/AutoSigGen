@@ -159,6 +159,8 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
         if clustering_algorithm in ['CANNwKNN', 'CANN']:
             X_first_row_list = X.iloc[0].tolist()
             data_first_row_list = X.iloc[0].tolist()
+            print(X_first_row_list)
+            print(data_first_row_list)
             data_only = [item for item in data_first_row_list if item not in X_first_row_list]
             print("in data only: ", data_only)
             labels = model.fit_predict(X, data)
