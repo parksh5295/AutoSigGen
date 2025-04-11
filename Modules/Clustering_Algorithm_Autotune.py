@@ -65,4 +65,7 @@ def choose_clustering_algorithm(data, X, clustering_algorithm, max_clusters=1000
         print("Unsupported algorithm")
         raise Exception("Unsupported clustering algorithms")
 
-    return clustering
+    if not GMM_type:
+        GMM_type = None
+
+    return clustering, GMM_type

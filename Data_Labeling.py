@@ -88,9 +88,9 @@ def main():
     
     Hyperparameter_optimization = str(input("\nDo you need to do Hyperparameter_optimization? (Y/n): "))
     if Hyperparameter_optimization in ['Y', 'y']:
-        clustering = choose_clustering_algorithm(data, X_reduced, clustering_algorithm, max_clusters)
+        clustering, GMM_type = choose_clustering_algorithm(data, X_reduced, clustering_algorithm, max_clusters)
     elif Hyperparameter_optimization in ['N', 'n']:
-        clustering = choose_clustering_algorithm_Non_optimization(data, X_reduced, clustering_algorithm)
+        clustering, GMM_type = choose_clustering_algorithm_Non_optimization(data, X_reduced, clustering_algorithm)
     else:
         raise Exception("You can only express your intent to proceed with hyperparameter tuning with Y/N.")
     data['cluster'] = clustering['Cluster_labeling']
@@ -126,11 +126,11 @@ def main():
 
 
     # 7. Save the results to csv file
-    row_compare_df = csv_compare_clustering(file_type, clustering_algorithm, file_number, data)    # Not called, but saved.
+    row_compare_df = csv_compare_clustering(file_type, clustering_algorithm, file_number, data, GMM_type)    # Not called, but saved.
 
     metrics_original = eval_clustering
     metrics_adjusted = eval_clustering_adjust
-    metrics_df = csv_compare_matrix_clustering(file_type, file_number, clustering_algorithm, metrics_original, metrics_adjusted)
+    metrics_df = csv_compare_matrix_clustering(file_type, file_number, clustering_algorithm, metrics_original, metrics_adjusted, GMM_type)
     print("\nThe result of the clustering score calculation: ")
     print(metrics_df)
 

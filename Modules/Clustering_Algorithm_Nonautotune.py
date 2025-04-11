@@ -62,5 +62,8 @@ def choose_clustering_algorithm_Non_optimization(data, X, clustering_algorithm):
     else:
         print("Unsupported algorithm")
         raise Exception("Unsupported clustering algorithms")
+    
+    if not GMM_type:
+        GMM_type = None
 
-    return clustering
+    return clustering, GMM_type
