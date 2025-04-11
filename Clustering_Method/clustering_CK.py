@@ -38,11 +38,10 @@ def ck_cluster(X, c, m=2, error=0.01, maxiter=500, epsilon_scale=1e-5): # Fix. O
             Final fuzzy partition coefficient.
     """
     n_samples, n_features = X.shape
-    print("c(from u): ", c)
     u = np.random.dirichlet(np.ones(c), size=n_samples).T  # Random initialization of membership matrix
 
     um = u ** m
-    
+
     denom = np.sum(um, axis=1, keepdims=True)
     denom = np.fmax(denom, np.finfo(np.float64).eps)  # Prevent 0
     cntr = np.dot(um, X) / denom
