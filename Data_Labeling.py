@@ -68,7 +68,8 @@ def main():
     X = group_mapped_df
     columns_data = list(data.columns)
     columns_X = list(X.columns)
-    print("data-X col: ", columns_data-columns_X)
+    diff_columns = list(set(columns_data) - set(columns_X))
+    print("data-X col: ", diff_columns)
 
     pca_want = str(input("\nDo you want to do PCA? (Y/n): "))
     if pca_want in ['Y', 'y']:
