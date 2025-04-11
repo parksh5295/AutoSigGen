@@ -21,6 +21,8 @@ def choose_clustering_algorithm_Non_optimization(data, X, clustering_algorithm):
                         'quantile' : 0.2, 'n_samples' : 500, 'n_start_nodes' : 2, 'max_nodes' : 50, 'step' : 0.2,
                         'max_edge_age' : 50, 'epochs' : 300, 'batch_size' : 256, 'n_neighbors' : 5, 'n_clusters' : 1000
                         }
+
+    GMM_type = None
     
     if clustering_algorithm in ['Kmeans', 'kmeans']:
         clustering = pre_clustering_Kmeans(data, X, parameter_dict['n_clusters'], parameter_dict['random_state'], parameter_dict['n_init'])
@@ -62,8 +64,5 @@ def choose_clustering_algorithm_Non_optimization(data, X, clustering_algorithm):
     else:
         print("Unsupported algorithm")
         raise Exception("Unsupported clustering algorithms")
-    
-    if not GMM_type:
-        GMM_type = None
 
     return clustering, GMM_type

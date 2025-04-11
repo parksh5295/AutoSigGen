@@ -23,6 +23,7 @@ def choose_clustering_algorithm(data, X, clustering_algorithm, max_clusters=1000
                         'batch_size': batch_size, 'n_neighbors' : n_neighbors
     }
     '''
+    GMM_type = None
 
     if clustering_algorithm in ['Kmeans', 'kmeans']:
         clustering = clustering_Kmeans(data, X, max_clusters)
@@ -64,8 +65,5 @@ def choose_clustering_algorithm(data, X, clustering_algorithm, max_clusters=1000
     else:
         print("Unsupported algorithm")
         raise Exception("Unsupported clustering algorithms")
-
-    if not GMM_type:
-        GMM_type = None
 
     return clustering, GMM_type
