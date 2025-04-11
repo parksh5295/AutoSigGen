@@ -1,7 +1,6 @@
-a = ['flow_psh','fpkts_per_second','total_bhlen','flow_iat_max','backward_packet_length_max','forward_iat_std','total_length_of_forward_packets','backward_packet_length_std','forward_iat_min','total_fhlen','total_length_of_backward_packets','total_backward_packets','forward_iat_max','forward_packet_length_mean','backward_iat_min','flow_iat_min','backward_packet_length_min','flow_syn','bpkts_per_second','flow_protocol','forward_iat_total','forward_packet_length_min','backward_iat_max','flow_iat_total','flow_urg','flow_fin','flow_ece','forward_packet_length_std','backward_packet_length_mean','flow_iat_std','flow_ack','backward_iat_total','backward_iat_mean','flow_rst','total_forward_packets','flow_packets_per_second','backward_iat_std','flow_cwr','forwar d_iat_mean','flow_iat_mean','forward_packet_length_max']
+import pandas as pd
 
-b = ['flow_protocol', 'flow_iat_max', 'flow_iat_min', 'flow_iat_mean', 'flow_iat_total', 'flow_iat_std',  'forward_iat_max', 'forward_iat_min', 'forward_iat_mean', 'forward_iat_total', 'forward_iat_std', 'backward_iat_max', 'backward_iat_min', 'backward_iat_mean', 'backward_iat_total', 'backward_iat_std', 'total_bhlen', 'total_fhlen',  'forward_packet_length_mean', 'forward_packet_length_min', 'forward_packet_length_max', 'forward_packet_length_std', 'backward_packet_length_mean', 'backward_packet_length_min', 'backward_packet_length_max', 'backward_packet_length_std', 'fpkts_per_second', 'bpkts_per_second', 'total_forward_packets', 'total_backward_packets', 'total_length_of_forward_packets', 'total_length_of_backward_packets', 'flow_packets_per_second', 'flow_psh', 'flow_syn', 'flow_urg', 'flow_fin', 'flow_ece', 'flow_ack', 'flow_rst', 'flow_cwr']
 
-print(len(a))
-print(len(b))
-print (a)
+chunk_size = 10
+for chunk in pd.read_csv('../Dataset/load_dataset/MiraiBotnet/output-dataset_ESSlab.csv', chunksize=chunk_size):
+    print(chunk.head(6))

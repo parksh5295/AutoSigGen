@@ -9,9 +9,9 @@ from Dataset_Choose_Rule.CICIDS2017_csv_selector import select_csv_file
 def file_path_line_nonnumber(file_type, file_number=1): # file_number is not used, but insert to prevent errors from occurring
     if file_type == 'MiraiBotnet':
         file_path = "../Dataset/load_dataset/MiraiBotnet/output-dataset_ESSlab.csv"
-    elif file_type == 'MitM' or 'Kitsune':
+    elif file_type in ['ARP' or 'MitM' or 'Kitsune']:
         file_path = "../Dataset/load_dataset/ARP_MitM_Kitsune/ARP_MitM_dataset.csv/ARP_MitM_dataset_final.csv"
-    elif file_type == 'CICIDS2017' or 'CICIDS':
+    elif file_type in ['CICIDS2017' or 'CICIDS']:
         file_path =  select_csv_file()
     elif file_type == 'netML' :
         file_path = "../Dataset/load_dataset/netML/netML_dataset.csv"
