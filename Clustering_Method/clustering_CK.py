@@ -73,7 +73,17 @@ def ck_cluster(X, c, m=2, error=0.01, maxiter=500, epsilon_scale=1e-5): # Fix. O
         # Calculate distances and update membership
         for i in range(c):
             diff = X - cntr[i]
-            d[i] = np.sqrt(np.sum(np.dot(diff, np.linalg.inv(cov_matrices[i])) * diff, axis=1))
+            
+            try:
+                inv_cov = np.linalg.inv(cov_matrices[i])
+            except np.linalg.LinAlgError:
+                print(f"[WARNING] Singular matrix at cluster {i}, using pseudo-inverse.")
+                inv_cov = np.linalg.pinv(cov_matrices[i])
+
+            val = np.sum(np.dot(diff, inv_cov) * diff, axis=1)
+            val = np.clip(val, 0, None) # Prevent negative numbers before SQRT
+            d[i] = np.sqrt(val)
+
         d = np.fmax(d, np.finfo(np.float64).eps)  # Avoid division by zero
         u_new = 1.0 / np.sum((d / d[:, np.newaxis]) ** (2 / (m - 1)), axis=0)
 
@@ -192,8 +202,11 @@ def regularize_covariance(cov, epsilon_scale=1e-5):
     """
     try:
         # Check determinant for near-singularity
-        if np.linalg.cond(cov) > 1e10:
+        cond = np.linalg.cond(cov)
+        if cond > 1e10 or np.isnan(cond):
             avg_diag = np.mean(np.diag(cov))
+            if avg_diag == 0 or np.isnan(avg_diag):
+                avg_diag = 1.0
             epsilon = epsilon_scale * avg_diag
             cov += np.eye(cov.shape[0]) * epsilon
     except np.linalg.LinAlgError:
