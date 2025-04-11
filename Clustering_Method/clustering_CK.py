@@ -39,7 +39,11 @@ def ck_cluster(X, c, m=2, error=0.01, maxiter=500, epsilon_scale=1e-5): # Fix. O
     """
     n_samples, n_features = X.shape
     u = np.random.dirichlet(np.ones(c), size=n_samples).T  # Random initialization of membership matrix
-    cntr = np.zeros((c, n_features))
+
+    denom = np.sum(um, axis=1, keepdims=True)
+    denom = np.fmax(denom, np.finfo(np.float64).eps)  # Prevent 0
+    cntr = np.dot(um, X) / denom
+
     cov_matrices = np.array([np.eye(n_features) for _ in range(c)])  # Initial covariance matrices
     d = np.zeros((c, n_samples))
 
@@ -55,7 +59,7 @@ def ck_cluster(X, c, m=2, error=0.01, maxiter=500, epsilon_scale=1e-5): # Fix. O
 
             # Normalize by determinant
             det = np.linalg.det(cov)
-            if det <= 0 or np.isnan(det):   # Exception handling
+            if not np.isfinite(det) or det <= 0:    # Exception handling
                 det = np.finfo(float).eps
             cov /= det ** (1 / n_features)
 
@@ -85,7 +89,10 @@ def ck_cluster(X, c, m=2, error=0.01, maxiter=500, epsilon_scale=1e-5): # Fix. O
             d[i] = np.sqrt(val)
 
         d = np.fmax(d, np.finfo(np.float64).eps)  # Avoid division by zero
-        u_new = 1.0 / np.sum((d / d[:, np.newaxis]) ** (2 / (m - 1)), axis=0)
+        
+        ratio = d / d[:, np.newaxis]
+        ratio = np.clip(ratio, np.finfo(np.float64).eps, 1e10)  # Preventing very small to too large numbers
+        u_new = 1.0 / np.sum(ratio ** (2 / (m - 1)), axis=0)
 
         # Check for convergence
         if np.linalg.norm(u_new - u) < error:
