@@ -32,6 +32,7 @@ class CANN(tf.keras.Model):
 def clustering_CANNwKNN(data, X):
     # Define model input shapes
     input_shape = (X.shape[1])
+    print("type of data, X: ", type(data), type(X))
 
     benign_data = nomal_class_data(data) # Assuming that we only know benign data
 

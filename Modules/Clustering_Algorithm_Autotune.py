@@ -15,7 +15,7 @@ from Clustering_Method.clustering_NeuralGas import clustering_NeuralGas
 from Clustering_Method.clustering_CANNwKNN import clustering_CANNwKNN
 
 
-def choose_clustering_algorithm(data, X, clustering_algorithm, max_clusters=10000):
+def choose_clustering_algorithm(data, X, clustering_algorithm, max_clusters=1000):
     '''
     parameter_dict = {'random_state' : random_state, 'n_init' : n_init, 'max_clusters' : max_clusters, 'tol' : tol, 'eps' : eps,
                         'count_samples' : count_samples, 'quantile' : quantile, 'n_samples' : n_samples, 'n_start_nodes' : n_start_nodes,
