@@ -62,6 +62,9 @@ def main():
     group_mapped_df, mapped_info_df = map_intervals_to_groups(embedded_dataframe, category_mapping, regul)
     print("mapped group: ", group_mapped_df)
     print("mapped_info: ", mapped_info_df)
+    columns_data = list(data.columns)
+    columns_X = list(X.columns)
+    print("data-X col: ", columns_data-columns_X)
 
 
     # 4. Numpy(hstack) processing and PCA
