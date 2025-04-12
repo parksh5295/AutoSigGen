@@ -52,6 +52,7 @@ def main():
     file_path, file_number = file_path_line_nonnumber(file_type, file_number)
     cut_type = str(input("Enter the data cut type: "))
     data = file_cut(file_path, cut_type)
+    print('data_column: ', data.columns)
 
     timing_info['1_load_data'] = time.time() - start
 
