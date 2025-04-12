@@ -32,6 +32,9 @@ def infer_dtypes_safely(csv_path, max_rows=1000, chunk_size=100):
         if row_count >= max_rows:
             break
 
+    print("[DEBUG] inferred_dtypes type:", type(inferred_dtypes))
+    print("[DEBUG] inferred_dtypes sample:", str(inferred_dtypes)[:500])
+
     # dtype estimation rules
     dtype_map = {}
     for col, types in inferred_dtypes.items():
