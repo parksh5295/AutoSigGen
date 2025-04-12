@@ -59,7 +59,7 @@ def main():
     # 2. Check data 'label'
     start = time.time()
 
-    if file_type == 'MiraiBotnet':
+    if file_type in ['MiraiBotnet', 'NSL-KDD']:
         data['label'] = anomal_judgment_nonlabel(file_type, data)
     else:
         data['label'] = anomal_judment_label(data)
