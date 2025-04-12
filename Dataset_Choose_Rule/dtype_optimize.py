@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 # Estimate dtype while memory-efficiently sampling a CSV
@@ -34,11 +35,11 @@ def infer_dtypes_safely(csv_path, max_rows=1000, chunk_size=100):
     # dtype estimation rules
     dtype_map = {}
     for col, types in inferred_dtypes.items():
-        if types <= {int}:
-            dtype_map[col] = 'int32'
-        elif types <= {float, int}:
-            dtype_map[col] = 'float32'
-        elif types <= {str}:
+        if types <= {"int"}:
+            dtype_map[col] = np.int32  # Use np.int32 instead of 'int32'
+        elif types <= {"int", "float"}:
+            dtype_map[col] = np.float32  # Use np.float32 instead of 'float32'
+        elif types <= {"str"}:
             dtype_map[col] = 'category'
         else:
             dtype_map[col] = 'object'
