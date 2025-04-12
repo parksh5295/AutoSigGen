@@ -7,7 +7,7 @@ def count_limit(signature_dict, count):
     return top_20_sig
 
 def precision_limit(signature_dict, precision_lim):
-    # Precision 값이 0.8 이상인 딕셔너리만 남기기
+    # Leave only dictionaries with a Precision value of 0.8 or higher
     upper_sig = [d for d in signature_dict if d["Precision"] >= precision_lim]
     return upper_sig
 

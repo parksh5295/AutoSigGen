@@ -17,6 +17,7 @@ def anomal_judgment_nonlabel(data_type, data):
     
 
 def anomal_judment_label(data):
+    print(data.columns)
     if data['Label']:
         return data['Label']
     elif data['label']:
