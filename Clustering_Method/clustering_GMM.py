@@ -164,7 +164,7 @@ def pre_clustering_GMM(data, X, n_clusters, random_state, GMM_type):
 
 
 # Functions to automatically update reg_covar to avoid errors
-def fit_gmm_with_retry(X, n_components, covariance_type='full', random_state=None, max_reg_covar=10):
+def fit_gmm_with_retry(X, n_components, covariance_type='full', random_state=None, max_reg_covar=1e-1):
     reg_covar = 1e-6
     while reg_covar <= max_reg_covar:
         try:
