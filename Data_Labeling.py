@@ -52,7 +52,6 @@ def main():
     file_path, file_number = file_path_line_nonnumber(file_type, file_number)
     cut_type = str(input("Enter the data cut type: "))
     data = file_cut(file_path, cut_type)
-    print('data_column: ', data.columns)
 
     timing_info['1_load_data'] = time.time() - start
 
@@ -64,6 +63,8 @@ def main():
         data['label'] = anomal_judgment_nonlabel(file_type, data)
     else:
         data['label'] = anomal_judment_label(data)
+        
+    print("a")
 
     timing_info['2_label_check'] = time.time() - start
 
@@ -78,6 +79,8 @@ def main():
     group_mapped_df, mapped_info_df = map_intervals_to_groups(embedded_dataframe, category_mapping, regul)
     print("mapped group: ", group_mapped_df)
     print("mapped_info: ", mapped_info_df)
+
+    print("b")
 
     timing_info['3_embedding'] = time.time() - start
 
