@@ -38,14 +38,17 @@ def infer_dtypes_safely(csv_path, max_rows=1000, chunk_size=100):
     # dtype estimation rules
     dtype_map = {}
     for col, types in inferred_dtypes.items():
-        if types <= {int}:
-            dtype_map[col] = 'int32'  # Use np.int32 instead of 'int32'
-        elif types <= {int, float}:
-            dtype_map[col] = 'float32'  # Use np.float32 instead of 'float32'
-        elif types <= {str}:
-            dtype_map[col] = 'category'
-        else:
+        if types <= {"int"}:
+            dtype_map[col] = 'int32'
+        elif types <= {"int", "float"}:
+            dtype_map[col] = 'float32'
+        elif types <= {"str"}:
             dtype_map[col] = 'object'
+        else:
+            print(f"[WARN] Unknown type set {types} for column '{col}', using object")
+            dtype_map[col] = 'object'
+
+    print("dtype map: ", dtype_map)
 
     return dtype_map
 
