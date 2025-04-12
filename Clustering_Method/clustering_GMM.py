@@ -14,9 +14,7 @@ def clustering_GMM_normal(data, X, max_clusters):
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
 
-    gmm = GaussianMixture(n_components=n_clusters, random_state=parameter_dict['random_state'])   # default; randomm_state=42
-
-    clusters = gmm.fit_predict(X)
+    gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='normal', random_state=parameter_dict['random_state'])
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_GMM = data['cluster']
@@ -32,9 +30,7 @@ def clustering_GMM_full(data, X, max_clusters):
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
 
-    gmm = GaussianMixture(n_components=n_clusters, covariance_type='full', random_state=parameter_dict['random_state'])   # default; randomm_state=42
-
-    clusters = gmm.fit_predict(X)
+    gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='full', random_state=parameter_dict['random_state'])
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_GMM = data['cluster']
@@ -50,9 +46,7 @@ def clustering_GMM_tied(data, X, max_clusters):
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
 
-    gmm = GaussianMixture(n_components=n_clusters, covariance_type='tied', random_state=parameter_dict['random_state'])   # default; randomm_state=42
-
-    clusters = gmm.fit_predict(X)
+    gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='tied', random_state=parameter_dict['random_state'])
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_GMM = data['cluster']
@@ -68,9 +62,7 @@ def clustering_GMM_diag(data, X, max_clusters):
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
 
-    gmm = GaussianMixture(n_components=n_clusters, covariance_type='diag', random_state=parameter_dict['random_state'])   # default; randomm_state=42
-
-    clusters = gmm.fit_predict(X)
+    gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='diag', random_state=parameter_dict['random_state'])
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_GMM = data['cluster']
@@ -105,9 +97,7 @@ def clustering_GMM(data, X, max_clusters, GMM_type):
 # Precept Function for Clustering Count Tuning Loop
 
 def pre_clustering_GMM_normal(data, X, random_state, n_clusters):
-    gmm = GaussianMixture(n_components=n_clusters, random_state=random_state)   # default; randomm_state=42
-
-    cluster_labels = gmm.fit_predict(X)
+    gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, covariance_type='normal', random_state=random_state)
 
     predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
@@ -120,9 +110,7 @@ def pre_clustering_GMM_normal(data, X, random_state, n_clusters):
 
 
 def pre_clustering_GMM_full(data, X, random_state, n_clusters):
-    gmm = GaussianMixture(n_components=n_clusters, covariance_type='full', random_state=random_state)   # default; randomm_state=42
-
-    cluster_labels = gmm.fit_predict(X)
+    gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, covariance_type='full', random_state=random_state)
 
     predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
@@ -135,9 +123,7 @@ def pre_clustering_GMM_full(data, X, random_state, n_clusters):
 
 
 def pre_clustering_GMM_tied(data, X, random_state, n_clusters):
-    gmm = GaussianMixture(n_components=n_clusters, covariance_type='tied', random_state=random_state)   # default; randomm_state=42
-
-    cluster_labels = gmm.fit_predict(X)
+    gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, covariance_type='tied', random_state=random_state)
 
     predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
@@ -150,9 +136,7 @@ def pre_clustering_GMM_tied(data, X, random_state, n_clusters):
 
 
 def pre_clustering_GMM_diag(data, X, random_state, n_clusters):
-    gmm = GaussianMixture(n_components=n_clusters, covariance_type='diag', random_state=random_state)   # default; randomm_state=42
-
-    cluster_labels = gmm.fit_predict(X)
+    gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, covariance_type='diag', random_state=random_state)
 
     predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
@@ -177,3 +161,23 @@ def pre_clustering_GMM(data, X, n_clusters, random_state, GMM_type):
         print("GMM type Error!! -In Clustering")
     
     return clustering_gmm
+
+
+# Functions to automatically update reg_covar to avoid errors
+def fit_gmm_with_retry(X, n_components, covariance_type='full', random_state=None, max_reg_covar=1e-1):
+    reg_covar = 1e-6
+    while reg_covar <= max_reg_covar:
+        try:
+            gmm = GaussianMixture(
+                n_components=n_components,
+                covariance_type=covariance_type,
+                random_state=random_state,
+                reg_covar=reg_covar
+            )
+            cluster_labels = gmm.fit_predict(X)
+            return gmm, cluster_labels
+        except ValueError as e:
+            print(f"[Warning] GMM ({covariance_type}) failed with reg_covar={reg_covar:.1e}: {e}")
+            reg_covar *= 10
+
+    raise ValueError(f"GMM ({covariance_type}) failed after trying reg_covar up to {max_reg_covar}")
