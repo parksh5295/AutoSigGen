@@ -48,8 +48,6 @@ def infer_dtypes_safely(csv_path, max_rows=1000, chunk_size=100):
             print(f"[WARN] Unknown type set {types} for column '{col}', using object")
             dtype_map[col] = 'object'
 
-    print("dtype map: ", dtype_map)
-
     return dtype_map
 
 
@@ -57,6 +55,7 @@ def infer_dtypes_safely(csv_path, max_rows=1000, chunk_size=100):
 def load_csv_safely(csv_path, max_rows_for_inference=1000):
     print("[INFO] Estimating: Sampling for dtype inference...")
     dtype_map = infer_dtypes_safely(csv_path, max_rows=max_rows_for_inference)
+    print("dtype map: ", dtype_map)
     print("[INFO] Dtype inference complete. Loading full CSV...")
     df = pd.read_csv(csv_path, dtype=dtype_map, low_memory=False)
     print("[INFO] Finished loading the DataFrame:", df.shape)
