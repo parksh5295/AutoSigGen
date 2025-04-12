@@ -15,7 +15,16 @@ def infer_dtypes_safely(csv_path, max_rows=1000, chunk_size=100):
         for _, row in chunk.iterrows():
             for col in column_names:
                 val = row[col]
-                inferred_dtypes[col].add(type(val))
+                if pd.isnull(val):
+                    continue
+                if isinstance(val, int):
+                    inferred_dtypes[col].add("int")
+                elif isinstance(val, float):
+                    inferred_dtypes[col].add("float")
+                elif isinstance(val, str):
+                    inferred_dtypes[col].add("str")
+                else:
+                    inferred_dtypes[col].add("other")
             row_count += 1
             if row_count >= max_rows:
                 break
