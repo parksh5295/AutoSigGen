@@ -56,8 +56,8 @@ def infer_dtypes_safely(csv_path, max_rows=1000, chunk_size=100):
 # Efficiently load a full CSV into a DataFrame after auto-estimating dtype
 def load_csv_safely(csv_path, max_rows_for_inference=1000):
     print("[INFO] Estimating: Sampling for dtype inference...")
-    inferred_dtypes = infer_dtypes_safely(csv_path, max_rows=max_rows_for_inference)
+    dtype_map = infer_dtypes_safely(csv_path, max_rows=max_rows_for_inference)
     print("[INFO] Dtype inference complete. Loading full CSV...")
-    df = pd.read_csv(csv_path, dtype=inferred_dtypes, low_memory=False)
+    df = pd.read_csv(csv_path, dtype=dtype_map, low_memory=False)
     print("[INFO] Finished loading the DataFrame:", df.shape)
     return df
