@@ -74,7 +74,6 @@ def main():
 
     embedded_dataframe, feature_list, category_mapping = choose_heterogeneous_method(data, file_type, heterogeneous_method, regul)
     print("embedded_dataframe: ", embedded_dataframe)
-    print(type(embedded_dataframe["flow_iat_max"].iloc[0]))
 
     group_mapped_df, mapped_info_df = map_intervals_to_groups(embedded_dataframe, category_mapping, regul)
     print("mapped group: ", group_mapped_df)
