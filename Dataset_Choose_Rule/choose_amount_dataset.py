@@ -15,6 +15,8 @@ def file_path_line_nonnumber(file_type, file_number=1): # file_number is not use
         file_path =  select_csv_file()
     elif file_type == 'netML' :
         file_path = "../Dataset/load_dataset/netML/netML_dataset.csv"
+    elif file_type in ['NSL-KDD' or 'NSL_KDD']:
+        file_path = "../Dataset/load_dataset/NSL-KDD/NSL-KDD_dataset.csv"
     else:
         print("No file information yet, please double-check the file type or provide new data!")
         file_path_line_nonnumber(file_type)
