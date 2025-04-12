@@ -36,6 +36,7 @@ def Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict=Non
     for k in range(1, max_clusters + 1):
         clustering = Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, k, parameter_dict)
         clustering_before_label = clustering['before_labeling']
+        print(clustering['before_labeling'])
         # clustering_before_label.fit(data)
         clustering_before_label.fit(X)
 
