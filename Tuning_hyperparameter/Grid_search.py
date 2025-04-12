@@ -183,7 +183,10 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
     best_params = None
 
     for param_set in param_combinations:
-        params = dict(zip(param_keys, param_set))
+        if clustering_algorithm == 'NeuralGas':
+            params = param_set  # Already a dict
+        else:
+            params = dict(zip(param_keys, param_set))
         model = create_model(params)
 
         print("[DEBUG] Grid_search_all() - X for training:", X.shape)
