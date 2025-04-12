@@ -12,7 +12,7 @@ def file_path_line_nonnumber(file_type, file_number=1): # file_number is not use
     elif file_type in ['ARP' or 'MitM' or 'Kitsune']:
         file_path = "../Dataset/load_dataset/ARP_MitM_Kitsune/ARP_MitM_dataset.csv/ARP_MitM_dataset_final.csv"
     elif file_type in ['CICIDS2017' or 'CICIDS']:
-        file_path =  select_csv_file()
+        file_path, file_number =  select_csv_file()
     elif file_type == 'netML' :
         file_path = "../Dataset/load_dataset/netML/netML_dataset.csv"
     elif file_type in ['NSL-KDD' or 'NSL_KDD']:
@@ -20,7 +20,7 @@ def file_path_line_nonnumber(file_type, file_number=1): # file_number is not use
     else:
         print("No file information yet, please double-check the file type or provide new data!")
         file_path_line_nonnumber(file_type)
-    return file_path
+    return file_path, file_number
 
 def file_path_line_withnumber(file_type, file_number=1):
     return # file_path

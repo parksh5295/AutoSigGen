@@ -30,7 +30,7 @@ def Heterogeneous_Feature_named_featrues(file_type):
             'flow_psh', 'flow_syn', 'flow_urg', 'flow_fin', 'flow_ece', 'flow_ack', 'flow_rst', 'flow_cwr'
         ]
 
-    elif file_type == 'MitM':
+    elif file_type in ['MitM', 'Kitsune']:
         categorical_features = []
         time_features = [
             'SrcMAC_IP_w_100ms', 'SrcMAC_IP_mu_100ms', 'SrcMAC_IP_sigma_100ms', 'SrcMAC_IP_max_100ms', 'SrcMAC_IP_min_100ms',
@@ -45,7 +45,7 @@ def Heterogeneous_Feature_named_featrues(file_type):
         ]
         binary_features = []
 
-    elif file_type == 'CICIDS2017':
+    elif file_type in ['CICIDS2017', 'CICIDS']:
         categorical_features = ['Destination Port']
         time_features = [
             'Flow Duration', 'Flow IAT Mean', 'Flow IAT Std', 'Flow IAT Max', 'Flow IAT Min',
@@ -101,6 +101,24 @@ def Heterogeneous_Feature_named_featrues(file_type):
         binary_features = [
             'FIN Flag Count', 'SYN Flag Count', 'RST Flag Count', 'PSH Flag Count',
             'ACK Flag Count', 'URG Flag Count', 'CWE Flag Count', 'ECE Flag Count'
+        ]
+
+    elif file_type in ['NSL-KDD', 'NSL_KDD']:
+        categorical_features = ['protocol_type', 'service', 'flag']
+        time_features = []
+        packet_length_features = [
+            'src_bytes', 'dst_bytes'
+        ]
+        count_features = [
+            'duration', 'wrong_fragment', 'urgent', 'hot', 'num_failed_logins', 'num_compromised', 'root_shell', 'su_attempted',
+            'num_root', 'num_file_creations', 'num_shells', 'num_access_files', 'num_outbound_cmds', 'count', 'srv_count',
+            'serror_rate', 'srv_serror_rate', 'rerror_rate', 'srv_rerror_rate', 'same_srv_rate', 'diff_srv_rate', 'srv_diff_host_rate',
+            'dst_host_count', 'dst_host_srv_count', 'dst_host_same_srv_rate', 'dst_host_diff_srv_rate', 'dst_host_same_src_port_rate',
+            'dst_host_srv_diff_host_rate', 'dst_host_serror_rate', 'dst_host_srv_serror_rate', 'dst_host_rerror_rate',
+            'dst_host_srv_rerror_rate'
+        ]
+        binary_features = [
+            'land', 'logged_in', 'is_host_login', 'is_guest_login'
         ]
     
     return {

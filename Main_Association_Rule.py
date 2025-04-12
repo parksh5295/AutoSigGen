@@ -2,6 +2,7 @@
 
 import argparse
 import numpy as np
+import time
 from Dataset_Choose_Rule.choose_amount_dataset import file_path_line_nonnumber, file_cut
 from definition.Anomal_Judgment import anomal_judment_label, anomal_judgment_nonlabel
 from utils.class_row import anomal_class_data, without_labelmaking_out, nomal_class_data
@@ -11,6 +12,7 @@ from Modules.Signature_evaluation_module import signature_evaluate
 from Modules.Signature_underlimit import under_limit
 from Evaluation.calculate_signature import calculate_signatures
 from Modules.Difference_sets import dict_list_difference
+from Dataset_Choose_Rule.time_save import time_save_csv_CS
 
 
 def main():
@@ -43,14 +45,23 @@ def main():
     precision_underlimit = args.precision_underlimit
     signature_ea = args.signature_ea
 
+    total_start_time = time.time()  # Start All Time
+    timing_info = {}  # For step-by-step time recording
+
 
     # 1. Data loading
+    start = time.time()
+
     file_path = file_path_line_nonnumber(file_type, file_number)
     cut_type = str(input("Enter the data cut type: "))
     data = file_cut(file_path, cut_type)
 
+    timing_info['1_load_data'] = time.time() - start
+
 
     # 2. Handling judgments of Anomal or Nomal
+    start = time.time()
+
     if file_type == 'MiraiBotnet':
         data['label'] = anomal_judgment_nonlabel(file_type, data)
     else:
@@ -77,8 +88,12 @@ def main():
     data_without_label['label'] = data['label']
     heterogeneous_whole_data = data_without_label
 
+    timing_info['2_anomal_judgment'] = time.time() - start
+
 
     # 3. Set association statements (confidence ratios, etc.)
+    start = time.time()
+
     # I need to let them choose if they want confidence to be selected automatically.
     min_support = 0.1
     best_confidence = 0.8    # Initialize the variables to change
@@ -87,9 +102,13 @@ def main():
     confidence_values = np.arange(0.1, 1.0, 0.05)
     best_recall = 0
 
+    timing_info['3_association_setting'] = time.time() - start
 
-    # Identify the signatures with the highest recall in your situation
+
+    # Identify the signatures with the highest recall in user's situation
     # 4. Excute Association Rule, Manage related groups
+    start = time.time()
+
     for min_confidence in confidence_values:
         association_list_anomal = association_module(anomal_grouped_data, Association_mathod, min_support, min_confidence)
 
@@ -123,6 +142,16 @@ def main():
         'Best_confidence': best_confidence
     }
     print(association_result)
+
+    timing_info['4_excute_association'] = time.time() - start
+
+
+    # Full time history
+    total_end_time = time.time()
+    timing_info['0_total_time'] = total_end_time - total_start_time
+
+    # Save time information as a CSV
+    time_save_csv_CS(file_type, file_number, Association_mathod, timing_info)
 
 
     return association_result

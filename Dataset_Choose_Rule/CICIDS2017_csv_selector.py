@@ -23,6 +23,6 @@ def select_csv_file():
                 selected_file = csv_files[choice - 1]
                 return os.path.join(directory_path, selected_file)
             else:
-                print(f"1과 {len(csv_files)} Enter a number between.")
+                print(f"1과 {len(csv_files)} Enter a number between."), choice  # return filenum
         except ValueError:
             print("Enter a valid number.")

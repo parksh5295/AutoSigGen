@@ -4,6 +4,8 @@
 def anomal_judgment_nonlabel(data_type, data):
     if data_type == "MiraiBotnet":
         data_line = ['reconnaissance', 'infection', 'action']
+    elif data_type in ['NSL-KDD', 'NSL_KDD']:
+        data_line = ['class']
     '''
     Need more setting for another data type
     '''

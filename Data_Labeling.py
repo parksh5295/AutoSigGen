@@ -2,6 +2,7 @@
 
 import argparse
 import numpy as np
+import time
 from Dataset_Choose_Rule.choose_amount_dataset import file_path_line_nonnumber, file_cut
 from definition.Anomal_Judgment import anomal_judgment_nonlabel, anomal_judment_label
 from Modules.Heterogeneous_module import choose_heterogeneous_method
@@ -12,6 +13,7 @@ from Modules.Clustering_Algorithm_Nonautotune import choose_clustering_algorithm
 from utils.cluster_adjust_mapping import cluster_mapping
 from Clustering_Method.clustering_score import evaluate_clustering, evaluate_clustering_wos
 from Dataset_Choose_Rule.save_csv import csv_compare_clustering, csv_compare_matrix_clustering
+from Dataset_Choose_Rule.time_save import time_save_csv_VL
 
 
 def main():
@@ -40,21 +42,34 @@ def main():
     eval_clustering_silhouette = args.eval_clustering_silhouette
     Association_mathod = args.association
 
+    total_start_time = time.time()  # Start All Time
+    timing_info = {}  # For step-by-step time recording
+
 
     # 1. Load data from csv
-    file_path = file_path_line_nonnumber(file_type, file_number)
+    start = time.time()
+
+    file_path, file_number = file_path_line_nonnumber(file_type, file_number)
     cut_type = str(input("Enter the data cut type: "))
     data = file_cut(file_path, cut_type)
 
+    timing_info['1_load_data'] = time.time() - start
+
 
     # 2. Check data 'label'
+    start = time.time()
+
     if file_type == 'MiraiBotnet':
         data['label'] = anomal_judgment_nonlabel(file_type, data)
     else:
         data['label'] = anomal_judment_label(data)
 
+    timing_info['2_label_check'] = time.time() - start
+
 
     # 3. Feature-specific embedding and preprocessing
+    start = time.time()
+
     regul = str(input("\nDo you want to Regulation? (Y/n): ")) # Whether to normalize or not
 
     embedded_dataframe, feature_list, category_mapping = choose_heterogeneous_method(data, file_type, heterogeneous_method, regul)
@@ -63,8 +78,12 @@ def main():
     print("mapped group: ", group_mapped_df)
     print("mapped_info: ", mapped_info_df)
 
+    timing_info['3_embedding'] = time.time() - start
+
 
     # 4. Numpy(hstack) processing and PCA
+    start = time.time()
+
     X = group_mapped_df
     columns_data = list(data.columns)
     columns_X = list(X.columns)
@@ -81,8 +100,12 @@ def main():
     else:
         X_reduced = X
 
+    timing_info['4_pca'] = time.time() - start
+
 
     # 5. Clustering and Mapping
+    start = time.time()
+
     max_clusters_want = str(input("\nDo you need to enter the number of max_clusters? (Y/n): "))
     if max_clusters_want in ['Y', 'y']:
         max_clusters = int(input("\nEnter the desired number of max_clusters: "))
@@ -101,8 +124,12 @@ def main():
 
     cluster_mapping(data)   # To verify the effect of 'clustering_nomal_identify' def
 
+    timing_info['5_clustering'] = time.time() - start
+
 
     # 6. Evaluation Labeling
+    start = time.time()
+
     if eval_clustering_silhouette == 'y':
         eval_clustering = evaluate_clustering(data['label'], data['cluster'], X_reduced)
         eval_clustering_adjust = evaluate_clustering(data['label'], data['adjusted_cluster'], X_reduced)
@@ -128,8 +155,12 @@ def main():
         ma_accuracy = ma_precision = ma_recall = ma_f1 = ma_jaccard = ma_silhouette = np.nan
     '''
 
+    timing_info['6_evaluation'] = time.time() - start
+
 
     # 7. Save the results to csv file
+    start = time.time()
+
     row_compare_df = csv_compare_clustering(file_type, clustering_algorithm, file_number, data, GMM_type)    # Not called, but saved.
 
     metrics_original = eval_clustering
@@ -137,6 +168,16 @@ def main():
     metrics_df = csv_compare_matrix_clustering(file_type, file_number, clustering_algorithm, metrics_original, metrics_adjusted, GMM_type)
     print("\nThe result of the clustering score calculation: ")
     print(metrics_df)
+
+    timing_info['7_save_result'] = time.time() - start
+
+
+    # Full time history
+    total_end_time = time.time()
+    timing_info['0_total_time'] = total_end_time - total_start_time
+
+    # Save time information as a CSV
+    time_save_csv_VL(file_type, file_number, clustering_algorithm, timing_info)
 
 
     return
