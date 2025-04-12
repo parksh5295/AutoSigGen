@@ -14,6 +14,8 @@ from Clustering_Method.clustering_nomal_identify import clustering_nomal_identif
 def clustering_MShift_clustering(data, X, state, quantile, n_samples):  # Fundamental MeanShift clustering
     # Estimate bandwidth based on the data
     bandwidth = estimate_bandwidth(X, quantile=quantile, n_samples=n_samples, random_state=state) # default; randomm_state=42, n_samples=500, quantile=0.2
+    if bandwidth <= 0:
+        bandwidth = 0.1  # Minimum safe value
     
     # Apply MeanShift with the estimated bandwidth
     MShift = MeanShift(bandwidth=bandwidth, bin_seeding=True)
