@@ -73,6 +73,7 @@ def main():
     regul = str(input("\nDo you want to Regulation? (Y/n): ")) # Whether to normalize or not
 
     embedded_dataframe, feature_list, category_mapping = choose_heterogeneous_method(data, file_type, heterogeneous_method, regul)
+    print("embedded_dataframe: ", embedded_dataframe)
 
     group_mapped_df, mapped_info_df = map_intervals_to_groups(embedded_dataframe, category_mapping, regul)
     print("mapped group: ", group_mapped_df)
