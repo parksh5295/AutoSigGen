@@ -63,8 +63,6 @@ def main():
         data['label'] = anomal_judgment_nonlabel(file_type, data)
     else:
         data['label'] = anomal_judment_label(data)
-        
-    print("a")
 
     timing_info['2_label_check'] = time.time() - start
 
