@@ -19,6 +19,7 @@ def Heterogeneous_Interval_Inverse(data, file_type, regul):
     binary_features = feature_name['binary_features']
 
     feature_list = [categorical_features, time_features, packet_length_features, count_features, binary_features]
+    print("hey: ", feature_list)
 
     df = pd.DataFrame() # A dataframe to store the entire condition
 

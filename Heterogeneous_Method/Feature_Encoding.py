@@ -120,7 +120,6 @@ def Heterogeneous_Feature_named_featrues(file_type):
         binary_features = [
             'land', 'logged_in', 'is_host_login', 'is_guest_login'
         ]
-        print("hey!")
     
     return {
             'categorical_features': categorical_features,
