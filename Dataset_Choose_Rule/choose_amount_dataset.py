@@ -4,7 +4,7 @@
 import pandas as pd
 import random
 from Dataset_Choose_Rule.CICIDS2017_csv_selector import select_csv_file
-from Dataset_Choose_Rule.dtype_optimize import load_csv_safely
+from Dataset_Choose_Rule.dtype_optimize import infer_dtypes_safely
 
 
 def file_path_line_nonnumber(file_type, file_number=1): # file_number is not used, but insert to prevent errors from occurring
@@ -29,7 +29,7 @@ def file_path_line_withnumber(file_type, file_number=1):
 # After selecting the file path
 # Functions for getting only part of a file as data
 def file_cut(file_path, cut_type='random'):
-    inferred_dtypes = load_csv_safely(file_path)
+    inferred_dtypes = infer_dtypes_safely(file_path)
 
     if cut_type == 'random':
         # Get the total number of rows (excluding headers)
