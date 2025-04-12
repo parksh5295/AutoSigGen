@@ -25,12 +25,3 @@ def anomal_judgment_label(data):
         print("label data error!")
         return
     
-
-def anomal_judgment_netML(data):
-    if data['Label'] == 'BENIGN':
-        data['label'] = 0
-        return data['label']
-    else:
-        data['label'] = 1
-        return data['label']
-    

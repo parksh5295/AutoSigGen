@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 import time
 from Dataset_Choose_Rule.choose_amount_dataset import file_path_line_nonnumber, file_cut
-from definition.Anomal_Judgment import anomal_judgment_nonlabel, anomal_judgment_label, anomal_judgment_netML
+from definition.Anomal_Judgment import anomal_judgment_nonlabel, anomal_judgment_label
 from Modules.Heterogeneous_module import choose_heterogeneous_method
 from Heterogeneous_Method.separate_group_mapping import map_intervals_to_groups
 from Modules.PCA import pca_func
@@ -62,7 +62,7 @@ def main():
     if file_type in ['MiraiBotnet', 'NSL-KDD']:
         data['label'] = anomal_judgment_nonlabel(file_type, data)
     elif file_type == 'netML':
-        data['label'] = anomal_judgment_netML(data)
+        data['label'] = data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
     else:
         data['label'] = anomal_judgment_label(data)
 
