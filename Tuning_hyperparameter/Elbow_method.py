@@ -36,12 +36,13 @@ def Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict=Non
     for k in range(1, max_clusters + 1):
         clustering = Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, k, parameter_dict)
         clustering_before_label = clustering['before_labeling']
-        clustering_before_label.fit(data)
+        # clustering_before_label.fit(data)
+        clustering_before_label.fit(X)
 
         # Use appropriate score
         if clustering_algorithm in ['GMM', 'SGMM']:
             # For GMM, use BIC instead of inertia
-            score = clustering_before_label.bic(data)
+            score = clustering_before_label.bic(X)
         else:
             # Default for KMeans and similar
             score = clustering_before_label.inertia_

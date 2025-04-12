@@ -79,8 +79,6 @@ def main():
     print("mapped group: ", group_mapped_df)
     print("mapped_info: ", mapped_info_df)
 
-    print("b")
-
     timing_info['3_embedding'] = time.time() - start
 
 
