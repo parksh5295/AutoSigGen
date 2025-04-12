@@ -16,8 +16,7 @@ def anomal_judgment_nonlabel(data_type, data):
     return result
     
 
-def anomal_judment_label(data):
-    print(data.columns)
+def anomal_judgment_label(data):
     if data['Label']:
         return data['Label']
     elif data['label']:
@@ -25,3 +24,13 @@ def anomal_judment_label(data):
     else:
         print("label data error!")
         return
+    
+
+def anomal_judgment_netML(data):
+    if data['Label'] == 'Benign':
+        data['label'] = 0
+        return data['label']
+    else:
+        data['label'] = 1
+        return data['label']
+    
