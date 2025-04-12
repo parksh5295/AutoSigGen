@@ -125,8 +125,35 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
 
     elif clustering_algorithm == 'NeuralGas':
         NeuralGasWithParams = dynamic_import("Clustering_Method.clustering_NeuralGas", "NeuralGasWithParams")
+        '''
         param_grid = {'n_start_nodes': [2, 5, 7, 10, 15, 20, 35, 50], 'max_nodes': list(range(50, 501, 50)),
                         'step': np.arange(0.05, 0.51, 0.05), 'max_edge_age': list(range(50, 301, 30))}
+        def create_model(params):
+            return NeuralGasWithParams(**params)
+        '''
+        # Automatically calculate reasonable ranges based on data counts
+        n = len(X)
+        estimated_nodes = int(np.sqrt(n))  # Recommended default values
+
+        # Limiting the max_nodes range
+        max_nodes_list = [int(0.5 * estimated_nodes), estimated_nodes, int(1.5 * estimated_nodes)]
+        max_nodes_list = [m for m in max_nodes_list if m >= 10]  # Exclude values that are too small
+
+        # Create constrained combinations to make max_edge_age proportional to max_nodes
+        edge_age_list = lambda m: [int(0.5 * m), m, int(1.5 * m)]
+
+        param_combinations = []
+        for start_nodes in [2, 5, 10]:
+            for max_nodes in max_nodes_list:
+                for edge_age in edge_age_list(max_nodes):
+                    for step in [0.1, 0.2, 0.3]:
+                        param_combinations.append({
+                            'n_start_nodes': start_nodes,
+                            'max_nodes': max_nodes,
+                            'step': step,
+                            'max_edge_age': edge_age
+                        })
+
         def create_model(params):
             return NeuralGasWithParams(**params)
 
@@ -142,10 +169,14 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
         print(f"Unsupported algorithm: {clustering_algorithm}")
         pass
 
-    # Generate all hyperparameter combinations
-    param_keys = list(param_grid.keys())
-    param_values = list(param_grid.values())
-    param_combinations = list(product(*param_values))
+    if clustering_algorithm == 'NeuralGas':
+        # ... param_combinations already created (see above)
+        pass
+    else:
+        # Generate all hyperparameter combinations
+        param_keys = list(param_grid.keys())
+        param_values = list(param_grid.values())
+        param_combinations = list(product(*param_values))
 
     best_score = -1
     best_db_score = float('inf')
