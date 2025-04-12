@@ -119,7 +119,7 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
 
     elif clustering_algorithm == 'MShift':
         MeanShiftWithDynamicBandwidth = dynamic_import("Clustering_Method.clustering_Mshift", "MeanShiftWithDynamicBandwidth")
-        param_grid = {'quantile': np.arange(0.01, 0.5, 0.05), 'n_samples': list(range(50, 1000, 50))}
+        param_grid = {'quantile': np.arange(0.01, 0.5, 0.05), 'n_samples': list(range(50, 260, 30))}    # Bandwidth estimates can be erroneous if n_samples is too large(1000)
         def create_model(params):
             return MeanShiftWithDynamicBandwidth(**params)
 
