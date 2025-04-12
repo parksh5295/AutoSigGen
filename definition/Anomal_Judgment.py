@@ -27,7 +27,7 @@ def anomal_judgment_label(data):
     
 
 def anomal_judgment_netML(data):
-    if data['Label'] == 'Benign':
+    if data['Label'] == 'BENIGN':
         data['label'] = 0
         return data['label']
     else:
