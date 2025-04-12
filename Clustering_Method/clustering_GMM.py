@@ -14,7 +14,7 @@ def clustering_GMM_normal(data, X, max_clusters):
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
 
-    gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='normal', random_state=parameter_dict['random_state'])
+    gmm, clusters = fit_gmm_with_retry(X, n_clusters, random_state=parameter_dict['random_state'])
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_GMM = data['cluster']
@@ -97,7 +97,7 @@ def clustering_GMM(data, X, max_clusters, GMM_type):
 # Precept Function for Clustering Count Tuning Loop
 
 def pre_clustering_GMM_normal(data, X, random_state, n_clusters):
-    gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, covariance_type='normal', random_state=random_state)
+    gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, random_state=random_state)
 
     predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
     num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
