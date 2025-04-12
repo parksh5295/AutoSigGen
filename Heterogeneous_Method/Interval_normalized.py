@@ -44,6 +44,10 @@ def Heterogeneous_Interval_Inverse(data, file_type, regul):
         for i in range(1, len(data_list)-1):    # Without categorical_features, flag features
             data_semilist = data_list[i]
             feature_semilist = feature_list[i]
+            # If the list is empty, skip
+            if not feature_semilist:
+                continue
+
             small_df, group_mapping_info_small = interval_length_Inverse_Count(data_semilist, feature_semilist)
             full_group_mapping_info.update(group_mapping_info_small)    # Accumulating mapping information
             df = pd.concat([df, small_df], axis=1, ignore_index=False)   # axis=1 is for combining df per feature in column direction
