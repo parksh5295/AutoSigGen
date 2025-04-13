@@ -133,6 +133,8 @@ def main():
     # 5. Excute Association Rule, Manage related groups
     start = time.time()
 
+    last_signature_sets = None
+
     for min_confidence in confidence_values:
         association_list_anomal = association_module(anomal_grouped_data, Association_mathod, min_support, min_confidence, association_metric)
         
