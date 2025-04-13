@@ -14,19 +14,19 @@ from Association_Rule.SaM import sam
 def association_module(df, association_rule_choose, min_support, min_confidence, association_metric):
     if association_rule_choose == 'conditional_probability':
         association_list = conditional_probability(df, min_confidence)
-    elif association_rule_choose == 'apriori' or 'Apriori':
+    elif association_rule_choose == ['apriori', 'Apriori']:
         association_list = Apriori_rule(df, min_support, min_confidence, association_metric)
-    elif association_rule_choose == 'fpgrowth' or 'FPGrowth':
+    elif association_rule_choose == ['fpgrowth', 'FPGrowth']:
         association_list = FPGrowth_rule(df, min_support, min_confidence, association_metric)
     elif association_rule_choose == 'eclat':
         association_list = eclat(df, min_support, min_confidence)
-    elif association_rule_choose == 'rarm' or 'RARM':
+    elif association_rule_choose == ['rarm', 'RARM']:
         association_list = rarm(df, min_support, min_confidence)
-    elif association_rule_choose == 'h_mine' or 'H_mine':
+    elif association_rule_choose == ['h_mine', 'H_mine']:
         association_list = h_mine(df, min_support, min_confidence)
-    elif association_rule_choose == 'opus' or 'OPUS':
+    elif association_rule_choose == ['opus', 'OPUS']:
         association_list = opus(df, min_support, min_confidence)
-    elif association_rule_choose == 'sam' or 'SaM':
+    elif association_rule_choose == ['sam', 'SaM']:
         association_list = sam(df, min_support, min_confidence)
     else:
         print("The name of the association rule appears to be incorrect.")
