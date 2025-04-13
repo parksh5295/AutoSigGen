@@ -5,6 +5,10 @@ import pandas as pd
 
 def time_scalar_transfer(data, file_type):
     if file_type in ['DARPA', 'DARPA98']:
+        data['Date'] = data['Date'].astype(str)
+        data['StartTime_scalar'] = data['StartTime_scalar'].astype(str)
+        data['Duration_scalar'] = data['Duration_scalar'].astype(str)
+
         # date transfer
         try:
             # First try with a 2-digit year
