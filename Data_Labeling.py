@@ -5,6 +5,7 @@ import numpy as np
 import time
 from Dataset_Choose_Rule.choose_amount_dataset import file_path_line_nonnumber, file_cut
 from definition.Anomal_Judgment import anomal_judgment_nonlabel, anomal_judgment_label
+from utils.time_transfer import time_scalar_transfer
 from Modules.Heterogeneous_module import choose_heterogeneous_method
 from Heterogeneous_Method.separate_group_mapping import map_intervals_to_groups
 from Modules.PCA import pca_func
@@ -63,6 +64,8 @@ def main():
         data['label'] = anomal_judgment_nonlabel(file_type, data)
     elif file_type == 'netML':
         data['label'] = data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
+    elif file_type == 'DARPA98':
+        data['label'] = data['class'].apply(lambda x: 0 if x == '-' else 1)
     else:
         data['label'] = anomal_judgment_label(data)
 
@@ -71,6 +74,8 @@ def main():
 
     # 3. Feature-specific embedding and preprocessing
     start = time.time()
+
+    data = time_scalar_transfer(data, file_type)
 
     regul = str(input("\nDo you want to Regulation? (Y/n): ")) # Whether to normalize or not
 

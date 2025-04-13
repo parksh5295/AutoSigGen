@@ -1,9 +1,6 @@
-import pandas as pd
+import csv
 
-
-# with open('D:\AutoSigGen_withData\Dataset\load_dataset\CICIDS2017\MachineLearningCSV\Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv', 'r') as f:
-csv_path = 'D:\AutoSigGen_withData\Dataset\load_dataset\DARPA98\\train\\1w_friday\\1w_friday_pre.csv'
-column_names = pd.read_csv(csv_path, nrows=6)
-
-print("Column Names:")
-print(column_names)
+with open('D:\AutoSigGen_withData\Dataset\load_dataset\DARPA98\\train\DARPA98.csv', 'r') as f:
+    reader = csv.reader(f)
+    row_count = sum(1 for row in reader)
+print("Row count: ", row_count)

@@ -120,6 +120,23 @@ def Heterogeneous_Feature_named_featrues(file_type):
         binary_features = [
             'land', 'logged_in', 'is_host_login', 'is_guest_login'
         ]
+
+    elif file_type in ['DARPA', 'DARPA98']:
+        categorical_features = [
+            'Protocol', 'SrcPort', 'DstPort', 'SrcIP', 'DstIP'
+        ]
+        time_features = [
+            'Date_scalar', 'StartTime_scalar', 'Duration_scalar'
+        ]
+        packet_length_features = [
+            
+        ]
+        count_features = [
+            
+        ]
+        binary_features = [
+            'Flag'
+        ]
     
     return {
             'categorical_features': categorical_features,

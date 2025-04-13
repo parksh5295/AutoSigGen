@@ -10,14 +10,16 @@ from Dataset_Choose_Rule.dtype_optimize import infer_dtypes_safely
 def file_path_line_nonnumber(file_type, file_number=1): # file_number is not used, but insert to prevent errors from occurring
     if file_type == 'MiraiBotnet':
         file_path = "../Dataset/load_dataset/MiraiBotnet/output-dataset_ESSlab.csv"
-    elif file_type in ['ARP' or 'MitM' or 'Kitsune']:
+    elif file_type in ['ARP', 'MitM', 'Kitsune']:
         file_path = "../Dataset/load_dataset/ARP_MitM_Kitsune/ARP_MitM_dataset.csv/ARP_MitM_dataset_final.csv"
-    elif file_type in ['CICIDS2017' or 'CICIDS']:
+    elif file_type in ['CICIDS2017', 'CICIDS']:
         file_path, file_number =  select_csv_file()
     elif file_type == 'netML' :
         file_path = "../Dataset/load_dataset/netML/netML_dataset.csv"
-    elif file_type in ['NSL-KDD' or 'NSL_KDD']:
+    elif file_type in ['NSL-KDD', 'NSL_KDD']:
         file_path = "../Dataset/load_dataset/NSL-KDD/NSL-KDD_dataset.csv"
+    elif file_type in ['DARPA', 'DARPA98']:
+        file_path = "../Dataset/load_dataset/DARPA98/train/DARPA98.csv"
     else:
         print("No file information yet, please double-check the file type or provide new data!")
         file_path_line_nonnumber(file_type)
