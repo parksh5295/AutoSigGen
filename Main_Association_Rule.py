@@ -142,13 +142,12 @@ def main():
 
 
         # 6. Make Signature
-        signature_result = signature_evaluate(data, signatures) # Evaluation and score of each signature is available, LIST (internal DICT)
+        signature_result = signature_evaluate(group_mapped_df, signatures) # Evaluation and score of each signature is available, LIST (internal DICT)
         signature_sets = under_limit(signature_result, signature_ea, precision_underlimit)  # Collection of signatures before validating recall
 
 
         # 7. Evaluate association rule (Signature)
-        current_recall = calculate_signatures(data, signature_sets)  # Score of the final signature collection
-        # 
+        current_recall = calculate_signatures(group_mapped_df, signature_sets)  # Score of the final signature collection
 
         # Update the highest Recall value
         if current_recall > best_recall:
