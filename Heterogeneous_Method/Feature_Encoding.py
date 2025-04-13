@@ -168,7 +168,6 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
             formatted_columns[feature] = items
 
         categorical_mapping_df = pd.DataFrame(formatted_columns)
-        print("categorical_mapping_df: ", categorical_mapping_df)
 
     if not time_features:
         time_data = np.empty((len(data), 0))
@@ -204,6 +203,7 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
 
     # Combine all processed data into a list
     data_list = [categorical_data, time_data, packet_length_data, packet_count_data, flow_flag_data]
+    print("categorical_mapping_df: ", categorical_mapping_df)
     category_mapping = {
         'categorical': categorical_mapping_df,
         'binary': binary_mapping_df
