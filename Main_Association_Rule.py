@@ -165,7 +165,7 @@ def main():
     }
     print(association_result)
 
-    save = csv_association(file_type, file_number, Association_mathod, association_result)
+    save = csv_association(file_type, file_number, Association_mathod, association_result, association_metric)
 
     timing_info['5_excute_association'] = time.time() - start
 
