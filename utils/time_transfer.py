@@ -13,15 +13,15 @@ def time_scalar_transfer(data, file_type):
         try:
             # First try with a 2-digit year
             data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y')
-        except Exception as e:
-            print(f"[DEBUG] Error type: {type(e).__name__}")
-            print(f"[DEBUG] Error message: {e}")
-        except ValueError:
+        except Exception as e1:
+            print(f"[DEBUG] First format failed. Error type: {type(e1).__name__}")
+            print(f"[DEBUG] Error message: {e1}")
             try:
-                # If that doesn't work, try a 4-digit year
+                # Then try with a 4-digit year
                 data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
-            except Exception as e:
-                print(f"[ERROR] Failed to parse 'Date': {e}")
+            except Exception as e2:
+                print(f"[DEBUG] Second format failed. Error type: {type(e2).__name__}")
+                print(f"[DEBUG] Error message: {e2}")
 
         # Time string to seconds
         def hms_to_seconds(hms_str):
