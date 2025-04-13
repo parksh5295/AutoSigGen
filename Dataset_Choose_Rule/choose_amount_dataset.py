@@ -33,6 +33,8 @@ def file_path_line_withnumber(file_type, file_number=1):
 def file_cut(file_type, file_path, cut_type='random'):
     inferred_dtypes = infer_dtypes_safely(file_type, file_path)
 
+    df = None  # Initialize df to avoid UnboundLocalError
+
     if cut_type == 'random':
         # Get the total number of rows (excluding headers)
         total_rows = sum(1 for _ in open(file_path)) - 1  # excluding headers
