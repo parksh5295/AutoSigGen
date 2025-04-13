@@ -61,5 +61,6 @@ def Heterogeneous_Interval_Inverse(data, file_type, regul):
 
     print("embedded data: ", df)
 
-    return df, feature_list, category_mapping   # df = embedded data
+    return df, feature_list, category_mapping, data_list   # df = embedded data
     # category_mapping: dict; categorical, interval, binary (key) -> Complete mapping_info
+    # data_list; has categorical, binary feature mapping information in it

@@ -7,6 +7,8 @@ from Heterogeneous_Method.Interval_normalized import Heterogeneous_Interval_Inve
 
 
 def choose_heterogeneous_method(data, file_type, het_method='Interval_inverse', regul='N'):
+    data_list = None
+
     if het_method == 'Non_act':
         het_method_Non_act = str(input("Choose between OneHotEncoder and StandardScaler: "))
         if het_method_Non_act == 'OneHotEncoder':
@@ -19,10 +21,10 @@ def choose_heterogeneous_method(data, file_type, het_method='Interval_inverse', 
     elif het_method == 'Interval_same':
         embedded_data, feature_list = Heterogeneous_Interval_Same(data, file_type)
     elif het_method in ['Interval_inverse', 'Interval_Inverse']:
-        embedded_data, feature_list, category_mapping = Heterogeneous_Interval_Inverse(data, file_type, regul)
+        embedded_data, feature_list, category_mapping, data_list = Heterogeneous_Interval_Inverse(data, file_type, regul)
     else:
         print("Invalid input: Please double-check your heterogenization method.")
         choose_heterogeneous_method(data, file_type, het_method)
 
-    return embedded_data, feature_list, category_mapping
+    return embedded_data, feature_list, category_mapping, data_list
     # category_mapping: [0]->categorical features mapping, [1]->flag features mapping (Non Standard)

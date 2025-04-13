@@ -4,7 +4,7 @@ import pandas as pd
 from Heterogeneous_Method.build_interval_mapping import build_interval_mapping_dataframe
 
 
-def map_intervals_to_groups(df, category_mapping, regul='N'):
+def map_intervals_to_groups(df, category_mapping, data_list, regul='N'):
     mapped_df = pd.DataFrame()  # Save the data converted to group numbers
     mapping_info = {}   # Save per-feature mapping information
 
@@ -36,6 +36,8 @@ def map_intervals_to_groups(df, category_mapping, regul='N'):
         mapping_info[col] = interval_to_group
 
         mapped_df[col] = interval_df[col].astype(str).map(interval_to_group)    # The value of df[col] must actually be a string for the mapping to work
+
+    mapped_df = pd.concat([data_list[0], mapped_df, data_list[len(data_list)-1]], axis=1)
 
     mapped_info_df = build_interval_mapping_dataframe(mapping_info)
 
