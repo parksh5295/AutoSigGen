@@ -47,5 +47,5 @@ def csv_association(file_type, file_number, association_rule, association_result
 
     file_path = f"{save_path}{file_type}_{association_rule}_{file_number}_{association_metric}_signature_train.csv"
 
-    association_result.to_csv(file_path, index=False)
+    df.to_csv(file_path, index=False)
     
