@@ -168,6 +168,7 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
             formatted_columns[feature] = items
 
         categorical_mapping_df = pd.DataFrame(formatted_columns)
+        print("categorical_mapping_df: ", categorical_mapping_df)
 
     if not time_features:
         time_data = np.empty((len(data), 0))

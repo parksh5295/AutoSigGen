@@ -166,6 +166,7 @@ def main():
     timing_info['6_evaluation'] = time.time() - start
 
 
+    '''
     # 7. Save the results to csv file
     start = time.time()
 
@@ -186,6 +187,7 @@ def main():
 
     # Save time information as a CSV
     time_save_csv_VL(file_type, file_number, clustering_algorithm, timing_info)
+    '''
 
 
     return
