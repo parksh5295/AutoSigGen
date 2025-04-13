@@ -5,10 +5,9 @@ import pandas as pd
 from mlxtend.frequent_patterns import apriori, association_rules
 
 
-def Apriori_rule(df, min_support=0.5, min_confidence=0.8):  # default; min_support=0.5, min_confidence=0.8
+def Apriori_rule(df, min_support=0.5, min_confidence=0.8, association_metric='confidence'):  # default; min_support=0.5, min_confidence=0.8
     # Decide on a matrics method
-    print("You need to decide on a metric method for your Apriori algorithm.")
-    metric = str(input("There are 5 in total; confidence, lift, leverage, conviction, and zhangs metric: "))
+    metric = association_metric
 
     df_encoded = pd.get_dummies(df.astype(str), prefix_sep="=") # One-Hot Encoding Conversion
 

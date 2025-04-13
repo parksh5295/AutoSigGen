@@ -11,13 +11,13 @@ from Association_Rule.OPUS import opus
 from Association_Rule.SaM import sam
 
 
-def association_module(df, association_rule_choose, min_support, min_confidence):
+def association_module(df, association_rule_choose, min_support, min_confidence, association_metric):
     if association_rule_choose == 'conditional_probability':
         association_list = conditional_probability(df, min_confidence)
     elif association_rule_choose == 'apriori' or 'Apriori':
-        association_list = Apriori_rule(df, min_support, min_confidence)
+        association_list = Apriori_rule(df, min_support, min_confidence, association_metric)
     elif association_rule_choose == 'fpgrowth' or 'FPGrowth':
-        association_list = FPGrowth_rule(df, min_support, min_confidence)
+        association_list = FPGrowth_rule(df, min_support, min_confidence, association_metric)
     elif association_rule_choose == 'eclat':
         association_list = eclat(df, min_support, min_confidence)
     elif association_rule_choose == 'rarm' or 'RARM':

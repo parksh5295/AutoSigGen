@@ -5,10 +5,9 @@
 import pandas as pd
 from mlxtend.frequent_patterns import fpgrowth, association_rules
 
-def FPGrowth_rule(df, min_support=0.5, min_confidence=0.8):
+def FPGrowth_rule(df, min_support=0.5, min_confidence=0.8, association_metric='confidence'):
     # Decide on a matrics method
-    print("You need to decide on a metric method for your FP-Growth algorithm.")
-    metric = str(input("There are 5 in total; confidence, lift, leverage, conviction, and zhangs metric: "))
+    metric = association_metric
 
     df_encoded = pd.get_dummies(df.astype(str), prefix_sep="=") # One-Hot Encoding Conversion
 

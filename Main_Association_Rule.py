@@ -35,6 +35,7 @@ def main():
     parser.add_argument('--association', type=str, default="apriori")   # Association Rule
     parser.add_argument('--precision_underlimit', type=float, default=0.7)
     parser.add_argument('--signature_ea', type=int, default=5)
+    parser.add_argument('--association_metric', type=str, default='confidence')
 
     # Save the above in args
     args = parser.parse_args()
@@ -49,6 +50,7 @@ def main():
     Association_mathod = args.association
     precision_underlimit = args.precision_underlimit
     signature_ea = args.signature_ea
+    association_metric = args.association_metric
 
     total_start_time = time.time()  # Start All Time
     timing_info = {}  # For step-by-step time recording
@@ -132,10 +134,10 @@ def main():
     start = time.time()
 
     for min_confidence in confidence_values:
-        association_list_anomal = association_module(anomal_grouped_data, Association_mathod, min_support, min_confidence)
+        association_list_anomal = association_module(anomal_grouped_data, Association_mathod, min_support, min_confidence, association_metric)
         
         # Find a difference-set association group
-        association_list_nomal = association_module(nomal_grouped_data, Association_mathod, min_support, min_confidence)
+        association_list_nomal = association_module(nomal_grouped_data, Association_mathod, min_support, min_confidence, association_metric)
 
         # A collection of pure anomalous signatures created with difference_set
         signatures = dict_list_difference(association_list_anomal, association_list_nomal)
