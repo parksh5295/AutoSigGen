@@ -203,11 +203,11 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
 
     # Combine all processed data into a list
     data_list = [categorical_data, time_data, packet_length_data, packet_count_data, flow_flag_data]
-    print("categorical_mapping_df: ", categorical_mapping_df)
     category_mapping = {
         'categorical': categorical_mapping_df,
         'binary': binary_mapping_df
     }
+    print("categorical_data: ", data_list[0])
 
     return data_list, category_mapping
 
