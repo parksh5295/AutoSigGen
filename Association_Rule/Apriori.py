@@ -13,7 +13,7 @@ def Apriori_rule(df, min_support=0.5, min_confidence=0.8):  # default; min_suppo
     df_encoded = pd.get_dummies(df.astype(str), prefix_sep="=") # One-Hot Encoding Conversion
 
     frequent_itemsets = apriori(df_encoded, min_support=min_support, use_colnames=True) # Applying Apriori
-    rules = association_rules(frequent_itemsets, metric=metric, min_threshold=min_confidence) # Create association rules
+    rules = association_rules(frequent_itemsets, metric=metric, min_threshold=min_confidence, num_itemsets=len(frequent_itemsets)) # Create association rules
 
     # Convert antecedents and consequents into a single dictionary
     rule_dicts = []

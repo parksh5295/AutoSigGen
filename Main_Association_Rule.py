@@ -3,15 +3,20 @@
 import argparse
 import numpy as np
 import time
-from Dataset_Choose_Rule.choose_amount_dataset import file_path_line_nonnumber, file_cut
-from definition.Anomal_Judgment import anomal_judment_label, anomal_judgment_nonlabel
-from utils.class_row import anomal_class_data, without_labelmaking_out, nomal_class_data
+from Dataset_Choose_Rule.association_data_choose import file_path_line_association
+from Dataset_Choose_Rule.choose_amount_dataset import file_cut
+from definition.Anomal_Judgment import anomal_judgment_label, anomal_judgment_nonlabel
+from utils.time_transfer import time_scalar_transfer
+from utils.class_row import anomal_class_data, without_labelmaking_out, nomal_class_data, without_label
 from Modules.Heterogeneous_module import choose_heterogeneous_method
+from Heterogeneous_Method.separate_group_mapping import map_intervals_to_groups
+from utils.remove_rare_columns import remove_rare_columns
 from Modules.Association_module import association_module
 from Modules.Signature_evaluation_module import signature_evaluate
 from Modules.Signature_underlimit import under_limit
 from Evaluation.calculate_signature import calculate_signatures
 from Modules.Difference_sets import dict_list_difference
+from Dataset_Choose_Rule.save_csv import csv_association
 from Dataset_Choose_Rule.time_save import time_save_csv_CS
 
 
@@ -52,9 +57,9 @@ def main():
     # 1. Data loading
     start = time.time()
 
-    file_path = file_path_line_nonnumber(file_type, file_number)
+    file_path, file_number = file_path_line_association(file_type, file_number)
     cut_type = str(input("Enter the data cut type: "))
-    data = file_cut(file_path, cut_type)
+    data = file_cut(file_type, file_path, cut_type)
 
     timing_info['1_load_data'] = time.time() - start
 
@@ -62,36 +67,50 @@ def main():
     # 2. Handling judgments of Anomal or Nomal
     start = time.time()
 
-    if file_type == 'MiraiBotnet':
-        data['label'] = anomal_judgment_nonlabel(file_type, data)
+    if file_type in ['MiraiBotnet', 'NSL-KDD']:
+        data['label'], _ = anomal_judgment_nonlabel(file_type, data)
+    elif file_type == 'netML':
+        data['label'] = data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
+    elif file_type == 'DARPA98':
+        data['label'] = data['Class'].apply(lambda x: 0 if x == '-' else 1)
     else:
-        data['label'] = anomal_judment_label(data)
-
-    anomal_rows = anomal_class_data(data)
-    anomal_data = without_labelmaking_out(file_type, anomal_rows)
-
-    # Information about how to set up association rule groups
-    anomal_grouped_data, fl = choose_heterogeneous_method(anomal_data, file_type, heterogeneous_method)
-    # anomal_grouped_data is DataFrame
-    # fl: feature list; Same contents but not used because it's not inside a DF.
-
-    # Make nomal row
-    nomal_rows = nomal_class_data(data)
-    nomal_data = without_labelmaking_out(file_type, nomal_rows)
-
-    nomal_grouped_data, flo = choose_heterogeneous_method(nomal_data, file_type, heterogeneous_method)
-    # nomal_grouped_data is DataFrame
-    # flo: feature list; Same contents but not used because it's not inside a DF.
-
-    data_without_label = without_labelmaking_out(file_type, data)
-    data_without_label, f_w = choose_heterogeneous_method(data_without_label, file_type, heterogeneous_method)
-    data_without_label['label'] = data['label']
-    heterogeneous_whole_data = data_without_label
+        data['label'] = anomal_judgment_label(data)
 
     timing_info['2_anomal_judgment'] = time.time() - start
 
 
-    # 3. Set association statements (confidence ratios, etc.)
+    # 3. Feature-specific embedding and preprocessing
+    start = time.time()
+
+    data = time_scalar_transfer(data, file_type)
+
+    regul = str(input("\nDo you want to Regulation? (Y/n): ")) # Whether to normalize or not
+
+    embedded_dataframe, feature_list, category_mapping = choose_heterogeneous_method(data, file_type, heterogeneous_method, regul)
+    print("embedded_dataframe: ", embedded_dataframe)
+
+    group_mapped_df, mapped_info_df = map_intervals_to_groups(embedded_dataframe, category_mapping, regul)
+    print("mapped group: ", group_mapped_df)
+    print("mapped_info: ", mapped_info_df)
+
+    group_mapped_df['label'] = data['label']
+
+    # Information about how to set up association rule groups
+    anomal_grouped_data = anomal_class_data(group_mapped_df)
+    anomal_grouped_data = without_label(anomal_grouped_data)
+    # anomal_grouped_data is DataFrame
+    # fl: feature list; Same contents but not used because it's not inside a DF.
+
+    # Make nomal row
+    nomal_grouped_data = nomal_class_data(group_mapped_df)
+    nomal_grouped_data = without_label(nomal_grouped_data)
+    # nomal_grouped_data is DataFrame
+    # flo: feature list; Same contents but not used because it's not inside a DF.
+
+    timing_info['3_embedding'] = time.time() - start
+
+
+    # 4. Set association statements (confidence ratios, etc.)
     start = time.time()
 
     # I need to let them choose if they want confidence to be selected automatically.
@@ -102,18 +121,20 @@ def main():
     confidence_values = np.arange(0.1, 1.0, 0.05)
     best_recall = 0
 
-    timing_info['3_association_setting'] = time.time() - start
+    anomal_grouped_data = remove_rare_columns(anomal_grouped_data, min_support)
+    nomal_grouped_data = remove_rare_columns(nomal_grouped_data, min_support)
+
+    timing_info['4_association_setting'] = time.time() - start
 
 
     # Identify the signatures with the highest recall in user's situation
-    # 4. Excute Association Rule, Manage related groups
+    # 5. Excute Association Rule, Manage related groups
     start = time.time()
 
     for min_confidence in confidence_values:
         association_list_anomal = association_module(anomal_grouped_data, Association_mathod, min_support, min_confidence)
-
         
-        # 5. Find a difference-set association group
+        # Find a difference-set association group
         association_list_nomal = association_module(nomal_grouped_data, Association_mathod, min_support, min_confidence)
 
         # A collection of pure anomalous signatures created with difference_set
@@ -143,7 +164,9 @@ def main():
     }
     print(association_result)
 
-    timing_info['4_excute_association'] = time.time() - start
+    save = csv_association(file_type, file_number, Association_mathod, association_result)
+
+    timing_info['5_excute_association'] = time.time() - start
 
 
     # Full time history
