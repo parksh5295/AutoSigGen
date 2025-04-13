@@ -52,7 +52,7 @@ def main():
 
     file_path, file_number = file_path_line_nonnumber(file_type, file_number)
     cut_type = str(input("Enter the data cut type: "))
-    data = file_cut(file_path, cut_type)
+    data = file_cut(file_type, file_path, cut_type)
 
     timing_info['1_load_data'] = time.time() - start
 
@@ -65,7 +65,7 @@ def main():
     elif file_type == 'netML':
         data['label'] = data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
     elif file_type == 'DARPA98':
-        data['label'] = data['class'].apply(lambda x: 0 if x == '-' else 1)
+        data['label'] = data['Class'].apply(lambda x: 0 if x == '-' else 1)
     else:
         data['label'] = anomal_judgment_label(data)
 

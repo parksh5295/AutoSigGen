@@ -3,7 +3,12 @@ import numpy as np
 
 
 # Estimate dtype while memory-efficiently sampling a CSV
-def infer_dtypes_safely(csv_path, max_rows=1000, chunk_size=100):
+def infer_dtypes_safely(file_type, csv_path, max_rows=1000, chunk_size=100):
+    if file_type in ['DARPA98', 'DARPA']:
+        force_str_columns = {'Date', 'StartTime', 'Duration'}
+    else:
+        force_str_columns = None
+    
     chunk_iter = pd.read_csv(csv_path, chunksize=chunk_size)
     inferred_dtypes = None
     row_count = 0
@@ -15,6 +20,10 @@ def infer_dtypes_safely(csv_path, max_rows=1000, chunk_size=100):
 
         for _, row in chunk.iterrows():
             for col in column_names:
+                if force_str_columns is not None and col in force_str_columns:
+                    inferred_dtypes[col].add("str")
+                    continue
+
                 val = row[col]
                 if pd.isnull(val):
                     continue

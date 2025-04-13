@@ -30,8 +30,8 @@ def file_path_line_withnumber(file_type, file_number=1):
 
 # After selecting the file path
 # Functions for getting only part of a file as data
-def file_cut(file_path, cut_type='random'):
-    inferred_dtypes = infer_dtypes_safely(file_path)
+def file_cut(file_type, file_path, cut_type='random'):
+    inferred_dtypes = infer_dtypes_safely(file_type, file_path)
 
     if cut_type == 'random':
         # Get the total number of rows (excluding headers)
