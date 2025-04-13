@@ -55,6 +55,7 @@ def Heterogeneous_Interval_Inverse(data, file_type, regul):
 
         interval_mapping_df = build_interval_mapping_dataframe(full_group_mapping_info)
         category_mapping['interval'] = interval_mapping_df
+        print("interval_mapping_df: ", interval_mapping_df)
 
     df = pd.concat([data_list[0], df], axis=1, ignore_index=False)   # Adding Categorical Features to DF Later
 
