@@ -116,7 +116,7 @@ def main():
     start = time.time()
 
     # I need to let them choose if they want confidence to be selected automatically.
-    min_support = 0.05
+    min_support = 0.1
     best_confidence = 0.8    # Initialize the variables to change
     # Considering anomalies and nomals simultaneously
 
