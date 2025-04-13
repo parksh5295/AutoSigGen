@@ -5,9 +5,9 @@ import pandas as pd
 
 def time_scalar_transfer(data, file_type):
     if file_type in ['DARPA', 'DARPA98']:
-        data['Date'] = data['Date'].astype(str)
-        data['StartTime'] = data['StartTime'].astype(str)
-        data['Duration'] = data['Duration'].astype(str)
+        data['Date'] = data['Date'].astype(str).str.strip()
+        data['StartTime'] = data['StartTime'].astype(str).str.strip()
+        data['Duration'] = data['Duration'].astype(str).str.strip()
 
         # date transfer
         try:
