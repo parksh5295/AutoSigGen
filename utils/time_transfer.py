@@ -19,6 +19,8 @@ def time_scalar_transfer(data, file_type):
         data.loc[mask4, 'Date'] = pd.to_datetime(data.loc[mask4, 'Date'],  format="%m/%d/%Y")
         print('[DEBUG] datetime conversion complete')
 
+        data['Date_scalar'] = data['Date']
+
         # # date transfer
         # try:
         #     # First try with a 2-digit year
