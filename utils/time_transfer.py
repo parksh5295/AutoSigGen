@@ -13,6 +13,9 @@ def time_scalar_transfer(data, file_type):
         try:
             # First try with a 2-digit year
             data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y')
+        except Exception as e:
+            print(f"[DEBUG] Error type: {type(e).__name__}")
+            print(f"[DEBUG] Error message: {e}")
         except ValueError:
             try:
                 # If that doesn't work, try a 4-digit year
