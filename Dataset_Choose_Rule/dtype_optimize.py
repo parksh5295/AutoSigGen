@@ -21,6 +21,7 @@ def infer_dtypes_safely(file_type, csv_path, max_rows=1000, chunk_size=100):
         for _, row in chunk.iterrows():
             for col in column_names:
                 if force_str_columns is not None and col in force_str_columns:
+                    print(force_str_columns)
                     inferred_dtypes[col].add("str")
                     continue
 
@@ -61,9 +62,9 @@ def infer_dtypes_safely(file_type, csv_path, max_rows=1000, chunk_size=100):
 
 
 # Efficiently load a full CSV into a DataFrame after auto-estimating dtype
-def load_csv_safely(csv_path, max_rows_for_inference=1000):
+def load_csv_safely(file_type, csv_path, max_rows_for_inference=1000):
     print("[INFO] Estimating: Sampling for dtype inference...")
-    dtype_map = infer_dtypes_safely(csv_path, max_rows=max_rows_for_inference)
+    dtype_map = infer_dtypes_safely(file_type, csv_path, max_rows=max_rows_for_inference)
     print("dtype map: ", dtype_map)
     print("[INFO] Dtype inference complete. Loading full CSV...")
     df = pd.read_csv(csv_path, dtype=dtype_map, low_memory=False)
