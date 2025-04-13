@@ -207,7 +207,7 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
         'categorical': categorical_mapping_df,
         'binary': binary_mapping_df
     }
-    print("categorical_data: ", data_list[0])
+    print("flag_data: ", data_list[4])
 
     return data_list, category_mapping
 
