@@ -6,8 +6,15 @@ import pandas as pd
 def time_scalar_transfer(data, file_type):
     if file_type in ['DARPA', 'DARPA98']:
         # date transfer
-        data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
-        data['Date_scalar'] = data['Date'].astype('int64') // 10**9
+        try:
+            # First try with a 2-digit year
+            data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y')
+        except ValueError:
+            try:
+                # If that doesn't work, try a 4-digit year
+                data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
+            except Exception as e:
+                print(f"[ERROR] Failed to parse 'Date': {e}")
 
         # Time string to seconds
         def hms_to_seconds(hms_str):
