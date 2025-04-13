@@ -12,13 +12,13 @@ def time_scalar_transfer(data, file_type):
         # date transfer
         try:
             # First try with a 2-digit year
-            data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y')
+            data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y', infer_datetime_format=True)
         except Exception as e1:
             print(f"[DEBUG] First format failed. Error type: {type(e1).__name__}")
             print(f"[DEBUG] Error message: {e1}")
             try:
                 # Then try with a 4-digit year
-                data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
+                data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y', infer_datetime_format=True)
             except Exception as e2:
                 print(f"[DEBUG] Second format failed. Error type: {type(e2).__name__}")
                 print(f"[DEBUG] Error message: {e2}")
