@@ -20,11 +20,6 @@ def infer_dtypes_safely(file_type, csv_path, max_rows=1000, chunk_size=100):
 
         for _, row in chunk.iterrows():
             for col in column_names:
-                if force_str_columns is not None and col in force_str_columns:
-                    print(force_str_columns)
-                    inferred_dtypes[col].add("str")
-                    continue
-
                 val = row[col]
                 if pd.isnull(val):
                     continue
@@ -34,6 +29,10 @@ def infer_dtypes_safely(file_type, csv_path, max_rows=1000, chunk_size=100):
                     inferred_dtypes[col].add("float")
                 elif isinstance(val, str):
                     inferred_dtypes[col].add("str")
+                elif force_str_columns is not None and col in force_str_columns:
+                    print(force_str_columns)
+                    inferred_dtypes[col].add("str")
+                    continue
                 else:
                     inferred_dtypes[col].add("other")
             row_count += 1
