@@ -8,8 +8,7 @@ import numpy as np
 def calculate_signature(data, signatures):
     results = []    # list for save the results
     # Inspect each row in the DataFrame for each condition dictionary
-    for idx, signature in enumerate(signatures):
-        signature_name = f'Condition_{idx + 1}'
+    for signature in signatures:
         matches = data[list(signature.keys())].eq(pd.Series(signature)).all(axis=1)  # Conditions are met
 
         # Calculate TP, FN, FP, TN
@@ -18,7 +17,14 @@ def calculate_signature(data, signatures):
         FP = ((matches) & (data['label'] == 0)).sum()
         TN = ((~matches) & (data['label'] == 0)).sum()
 
-        results.append({'Signature_name': signature_name, 'TP': TP, 'TN': TN, 'FP': FP, 'FN': FN})    
+        # signature 자체를 저장 (Condition_N 대신)
+        results.append({
+            'Signature_dict': signature,  # 실제 signature 딕셔너리 저장
+            'TP': TP, 
+            'TN': TN, 
+            'FP': FP, 
+            'FN': FN
+        })    
 
     return results
 
@@ -28,18 +34,15 @@ def calculate_signatures(data, signatures):
     # Extract only the actual signature conditions
     needed_columns = set()
     for signature in signatures:
-        # Extract actual signature conditions
-        actual_signature = signature['signature_name']
-        needed_columns.update(actual_signature.keys())
+        needed_columns.update(signature.keys())  # signature가 이미 딕셔너리이므로 직접 사용
     
     needed_columns.add('label')
     data_subset = data[list(needed_columns)]
     
     TP = FN = FP = TN = 0
     for _, row in data_subset.iterrows():
-        # Extract actual signature conditions
-        row_satisfied = any(all(row.get(k) == v 
-                              for k, v in sig['signature_name'].items()) 
+        # 각 signature와 직접 비교
+        row_satisfied = any(all(row[k] == v for k, v in sig.items()) 
                           for sig in signatures)
         
         if row['label'] == 1:
