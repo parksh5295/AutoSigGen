@@ -21,12 +21,17 @@ def get_confidence(transaction_list, base, full):
 def eclat_recursive(prefix, items, transaction_list, min_support, frequent_itemsets):
     while items:
         item = items.pop()
+        print("a")
         new_prefix = prefix.union(item)
+        print("b")
         support = get_support(transaction_list, new_prefix)
+        print("c")
 
         if support >= min_support:
             frequent_itemsets.add(frozenset(new_prefix))
+            print("d")
             remaining_items = [other for other in items if get_support(transaction_list, new_prefix.union(other)) >= min_support]
+            print("e")
             eclat_recursive(new_prefix, remaining_items, transaction_list, min_support, frequent_itemsets)
 
 
