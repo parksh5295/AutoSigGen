@@ -5,7 +5,6 @@
 import itertools
 
 
-'''
 # Calculate Support for how many times a particular itemset appears in the overall data
 def get_support(transaction_list, itemset):
     count = sum(1 for transaction in transaction_list if itemset.issubset(transaction))
@@ -16,9 +15,9 @@ def get_confidence(transaction_list, base, full):
     base_support = get_support(transaction_list, base)
     full_support = get_support(transaction_list, full)
     return full_support / base_support if base_support > 0 else 0
-'''    
 
 
+'''
 # Eclat Algorithm: Finding infrequent itemsets using set intersection operations
 def eclat_tid(prefix, items, min_support, total_transactions, frequent_itemsets):
     while items:
@@ -37,39 +36,51 @@ def eclat_tid(prefix, items, min_support, total_transactions, frequent_itemsets)
                     new_items.append((item.union(other_item), intersection))
 
             eclat_tid(new_prefix, new_items, min_support, total_transactions, frequent_itemsets)
+'''
+            
 
-
-def eclat(df, min_support=0.5):
-    transaction_list = [set(f"{col}={row[idx]}" for idx, col in enumerate(df.columns))
-                        for row in df.itertuples(index=False, name=None)]
-    total_transactions = len(transaction_list)
-    print("1-1")
-
-    # Step 1: Create initial TID lists
-    tid_dict = {}
-    for tid, transaction in enumerate(transaction_list):
-        for item in transaction:
-            key = frozenset([item])
-            if key not in tid_dict:
-                tid_dict[key] = set()
-            tid_dict[key].add(tid)
-    print("1-2")
-
-    # Step 2: Filter by min_support
-    items = [(item, tids) for item, tids in tid_dict.items()
-             if len(tids) / total_transactions >= min_support]
-    print("1-3")
-
-    # Step 3: Run Eclat with TID list
+# Eclat Algorithm: Finding infrequent itemsets using set intersection operations
+def eclat(df, min_support=0.5, confidence_threshold=0.8):
+    # Convert each row into a set of items
+    transaction_list = [set((f"{col}={row[idx]}" for idx, col in enumerate(df.columns))) for row in df.itertuples(index=False, name=None)]
+    
+    # Find all unique items
+    itemsets = {frozenset([value]) for row in transaction_list for value in row}
+    
     frequent_itemsets = set()
-    eclat_tid(set(), items, min_support, total_transactions, frequent_itemsets)
-    print("1-4")
+    rule_set = set()  # To store unique rules without duplicates
+    
+    # Stack for iterative processing
+    stack = [(set(), list(itemsets))]
+    
+    while stack:
+        prefix, items = stack.pop()
+        
+        while items:
+            item = items.pop()
+            new_prefix = prefix.union(item)
+            support = get_support(transaction_list, new_prefix)
 
-    # Step 4: Convert back to rule format
-    rules = []
-    for itemset in frequent_itemsets:
-        rule_dict = {pair.split('=')[0]: float(pair.split('=')[1]) for pair in itemset}
-        rules.append(rule_dict)
-    print("1-5")
+            if support >= min_support:
+                frequent_itemsets.add(frozenset(new_prefix))
+                remaining_items = [other for other in items if get_support(transaction_list, new_prefix.union(other)) >= min_support]
 
-    return rules
+                # Calculate confidence for all pairs and add to rules if confidence is above threshold
+                for base in itertools.combinations(new_prefix, len(new_prefix) - 1):  # Generate subsets of size |new_prefix|-1
+                    base_set = set(base)
+                    confidence = get_confidence(transaction_list, base_set, new_prefix)
+
+                    if confidence >= confidence_threshold:  # Check if confidence is above the threshold
+                        rule_dict = {pair.split('=')[0]: float(pair.split('=')[1]) for pair in new_prefix}
+                        sorted_rule = tuple(sorted(rule_dict.items()))
+
+                        if sorted_rule not in rule_set:
+                            rule_set.add(sorted_rule)
+                            rule_set.add(dict(sorted_rule))
+                
+                # Add the new items for further exploration
+                if remaining_items:
+                    stack.append((new_prefix, remaining_items))
+    
+    # Return the filtered rules based on confidence threshold
+    return [dict(rule) for rule in rule_set]
