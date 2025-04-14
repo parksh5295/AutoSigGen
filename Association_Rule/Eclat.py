@@ -43,11 +43,9 @@ def eclat_tid(prefix, items, min_support, total_transactions, frequent_itemsets)
 def eclat(df, min_support=0.5, confidence_threshold=0.8):
     # Convert each row into a set of items
     transaction_list = [set((f"{col}={row[idx]}" for idx, col in enumerate(df.columns))) for row in df.itertuples(index=False, name=None)]
-    print("1-1")
 
     # Find all unique items
     itemsets = {frozenset([value]) for row in transaction_list for value in row}
-    print("1-2")
     
     frequent_itemsets = set()
     rule_set = set()  # To store unique rules without duplicates
@@ -62,32 +60,26 @@ def eclat(df, min_support=0.5, confidence_threshold=0.8):
             item = items.pop()
             new_prefix = prefix.union(item)
             support = get_support(transaction_list, new_prefix)
-            print("1-3")
 
             if support >= min_support:
                 frequent_itemsets.add(frozenset(new_prefix))
                 remaining_items = [other for other in items if get_support(transaction_list, new_prefix.union(other)) >= min_support]
-                print("1-4")
 
                 # Calculate confidence for all pairs and add to rules if confidence is above threshold
                 for base in itertools.combinations(new_prefix, len(new_prefix) - 1):  # Generate subsets of size |new_prefix|-1
                     base_set = set(base)
                     confidence = get_confidence(transaction_list, base_set, new_prefix)
-                    print("1-5")
 
                     if confidence >= confidence_threshold:  # Check if confidence is above the threshold
                         rule_dict = {pair.split('=')[0]: float(pair.split('=')[1]) for pair in new_prefix}
                         sorted_rule = tuple(sorted(rule_dict.items()))
-                        print("1-6")
 
                         if sorted_rule not in rule_set:
                             rule_set.add(sorted_rule)
-                            print("1-7")
                 
                 # Add the new items for further exploration
                 if remaining_items:
                     stack.append((new_prefix, remaining_items))
-                    print("1-8")
     
     # Return the filtered rules based on confidence threshold
     return [dict(rule) for rule in rule_set]
