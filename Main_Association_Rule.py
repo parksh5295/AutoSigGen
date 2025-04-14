@@ -60,7 +60,8 @@ def main():
     start = time.time()
 
     file_path, file_number = file_path_line_association(file_type, file_number)
-    cut_type = str(input("Enter the data cut type: "))
+    # cut_type = str(input("Enter the data cut type: "))
+    cut_type = 'all'
     data = file_cut(file_type, file_path, cut_type)
 
     timing_info['1_load_data'] = time.time() - start
@@ -86,7 +87,8 @@ def main():
 
     data = time_scalar_transfer(data, file_type)
 
-    regul = str(input("\nDo you want to Regulation? (Y/n): ")) # Whether to normalize or not
+    # regul = str(input("\nDo you want to Regulation? (Y/n): ")) # Whether to normalize or not
+    regul = 'N'
 
     embedded_dataframe, feature_list, category_mapping, data_list = choose_heterogeneous_method(data, file_type, heterogeneous_method, regul)
     print("embedded_dataframe: ", embedded_dataframe)
