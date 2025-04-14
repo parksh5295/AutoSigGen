@@ -37,9 +37,10 @@ def eclat(df, min_support=0.5, min_confidence=0.8):
     
     # Find a single frequent occurrence of each item
     itemsets = {frozenset([value]) for row in transaction_list for value in row}
+
+    frequent_itemsets = set()  # Use set instead of list
     
     # Performing an Eclat (recursion)
-    frequent_itemsets = []
     eclat_recursive(set(), list(itemsets), transaction_list, min_support, frequent_itemsets)
 
     # Convert results to a dictionary list

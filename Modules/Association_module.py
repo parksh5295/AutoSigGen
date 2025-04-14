@@ -17,8 +17,8 @@ def association_module(df, association_rule_choose, min_support, min_confidence,
     elif association_rule_choose in ['apriori', 'Apriori']:
         association_list = Apriori_rule(df, min_support, min_confidence, association_metric)
     elif association_rule_choose in ['fpgrowth', 'FPGrowth']:
-        association_list = FPGrowth_rule(df, min_support, min_confidence)   # PyFim
-        # association_list = FPGrowth_rule(df, min_support, min_confidence, association_metric) # mlxtend
+        # association_list = FPGrowth_rule(df, min_support, min_confidence)   # PyFim
+        association_list = FPGrowth_rule(df, min_support, min_confidence, association_metric) # mlxtend
     elif association_rule_choose == 'eclat':
         association_list = eclat(df, min_support, min_confidence)
     elif association_rule_choose in ['rarm', 'RARM']:
@@ -33,4 +33,4 @@ def association_module(df, association_rule_choose, min_support, min_confidence,
         print("The name of the association rule appears to be incorrect.")
         pass
 
-    return association_list
+    return association_list # dictionary
