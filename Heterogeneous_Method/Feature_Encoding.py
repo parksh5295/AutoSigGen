@@ -83,7 +83,7 @@ def Heterogeneous_Feature_named_featrues(file_type):
         ]
 
     elif file_type == 'netML':
-        categorical_features = ['Protocol']
+        categorical_features = ['Protocol', 'Source IP', 'Destination IP', 'Source Port', 'Destination Port']
         time_features = [
             'Flow IAT Max', 'Flow IAT Min', 'Flow IAT Mean', 'Flow IAT Std',
             'Fwd IAT Total', 'Fwd IAT Mean', 'Fwd IAT Max', 'Fwd IAT Min',
@@ -92,7 +92,7 @@ def Heterogeneous_Feature_named_featrues(file_type):
             'Idle Mean', 'Idle Std', 'Idle Max', 'Idle Min'
         ]
         packet_length_features = [
-            'Total Length of Fwd Packets', 'Total Length of Bwd Packets',
+            'Flow Duration', 'Total Length of Fwd Packets', 'Total Length of Bwd Packets',
             'Fwd Packet Length Max', 'Fwd Packet Length Min', 'Fwd Packet Length Mean', 'Fwd Packet Length Std',
             'Bwd Packet Length Max', 'Bwd Packet Length Min', 'Bwd Packet Length Mean', 'Bwd Packet Length Std',
             'Packet Length Mean', 'Packet Length Std', 'Packet Length Variance',
