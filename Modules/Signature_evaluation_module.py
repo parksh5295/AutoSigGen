@@ -13,7 +13,8 @@ def signature_evaluate(data, signatures):
         signature_metric = metric
         weights = {'Accuracy': 0.1, 'Precision': 0.7, 'Recall': 0.15, 'F1-Score': 0.05}
         total_score = calculate_total_score(signature_metric, weights)
-        signature_metric['total_score': total_score]
+        signature_metric['total_score'] = total_score
+        # signature_metric['total_score': total_score]
         signature_metrics.append(signature_metric)
 
     return signature_metrics
