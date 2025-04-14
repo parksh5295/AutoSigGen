@@ -1,88 +1,123 @@
 # Algorithm: SaM (Split and Merge)
 # Output: Association rules Dictionary List; [{'feature1': value1, 'feature2': value2, ...}, {...}, ...]
 
-import itertools
+from collections import defaultdict
+from itertools import combinations
 
 
-# Calculate Support for a given itemset
-def get_support(transaction_list, itemset):
-    count = sum(1 for transaction in transaction_list if itemset.issubset(transaction))
-    return count / len(transaction_list)
+class ChunkProcessor:
+    def __init__(self, min_support):
+        self.transaction_count = 0
+        self.item_counts = defaultdict(int)
+        self.min_support = min_support
+        
+    def process_transaction(self, transaction):
+        # Process single transaction
+        self.transaction_count += 1
+        for item in transaction:
+            self.item_counts[item] += 1
+    
+    def get_frequent_items(self):
+        # Return items with minimum support
+        return {item for item, count in self.item_counts.items() 
+               if count / self.transaction_count >= self.min_support}
 
 
-# Calculate Confidence for a given rule
-def get_confidence(transaction_list, base, full):
-    base_support = get_support(transaction_list, base)
-    full_support = get_support(transaction_list, full)
-    return full_support / base_support if base_support > 0 else 0
+class SaMiner:
+    def __init__(self, min_support, chunk_size=1000):
+        self.min_support = min_support
+        self.chunk_size = chunk_size
+        self.transaction_count = 0
+        self.item_tids = defaultdict(set)
+    
+    def get_support(self, items):
+        # Calculate support using TID intersection
+        if not items:
+            return 0
+        common_tids = set.intersection(*(self.item_tids[item] for item in items))
+        return len(common_tids) / self.transaction_count
+    
+    def process_chunk(self, transactions):
+        # Process chunk
+        processor = ChunkProcessor(self.min_support)
+        
+        # Process transactions in chunk
+        for transaction in transactions:
+            processor.process_transaction(transaction)
+        
+        return processor.get_frequent_items()
 
 
-# SaM Algorithm for Frequent Itemset Mining
 def sam(df, min_support=0.5, min_confidence=0.8):
-    # Convert data into transaction format
-    transaction_list = [set(f"{col}={row[idx]}" for idx, col in enumerate(df.columns)) for row in df.itertuples(index=False, name=None)]
-
-    # Split: Divide transactions into chunks (simulating real SaM behavior)
-    chunk_size = max(1, len(transaction_list) // 2)  # Split into two parts
-    chunks = [transaction_list[i : i + chunk_size] for i in range(0, len(transaction_list), chunk_size)]
-
-    # Step 1: Mine frequent patterns in each chunk
-    local_frequent_itemsets = []
+    # Initialize
+    miner = SaMiner(min_support)
+    chunk_size = max(1, len(df) // 4)  # Control memory usage
+    
+    # Build TID mapping (streaming approach)
+    for tid, row in enumerate(df.itertuples(index=False, name=None)):
+        transaction = set(f"{col}={val}" for col, val in zip(df.columns, row))
+        miner.transaction_count += 1
+        for item in transaction:
+            miner.item_tids[item].add(tid)
+    
+    # Split step: Process chunks
+    all_frequent_items = set()
+    chunks = [df.iloc[i:i + chunk_size] for i in range(0, len(df), chunk_size)]
+    
     for chunk in chunks:
-        item_support = {}
-        for transaction in chunk:
-            for item in transaction:
-                if item not in item_support:
-                    item_support[item] = 0
-                item_support[item] += 1
-
-        num_transactions = len(chunk)
-        valid_items = {item for item, count in item_support.items() if count / num_transactions >= min_support}
-
-        # Generate frequent itemsets locally
-        for r in range(2, len(valid_items) + 1):
-            for subset in itertools.combinations(valid_items, r):
-                itemset = set(subset)
-                support = get_support(chunk, itemset)
-                if support >= min_support:
-                    local_frequent_itemsets.append(itemset)
-
-    # Step 2: Merge frequent patterns
-    global_frequent_itemsets = []
-    for itemset in local_frequent_itemsets:
-        if get_support(transaction_list, itemset) >= min_support:
-            global_frequent_itemsets.append(itemset)
-
-    # Step 3: Generate association rules with confidence check
-    rules = []
-    for itemset in global_frequent_itemsets:
-        subsets = list(itertools.chain.from_iterable(itertools.combinations(itemset, i) for i in range(1, len(itemset))))
-        valid_subsets = [set(sub) for sub in subsets if get_support(transaction_list, set(sub)) >= min_support]
-
-        for valid_set in valid_subsets:
-            confidence = get_support(transaction_list, itemset) / get_support(transaction_list, valid_set)
-            if confidence >= min_confidence:
-                rule_dict = {pair.split("=")[0]: int(pair.split("=")[1]) for pair in valid_set}
-                rules.append(rule_dict)
-
-    # Remove duplicates by treating {a=3, b=4} and {b=4, a=3} as the same
+        # Convert chunk to transaction form
+        transactions = [
+            set(f"{col}={val}" for col, val in zip(df.columns, row))
+            for row in chunk.itertuples(index=False, name=None)
+        ]
+        
+        # Find frequent items in chunk
+        frequent_items = miner.process_chunk(transactions)
+        all_frequent_items.update(frequent_items)
+    
+    # Merge step: Create global frequent itemset
     rule_set = set()
-    unique_rules = []
-
-    for rule in rules:
-        sorted_tuple = tuple(sorted(rule.items()))  # dict → sorted tuple
-        if sorted_tuple not in rule_set:
-            rule_set.add(sorted_tuple)
-            unique_rules.append(rule)
-
-
-    '''
-    # Remove duplicates by treating {a=3, b=4} and {b=4, a=3} as the same
-    unique_rules = []
-    for rule in rules:
-        sorted_rule = {k: rule[k] for k in sorted(rule)}
-        if sorted_rule not in unique_rules:
-            unique_rules.append(sorted_rule)
-    '''
-
-    return unique_rules
+    current_level = {frozenset([item]) for item in all_frequent_items 
+                    if miner.get_support({item}) >= min_support}
+    
+    while current_level:
+        next_level = set()
+        
+        # Generate rules from current level itemset
+        for itemset in current_level:
+            # Generate next level candidates
+            for item in all_frequent_items - itemset:
+                candidate = itemset | {item}
+                
+                # Check if all subsets are frequent
+                if all(frozenset(subset) in current_level 
+                      for subset in combinations(candidate, len(itemset))):
+                    
+                    support = miner.get_support(candidate)
+                    if support >= min_support:
+                        next_level.add(candidate)
+                        
+                        # Generate rules
+                        for i in range(1, len(candidate)):
+                            for antecedent in combinations(candidate, i):
+                                antecedent = frozenset(antecedent)
+                                consequent = candidate - antecedent
+                                
+                                ant_support = miner.get_support(antecedent)
+                                if ant_support > 0:
+                                    confidence = miner.get_support(candidate) / ant_support
+                                    
+                                    if confidence >= min_confidence:
+                                        # Convert rule to sorted tuple
+                                        rule_dict = {}
+                                        for item in antecedent:
+                                            key, value = item.split('=')
+                                            rule_dict[key] = int(value)
+                                        
+                                        rule_tuple = tuple(sorted(rule_dict.items()))
+                                        rule_set.add(rule_tuple)
+        
+        current_level = next_level
+    
+    # Convert results
+    return [dict(rule) for rule in rule_set]

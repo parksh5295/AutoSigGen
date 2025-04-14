@@ -1,58 +1,107 @@
 # Algorithm: OPUS (Optimal Pattern Discovery)
 # Output: Association rules Dictionary List; [{'feature1': value1, 'feature2': value2, ...}, {...}, ...]
 
-import itertools
+from collections import defaultdict
+from itertools import combinations
 
 
-# Calculate Support for how many times a particular itemset appears in the overall data
-def get_support(transaction_list, itemset):
-    count = sum(1 for transaction in transaction_list if itemset.issubset(transaction))
-    return count / len(transaction_list)
-
-
-# OPUS Algorithm for Optimal Pattern Discovery
-def opus(df, min_support=0.5, min_confidence=0.8):
-    # Convert each row to a set of key-value pairs
-    transaction_list = [set((f"{col}={row[idx]}" for idx, col in enumerate(df.columns))) for row in df.itertuples(index=False, name=None)]
+class OPUSMiner:
+    def __init__(self):
+        self.transaction_count = 0
+        self.item_tids = defaultdict(set)  # Save transaction IDs where each item appears
+        self.support_cache = {}  # support value caching
     
-    # Calculate support for individual items
-    item_support = {}
-    for transaction in transaction_list:
-        for item in transaction:
-            if item not in item_support:
-                item_support[item] = 0
-            item_support[item] += 1
+    def add_transaction(self, tid, items):
+        self.transaction_count += 1
+        for item in items:
+            self.item_tids[item].add(tid)
+    
+    def get_support(self, items):
+        if not items:
+            return 0
+            
+        # If cached support value exists, return it
+        items_key = frozenset(items)
+        if items_key in self.support_cache:
+            return self.support_cache[items_key]
+        
+        # Calculate support using TID intersection
+        common_tids = set.intersection(*(self.item_tids[item] for item in items))
+        support = len(common_tids) / self.transaction_count
+        
+        # Cache support values for frequently used itemsets
+        if len(items) <= 3:  # Only cache small itemsets
+            self.support_cache[items_key] = support
+            
+        return support
+    
+    def prune_candidates(self, candidates, min_support):
+        # Prune candidates using OPUS style
+        return {c for c in candidates if self.get_support(c) >= min_support}
 
-    # Filter out items that do not meet the minimum support
-    num_transactions = len(transaction_list)
-    frequent_items = {item for item, count in item_support.items() if count / num_transactions >= min_support}
 
-    # Generate candidate itemsets using OPUS-style pruning
-    frequent_itemsets = []
-    for r in range(2, len(frequent_items) + 1):
-        for subset in itertools.combinations(frequent_items, r):
-            itemset = set(subset)
-            support = get_support(transaction_list, itemset)
-            if support >= min_support:
-                frequent_itemsets.append(itemset)
-
-    # Generate association rules with confidence check
-    rules = []
-    for itemset in frequent_itemsets:
-        subsets = list(itertools.chain.from_iterable(itertools.combinations(itemset, i) for i in range(1, len(itemset))))
-        valid_subsets = [set(sub) for sub in subsets if get_support(transaction_list, set(sub)) >= min_support]
-
-        for valid_set in valid_subsets:
-            confidence = get_support(transaction_list, itemset) / get_support(transaction_list, valid_set)
-            if confidence >= min_confidence:
-                rule_dict = {pair.split("=")[0]: int(pair.split("=")[1]) for pair in valid_set}
-                rules.append(rule_dict)
-
-    # Sort rules to treat {a=3, b=4} and {b=4, a=3} as the same
-    unique_rules = []
-    for rule in rules:
-        sorted_rule = {k: rule[k] for k in sorted(rule)}  # 정렬하여 중복 제거
-        if sorted_rule not in unique_rules:
-            unique_rules.append(sorted_rule)
-
-    return unique_rules
+def opus(df, min_support=0.5, min_confidence=0.8):
+    # Initialize OPUS miner
+    miner = OPUSMiner()
+    
+    # Convert data and build initial structure
+    for tid, row in enumerate(df.itertuples(index=False, name=None)):
+        items = set(f"{col}={val}" for col, val in zip(df.columns, row))
+        miner.add_transaction(tid, items)
+    
+    # Find frequent 1-itemsets
+    frequent_items = {
+        item for item in miner.item_tids
+        if len(miner.item_tids[item]) / miner.transaction_count >= min_support
+    }
+    
+    # Set for rule storage
+    rule_set = set()
+    
+    # Incremental pattern discovery using OPUS style
+    current_level = {frozenset([item]) for item in frequent_items}
+    
+    while current_level:
+        next_candidates = set()
+        
+        # Generate rules from current level itemsets
+        for itemset in current_level:
+            # Efficient subset processing
+            for i in range(1, len(itemset)):
+                for antecedent in combinations(itemset, i):
+                    antecedent = frozenset(antecedent)
+                    consequent = itemset - antecedent
+                    
+                    ant_support = miner.get_support(antecedent)
+                    if ant_support > 0:
+                        confidence = miner.get_support(itemset) / ant_support
+                        
+                        if confidence >= min_confidence:
+                            # Convert rule to sorted tuple
+                            rule_dict = {}
+                            for item in itemset:
+                                key, value = item.split('=')
+                                rule_dict[key] = int(value)
+                            
+                            rule_tuple = tuple(sorted(rule_dict.items()))
+                            rule_set.add(rule_tuple)
+            
+            # Generate next level candidates
+            for other in current_level:
+                if len(other) == len(itemset):
+                    new_candidate = itemset.union(other)
+                    if len(new_candidate) == len(itemset) + 1:
+                        # Check if all subsets are frequent
+                        if all(frozenset(subset) in current_level 
+                              for subset in combinations(new_candidate, len(itemset))):
+                            next_candidates.add(new_candidate)
+        
+        # Prune candidates using OPUS style to determine next level
+        current_level = miner.prune_candidates(next_candidates, min_support)
+        
+        # Memory management: Clear support cache when no longer needed
+        if len(current_level) == 0:
+            miner.support_cache.clear()
+    
+    # Convert results
+    return [dict(rule) for rule in rule_set]

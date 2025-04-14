@@ -3,6 +3,7 @@
 # Output: Association rules Dictionary List; [{'feature1': value1, 'feature2': value2, ...}, {...}, ...]
 
 import itertools
+from collections import defaultdict
 
 
 # Calculate Support for how many times a particular itemset appears in the overall data
@@ -14,6 +15,22 @@ def get_confidence(transaction_list, base, full):
     # Confidence = P(Full | Base) = Support(Full) / Support(Base)
     base_support = get_support(transaction_list, base)
     full_support = get_support(transaction_list, full)
+    return full_support / base_support if base_support > 0 else 0
+
+
+def get_support_optimized(tid_map, itemset):
+    # Optimize support calculation using tid_map
+    if len(itemset) == 1:
+        return len(tid_map[next(iter(itemset))]) / tid_map['total']
+    
+    # Calculate support through intersection calculation
+    tids = set.intersection(*[tid_map[item] for item in itemset])
+    return len(tids) / tid_map['total']
+
+
+def get_confidence_optimized(tid_map, base, full):
+    base_support = get_support_optimized(tid_map, base)
+    full_support = get_support_optimized(tid_map, full)
     return full_support / base_support if base_support > 0 else 0
 
 
@@ -41,44 +58,56 @@ def eclat_tid(prefix, items, min_support, total_transactions, frequent_itemsets)
 
 # Eclat Algorithm: Finding infrequent itemsets using set intersection operations
 def eclat(df, min_support=0.5, confidence_threshold=0.8):
-    # Convert each row into a set of items
-    transaction_list = [set((f"{col}={row[idx]}" for idx, col in enumerate(df.columns))) for row in df.itertuples(index=False, name=None)]
-
-    # Find all unique items
-    itemsets = {frozenset([value]) for row in transaction_list for value in row}
-    print("log1")
+    # Create TID mapping (for memory and time efficiency)
+    tid_map = defaultdict(set)
+    tid_map['total'] = len(df)
+    
+    # Calculate TID list for each item (for memory and time efficiency)
+    for tid, row in enumerate(df.itertuples(index=False, name=None)):
+        for col_idx, col in enumerate(df.columns):
+            item = f"{col}={row[col_idx]}"
+            tid_map[item].add(tid)
+    
+    # Create initial 1-itemsets
+    itemsets = {frozenset([item]) for item in tid_map.keys() if item != 'total'}
     
     frequent_itemsets = set()
-    rule_set = set()  # To store unique rules without duplicates
-    print("log2")
-
-    # Stack for iterative processing
+    rule_set = set()
+    
+    # Stack of items to process
     stack = [(set(), list(itemsets))]
-    print("log3")
-
+    
     while stack:
         prefix, items = stack.pop()
-        print("log4")
         
         while items:
             item = items.pop()
             new_prefix = prefix.union(item)
-            support = get_support(transaction_list, new_prefix)
-
+            support = get_support_optimized(tid_map, new_prefix)
+            
             if support >= min_support:
                 frequent_itemsets.add(frozenset(new_prefix))
-                remaining_items = [other for other in items if get_support(transaction_list, new_prefix.union(other)) >= min_support]
-
-                # Calculate confidence for all pairs and add to rules if confidence is above threshold
-                for base in itertools.combinations(new_prefix, len(new_prefix) - 1):  # Generate subsets of size |new_prefix|-1
-                    base_set = set(base)
-                    confidence = get_confidence(transaction_list, base_set, new_prefix)
-
-                    if confidence >= confidence_threshold:  # Check if confidence is above the threshold
-                        rule_dict = {pair.split('=')[0]: float(pair.split('=')[1]) for pair in new_prefix}
-                        sorted_rule = tuple(sorted(rule_dict.items()))
-
-                        if sorted_rule not in rule_set:
+                
+                # Filter remaining items that meet support condition
+                remaining_items = []
+                for other in items:
+                    combined = new_prefix.union(other)
+                    if get_support_optimized(tid_map, combined) >= min_support:
+                        remaining_items.append(other)
+                
+                # Calculate confidence and generate rules
+                for base_size in range(1, len(new_prefix)):
+                    for base in itertools.combinations(new_prefix, base_size):
+                        base_set = set(base)
+                        confidence = get_confidence_optimized(tid_map, base_set, new_prefix)
+                        
+                        if confidence >= confidence_threshold:
+                            rule_dict = {}
+                            for pair in new_prefix:
+                                key, value = pair.split('=')
+                                rule_dict[key] = float(value)
+                            
+                            sorted_rule = tuple(sorted(rule_dict.items()))
                             rule_set.add(sorted_rule)
                 
                 # Add the new items for further exploration

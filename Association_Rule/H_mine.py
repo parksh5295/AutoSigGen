@@ -1,58 +1,95 @@
 # Algorithm: H-Mine (H-Structure Mining)
 # Output: Association rules Dictionary List; [{'feature1': value1, 'feature2': value2, ...}, {...}, ...]
 
-import itertools
+from collections import defaultdict
+from itertools import combinations
 
 
-# Calculate Support for how many times a particular itemset appears in the overall data
-def get_support(transaction_list, itemset):
-    count = sum(1 for transaction in transaction_list if itemset.issubset(transaction))
-    return count / len(transaction_list)
-
-
-# Generate candidate itemsets and find frequent itemsets using H-Mine
-def h_mine(df, min_support=0.5, min_confidence=0.8):
-    # Data transformation: convert each row to a set
-    transaction_list = [set((f"{col}={row[idx]}" for idx, col in enumerate(df.columns))) for row in df.itertuples(index=False, name=None)]
+class HStructure:
+    def __init__(self):
+        self.item_counts = defaultdict(int)
+        self.transaction_count = 0
+        self.item_tids = defaultdict(set)  # Save transaction IDs where each item appears
     
-    # Find frequent itemsets using the H-Structure approach
-    item_support = {}
-    for transaction in transaction_list:
-        for item in transaction:
-            if item not in item_support:
-                item_support[item] = 0
-            item_support[item] += 1
+    def add_transaction(self, tid, items):
+        self.transaction_count += 1
+        for item in items:
+            self.item_counts[item] += 1
+            self.item_tids[item].add(tid)
+    
+    def get_support(self, items):
+        if not items:
+            return 0
+        # Calculate the number of transactions where all items appear simultaneously
+        common_tids = set.intersection(*[self.item_tids[item] for item in items])
+        return len(common_tids) / self.transaction_count
 
-    # Filter out items with low support
-    num_transactions = len(transaction_list)
-    frequent_items = {item for item, count in item_support.items() if count / num_transactions >= min_support}
 
-    # Generate candidate itemsets of length > 1 and calculate their support
-    frequent_itemsets = []
-    for r in range(2, len(frequent_items) + 1):
-        for subset in itertools.combinations(frequent_items, r):
-            itemset = set(subset)
-            support = get_support(transaction_list, itemset)
-            if support >= min_support:
-                frequent_itemsets.append(itemset)
-
-    # Create association rules
-    rules = []
-    for itemset in frequent_itemsets:
-        subsets = list(itertools.chain.from_iterable(itertools.combinations(itemset, i) for i in range(1, len(itemset))))
-        valid_subsets = [set(sub) for sub in subsets if get_support(transaction_list, set(sub)) >= min_support]
-
-        for valid_set in valid_subsets:
-            confidence = get_support(transaction_list, itemset) / get_support(transaction_list, valid_set)
-            if confidence >= min_confidence:
-                rule_dict = {pair.split("=")[0]: int(pair.split("=")[1]) for pair in valid_set}
-                rules.append(rule_dict)
-
-    # Sort rules to treat {a=3, b=4} and {b=4, a=3} as the same
-    unique_rules = []
-    for rule in rules:
-        sorted_rule = {k: rule[k] for k in sorted(rule)}  # Sort the keys
-        if sorted_rule not in unique_rules:
-            unique_rules.append(sorted_rule)
-
-    return unique_rules
+def h_mine(df, min_support=0.5, min_confidence=0.8):
+    # Initialize H-Structure
+    h_struct = HStructure()
+    
+    # Convert data and build H-Structure
+    transaction_items = []
+    for tid, row in enumerate(df.itertuples(index=False, name=None)):
+        items = set(f"{col}={row[idx]}" for idx, col in enumerate(df.columns))
+        transaction_items.append(items)  # Keep full transactions for later use
+        h_struct.add_transaction(tid, items)
+    
+    # Find frequent 1-itemsets
+    frequent_items = {
+        item for item, count in h_struct.item_counts.items()
+        if count / h_struct.transaction_count >= min_support
+    }
+    
+    # Use set for rule storage (optimized for duplicate removal)
+    rule_set = set()
+    
+    # Generate frequent itemsets and extract rules
+    current_level = [frozenset([item]) for item in frequent_items]
+    
+    while current_level:
+        next_level = set()
+        
+        # Generate rules from current level itemsets
+        for itemset in current_level:
+            # Generate rules for subsets
+            for i in range(1, len(itemset)):
+                for antecedent in combinations(itemset, i):
+                    antecedent = frozenset(antecedent)
+                    consequent = itemset - antecedent
+                    
+                    # Calculate confidence
+                    ant_support = h_struct.get_support(antecedent)
+                    if ant_support > 0:
+                        confidence = h_struct.get_support(itemset) / ant_support
+                        
+                        if confidence >= min_confidence:
+                            # Convert rule to sorted tuple and save
+                            rule_dict = {}
+                            for item in itemset:
+                                key, value = item.split('=')
+                                rule_dict[key] = int(value)
+                            
+                            rule_tuple = tuple(sorted(rule_dict.items()))
+                            rule_set.add(rule_tuple)
+            
+            # Generate candidate itemsets for next level
+            for other in current_level:
+                if len(other) == len(itemset):
+                    new_itemset = itemset.union(other)
+                    if len(new_itemset) == len(itemset) + 1:
+                        # Check if all subsets are frequent
+                        all_frequent = True
+                        for subset in combinations(new_itemset, len(itemset)):
+                            if frozenset(subset) not in current_level:
+                                all_frequent = False
+                                break
+                        
+                        if all_frequent and h_struct.get_support(new_itemset) >= min_support:
+                            next_level.add(frozenset(new_itemset))
+        
+        current_level = next_level
+    
+    # Convert final result to dictionary list
+    return [dict(rule) for rule in rule_set]

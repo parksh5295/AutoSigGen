@@ -52,22 +52,40 @@ def FPGrowth_rule(df, min_support=0.5, min_confidence=0.8, association_metric='c
     # Decide on a metrics method
     metric = association_metric
 
-    df_encoded = pd.get_dummies(df.astype(str), prefix_sep="=")  # One-Hot Encoding Conversion
+    # One-Hot Encoding with sparse matrix for memory efficiency
+    df_encoded = pd.get_dummies(df.astype(str), prefix_sep="=", sparse=True)
 
-    frequent_itemsets = fpgrowth(df_encoded, min_support=min_support, use_colnames=True)  # Apply FP-Growth
-    rules = association_rules(frequent_itemsets, metric=metric, min_threshold=min_confidence, num_itemsets=len(frequent_itemsets))  # Generate rules
+    # Apply FP-Growth
+    frequent_itemsets = fpgrowth(df_encoded, 
+                                min_support=min_support, 
+                                use_colnames=True)
 
-    rule_dict = {}
+    # Generate rules
+    rules = association_rules(frequent_itemsets, 
+                            metric=metric, 
+                            min_threshold=min_confidence, 
+                            num_itemsets=len(frequent_itemsets))
 
-    for _, row in rules.iterrows():
-        antecedents = {item.split("=")[0]: int(item.split("=")[1]) for item in row['antecedents']}
-        consequents = {item.split("=")[0]: int(item.split("=")[1]) for item in row['consequents']}
+    # Pre-split column names for faster processing
+    column_map = {col: col.split("=") for col in df_encoded.columns}
+    
+    # Use set for faster duplicate removal
+    unique_rules = set()
+    
+    # Use to_dict('records') instead of iterrows
+    for rule in rules[['antecedents', 'consequents']].to_dict('records'):
+        # Add directly to single dictionary
+        combined_rule = {}
         
-        # Combine and sort the rule
-        combined_rule = {**antecedents, **consequents}
-        sorted_items = tuple(sorted(combined_rule.items()))  # Tuple is hashable
+        # Process antecedents and consequents together
+        for items in (rule['antecedents'], rule['consequents']):
+            for item in items:
+                key, value = column_map[item]
+                combined_rule[key] = int(value)
+        
+        # Convert to sorted tuple for faster set addition
+        rule_tuple = tuple(sorted(combined_rule.items()))
+        unique_rules.add(rule_tuple)
 
-        # Use the sorted tuple as a unique key
-        rule_dict[sorted_items] = combined_rule
-
-    return list(rule_dict.values())
+    # Convert set to final result format
+    return [dict(rule) for rule in unique_rules]
