@@ -25,7 +25,7 @@ def eclat_recursive(prefix, items, transaction_list, min_support, frequent_items
         support = get_support(transaction_list, new_prefix)
 
         if support >= min_support:
-            frequent_itemsets.append(new_prefix)
+            frequent_itemsets.add(frozenset(new_prefix))
             remaining_items = [other for other in items if get_support(transaction_list, new_prefix.union(other)) >= min_support]
             eclat_recursive(new_prefix, remaining_items, transaction_list, min_support, frequent_itemsets)
 
