@@ -135,23 +135,33 @@ def main():
 
     last_signature_sets = None
 
+    print("start")
+
     for min_confidence in confidence_values:
         association_list_anomal = association_module(anomal_grouped_data, Association_mathod, min_support, min_confidence, association_metric)
         
+        print("1")
+
         # Find a difference-set association group
         association_list_nomal = association_module(nomal_grouped_data, Association_mathod, min_support, min_confidence, association_metric)
+
+        print("2")
 
         # A collection of pure anomalous signatures created with difference_set
         signatures = dict_list_difference(association_list_anomal, association_list_nomal)
 
+        print("3")
 
         # 6. Make Signature
         signature_result = signature_evaluate(group_mapped_df, signatures) # Evaluation and score of each signature is available, LIST (internal DICT)
         signature_sets = under_limit(signature_result, signature_ea, precision_underlimit)  # Collection of signatures before validating recall
 
+        print("4")
 
         # 7. Evaluate association rule (Signature)
         current_recall = calculate_signatures(group_mapped_df, signature_sets)  # Score of the final signature collection
+
+        print("5")
 
         # Update the highest Recall value
         if current_recall > best_recall:
