@@ -25,16 +25,22 @@ def calculate_signature(data, signatures):
 
 # Tools for evaluating recall in an aggregated signature collection
 def calculate_signatures(data, signatures):
-    # 1. Extract only the necessary columns (from signature_name)
-    needed_columns = set().union(*(sig.keys() for sig in signatures))
+    # Extract only the actual signature conditions
+    needed_columns = set()
+    for signature in signatures:
+        # Extract actual signature conditions
+        actual_signature = signature['signature_name']
+        needed_columns.update(actual_signature.keys())
+    
     needed_columns.add('label')
     data_subset = data[list(needed_columns)]
     
     TP = FN = FP = TN = 0
     for _, row in data_subset.iterrows():
-        # signature_name이 아닌 signature 자체를 사용
-        row_satisfied = any(all(row.get(k) == v for k, v in signature.items()) 
-                          for signature in signatures)
+        # Extract actual signature conditions
+        row_satisfied = any(all(row.get(k) == v 
+                              for k, v in sig['signature_name'].items()) 
+                          for sig in signatures)
         
         if row['label'] == 1:
             if row_satisfied:
