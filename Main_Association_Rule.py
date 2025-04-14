@@ -33,7 +33,7 @@ def main():
     parser.add_argument('--clustering', type=str, default="kmeans")   # Clustering Methods
     parser.add_argument('--eval_clustering_silhouette', type=str, default="n")
     parser.add_argument('--association', type=str, default="apriori")   # Association Rule
-    parser.add_argument('--precision_underlimit', type=float, default=0.7)
+    parser.add_argument('--precision_underlimit', type=float, default=0.6)
     parser.add_argument('--signature_ea', type=int, default=5)
     parser.add_argument('--association_metric', type=str, default='confidence')
 
@@ -170,6 +170,21 @@ def main():
             best_recall = current_recall
             best_confidence = min_confidence
             last_signature_sets = signature_sets    # signatures in best_confidence
+
+        # association_list_anomal 생성 후
+        print("Anomal association rules:", len(association_list_anomal))
+
+        # association_list_nomal 생성 후
+        print("Normal association rules:", len(association_list_nomal))
+
+        # signatures 생성 후
+        print("Pure anomal signatures:", len(signatures))
+
+        # signature_result 생성 후
+        print("Evaluated signatures:", len(signature_result))
+
+        # signature_sets 생성 후
+        print("Filtered signatures:", len(signature_sets) if signature_sets else 0)
 
 
     association_result = {
