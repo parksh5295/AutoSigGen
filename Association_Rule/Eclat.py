@@ -55,7 +55,7 @@ def eclat(df, min_support=0.5, min_confidence=0.8):
                     confidence = get_confidence(transaction_list, base_set, full_set)
                     
                     if confidence >= min_confidence:
-                        rule_dict = {pair.split('=')[0]: int(pair.split('=')[1]) for pair in full_set}
+                        rule_dict = {pair.split('=')[0]: float(pair.split('=')[1]) for pair in full_set}
 
                         # Always sort and save in the same order
                         sorted_rule = tuple(sorted(rule_dict.items()))
