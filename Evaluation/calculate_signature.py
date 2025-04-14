@@ -2,6 +2,7 @@
 # Return: [{'Signature_dict': signature_name, 'TP': TP, 'TN': TN, 'FP': FP, 'FN': FN}, {}, ...]
 
 import pandas as pd
+import numpy as np
 
 
 def calculate_signature(data, signatures):
@@ -24,26 +25,35 @@ def calculate_signature(data, signatures):
 
 # Tools for evaluating recall in an aggregated signature collection
 def calculate_signatures(data, signatures):
-    # Initialize variables for storing results
+    # 1. Extract only the necessary columns (from signature_name)
+    needed_columns = set().union(*(sig['signature_name'].keys() for sig in signatures))
+    needed_columns.add('label')
+    data_subset = data[list(needed_columns)]
+    
+    # 2. Use vectorized operations
     TP = FN = FP = TN = 0
-
-    # Inspect each row in the DataFrame(data)
-    for _, row in data.iterrows():
-        row_satisfied = any(all(row.get(k) == v for k, v in signature.items()) for signature in signatures)
+    data_values = data_subset.values
+    
+    chunk_size = 10000
+    for i in range(0, len(data_values), chunk_size):
+        chunk = data_values[i:i + chunk_size]
         
-        if row['label'] == 1:
-            if row_satisfied:
-                TP += 1  # Have a dictionary that satisfies the condition
-            else:
-                FN += 1  # No dictionaries satisfy the condition
-        else:  # row['label'] == 0
-            if row_satisfied:
-                FP += 1  # Have a dictionary that satisfies the condition
-            else:
-                TN += 1  # No dictionaries satisfy the condition
+        # Check matching for each signature
+        matches = np.zeros(len(chunk), dtype=bool)
+        for signature in signatures:
+            # Extract actual conditions from signature_name
+            actual_signature = signature['signature_name']
+            sig_match = np.ones(len(chunk), dtype=bool)
+            for k, v in actual_signature.items():
+                col_idx = data_subset.columns.get_loc(k)
+                sig_match &= (chunk[:, col_idx] == v)
+            matches |= sig_match
+        
+        labels = chunk[:, data_subset.columns.get_loc('label')]
+        TP += np.sum((matches) & (labels == 1))
+        FN += np.sum((~matches) & (labels == 1))
+        FP += np.sum((matches) & (labels == 0))
+        TN += np.sum((~matches) & (labels == 0))
 
-    # Calculate Recall
     recall = TP / (TP + FN) if (TP + FN) > 0 else 0
-
     return recall
-
