@@ -34,15 +34,15 @@ def eclat_recursive(prefix, items, transaction_list, min_support, frequent_items
 def eclat(df, min_support=0.5, min_confidence=0.8):
     # Transform data: convert each row into a set
     transaction_list = [set((f"{col}={row[idx]}" for idx, col in enumerate(df.columns))) for row in df.itertuples(index=False, name=None)]
-    
+    print("1-1")
     # Find a single frequent occurrence of each item
     itemsets = {frozenset([value]) for row in transaction_list for value in row}
-
+    print("1-2")
     frequent_itemsets = set()  # Use set instead of list
     
     # Performing an Eclat (recursion)
     eclat_recursive(set(), list(itemsets), transaction_list, min_support, frequent_itemsets)
-
+    print("1-3")
     # Convert results to a dictionary list
     rules = []
     existing_rules = set()  # set to avoid duplicates
@@ -50,17 +50,19 @@ def eclat(df, min_support=0.5, min_confidence=0.8):
     for itemset in frequent_itemsets:
         if len(itemset) > 1:
             for i in range(1, len(itemset)):  # See all possible combinations
+                print("1-4")
                 for base in itertools.combinations(itemset, i):
                     base_set = set(base)
                     full_set = itemset
                     confidence = get_confidence(transaction_list, base_set, full_set)
+                    print("1-5")
                     
                     if confidence >= min_confidence:
                         rule_dict = {pair.split('=')[0]: float(pair.split('=')[1]) for pair in full_set}
 
                         # Always sort and save in the same order
                         sorted_rule = tuple(sorted(rule_dict.items()))
-
+                        print("1-6")
                         if sorted_rule not in existing_rules:
                             existing_rules.add(sorted_rule)
                             rules.append(dict(sorted_rule))  # Convert back to dictionary form
