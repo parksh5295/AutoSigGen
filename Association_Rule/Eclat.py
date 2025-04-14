@@ -46,33 +46,41 @@ def eclat(df, min_support=0.5, confidence_threshold=0.8):
 
     # Find all unique items
     itemsets = {frozenset([value]) for row in transaction_list for value in row}
+    print("log1")
     
     frequent_itemsets = set()
     rule_set = set()  # To store unique rules without duplicates
-    
+    print("log2")
+
     # Stack for iterative processing
     stack = [(set(), list(itemsets))]
-    
+    print("log3")
+
     while stack:
         prefix, items = stack.pop()
+        print("log4")
         
         while items:
             item = items.pop()
             new_prefix = prefix.union(item)
             support = get_support(transaction_list, new_prefix)
+            print("log5")
 
             if support >= min_support:
                 frequent_itemsets.add(frozenset(new_prefix))
                 remaining_items = [other for other in items if get_support(transaction_list, new_prefix.union(other)) >= min_support]
+                print("log6")
 
                 # Calculate confidence for all pairs and add to rules if confidence is above threshold
                 for base in itertools.combinations(new_prefix, len(new_prefix) - 1):  # Generate subsets of size |new_prefix|-1
                     base_set = set(base)
                     confidence = get_confidence(transaction_list, base_set, new_prefix)
+                    print("log7")
 
                     if confidence >= confidence_threshold:  # Check if confidence is above the threshold
                         rule_dict = {pair.split('=')[0]: float(pair.split('=')[1]) for pair in new_prefix}
                         sorted_rule = tuple(sorted(rule_dict.items()))
+                        print("log8")
 
                         if sorted_rule not in rule_set:
                             rule_set.add(sorted_rule)

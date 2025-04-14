@@ -66,10 +66,23 @@ def sam(df, min_support=0.5, min_confidence=0.8):
                 rules.append(rule_dict)
 
     # Remove duplicates by treating {a=3, b=4} and {b=4, a=3} as the same
+    rule_set = set()
+    unique_rules = []
+
+    for rule in rules:
+        sorted_tuple = tuple(sorted(rule.items()))  # dict → sorted tuple
+        if sorted_tuple not in rule_set:
+            rule_set.add(sorted_tuple)
+            unique_rules.append(rule)
+
+
+    '''
+    # Remove duplicates by treating {a=3, b=4} and {b=4, a=3} as the same
     unique_rules = []
     for rule in rules:
         sorted_rule = {k: rule[k] for k in sorted(rule)}
         if sorted_rule not in unique_rules:
             unique_rules.append(sorted_rule)
+    '''
 
     return unique_rules
