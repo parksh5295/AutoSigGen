@@ -17,9 +17,9 @@ def calculate_signature(data, signatures):
         FP = ((matches) & (data['label'] == 0)).sum()
         TN = ((~matches) & (data['label'] == 0)).sum()
 
-        # signature 자체를 저장 (Condition_N 대신)
+        # Store the signature itself (instead of Condition_N)
         results.append({
-            'Signature_dict': signature,  # 실제 signature 딕셔너리 저장
+            'Signature_dict': signature,  # Storing the actual signature dictionary
             'TP': TP, 
             'TN': TN, 
             'FP': FP, 
@@ -34,17 +34,22 @@ def calculate_signatures(data, signatures):
     # Extract only the actual signature conditions
     needed_columns = set()
     for signature in signatures:
-        needed_columns.update(signature.keys())  # signature가 이미 딕셔너리이므로 직접 사용
-        print("signature: ", signature)
+        # extract the actual feature from the Signature_dict inside the signature_name key
+        if 'signature_name' in signature and 'Signature_dict' in signature['signature_name']:
+            actual_signature = signature['signature_name']['Signature_dict']
+            needed_columns.update(actual_signature.keys())
     
     needed_columns.add('label')
     data_subset = data[list(needed_columns)]
     
     TP = FN = FP = TN = 0
     for _, row in data_subset.iterrows():
-        # 각 signature와 직접 비교
-        row_satisfied = any(all(row[k] == v for k, v in sig.items()) 
-                          for sig in signatures)
+        # Compare with Signature_dict for each signature
+        row_satisfied = any(
+            all(row[k] == sig['signature_name']['Signature_dict'][k] 
+                for k in sig['signature_name']['Signature_dict'].keys())
+            for sig in signatures
+        )
         
         if row['label'] == 1:
             if row_satisfied:
