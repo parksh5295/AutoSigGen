@@ -7,6 +7,7 @@ from Dataset_Choose_Rule.association_data_choose import file_path_line_associati
 from Dataset_Choose_Rule.choose_amount_dataset import file_cut
 from definition.Anomal_Judgment import anomal_judgment_label, anomal_judgment_nonlabel
 from utils.time_transfer import time_scalar_transfer
+from Dataset_Choose_Rule.dtype_optimize import load_csv_safely
 from utils.class_row import anomal_class_data, without_labelmaking_out, nomal_class_data, without_label
 from Modules.Heterogeneous_module import choose_heterogeneous_method
 from Heterogeneous_Method.separate_group_mapping import map_intervals_to_groups
@@ -18,6 +19,11 @@ from Evaluation.calculate_signature import calculate_signatures
 from Modules.Difference_sets import dict_list_difference
 from Dataset_Choose_Rule.save_csv import csv_association
 from Dataset_Choose_Rule.time_save import time_save_csv_CS
+import pandas as pd
+from Evaluation.signature_evaluation_module import signature_evaluate
+from Rebuild_Method.FalsePositive_Check import evaluate_false_positives
+from Rebuild_Method.Overfiting_Check import evaluate_signature_overfitting, print_signature_overfit_report
+from Dataset_Choose_Rule.save_signature_validation import save_validation_results
 
 
 def main():
@@ -82,8 +88,43 @@ def main():
     timing_info['2_anomal_judgment'] = time.time() - start
 
 
-    mapped_info_df = pd.read_csv(f"../Dataset/signature/{file_type}/{file_type}_{file_number}_mapped_info.csv")
-
-
-    # 3. Feature-specific embedding and preprocessing
+    mapped_info_path = f"../Dataset/signature/{file_type}/{file_type}_{file_number}_mapped_info.csv"
+    association_result_path = f"../Dataset/signature/{file_type}/{file_type}_{association_rule}_{file_number}_{association_metric}_signature_train.csv"
     
+    # Load data in an optimized way
+    mapped_info_df = load_csv_safely('DARPA', mapped_info_path)
+    association_result = pd.read_csv(association_result_path)
+    
+    # Extract signatures from association_result
+    signatures = association_result['signature_name'].apply(lambda x: eval(x)['Signature_dict']).tolist()
+    
+    # 1. basic signature evaluation
+    signature_result = signature_evaluate(mapped_info_df, signatures)
+    print("\n=== Basic Signature Evaluation ===")
+    print(signature_result)
+    
+    # 2. False Positive check
+    fp_results = evaluate_false_positives(mapped_info_df, signatures)
+    print("\n=== False Positive Analysis ===")
+    print(fp_results)
+    
+    # 3. Overfitting check
+    overfit_results = evaluate_signature_overfitting(mapped_info_df, signatures)
+    print("\n=== Overfitting Analysis ===")
+    print_signature_overfit_report(overfit_results)
+
+
+    # Save all results to CSV
+    save_validation_results(
+        file_type=file_type,
+        file_number=file_number,
+        association_rule=association_rule,
+        basic_eval=signature_result,
+        fp_results=fp_results,
+        overfit_results=overfit_results
+    )
+
+
+if __name__ == "__main__":
+    main()
+
