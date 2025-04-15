@@ -5,7 +5,11 @@ def anomal_judgment_nonlabel(data_type, data):
     if data_type == "MiraiBotnet":
         data_line = ['reconnaissance', 'infection', 'action']
     elif data_type in ['NSL-KDD', 'NSL_KDD']:
-        data_line = ['Class']
+        class_columns = [col for col in data.columns if col.lower() == 'class']
+        if class_columns:
+            data_line = [class_columns[0]]
+        else:
+            raise ValueError("No 'class' or 'Class' column found in the dataset")
     '''
     Need more setting for another data type
     '''
