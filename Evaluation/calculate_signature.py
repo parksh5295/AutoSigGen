@@ -35,6 +35,7 @@ def calculate_signatures(data, signatures):
     needed_columns = set()
     for signature in signatures:
         needed_columns.update(signature.keys())  # signature가 이미 딕셔너리이므로 직접 사용
+        print("signature: ", signature)
     
     needed_columns.add('label')
     data_subset = data[list(needed_columns)]
