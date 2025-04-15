@@ -34,7 +34,7 @@ def main():
     parser.add_argument('--eval_clustering_silhouette', type=str, default="n")
     parser.add_argument('--association', type=str, default="apriori")   # Association Rule
     parser.add_argument('--precision_underlimit', type=float, default=0.6)
-    parser.add_argument('--signature_ea', type=int, default=5)
+    parser.add_argument('--signature_ea', type=int, default=15)
     parser.add_argument('--association_metric', type=str, default='confidence')
 
     # Save the above in args
@@ -205,6 +205,11 @@ def main():
 
     # Save time information as a CSV
     time_save_csv_CS(file_type, file_number, Association_mathod, timing_info)
+
+
+    # mapped_info_file save
+    mapped_info_file_path = f"../Dataset/signature/{file_type}/{file_type}_{file_number}_mapped_info.csv"
+    mapped_info_df.to_csv(mapped_info_file_path, index=False)
 
 
     return association_result

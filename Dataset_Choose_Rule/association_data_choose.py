@@ -13,7 +13,7 @@ def file_path_line_association(file_type, file_number=1): # file_number is not u
     elif file_type == 'netML' :
         file_path = "../Dataset/load_dataset/netML/netML_dataset.csv"
     elif file_type in ['NSL-KDD', 'NSL_KDD']:
-        file_path = "../Dataset/load_dataset/NSL-KDD/train/train_payload_multiclass.csv"
+        file_path = "../Dataset/load_dataset/NSL-KDD/train/train_payload.csv"
     elif file_type in ['DARPA', 'DARPA98']:
         file_path = "../Dataset/load_dataset/DARPA98/train/DARPA98.csv"
     else:
@@ -33,7 +33,7 @@ def file_path_line_signatures(file_type, file_number=1): # file_number is not us
     elif file_type == 'netML' :
         file_path = "../Dataset/load_dataset/netML/netML_dataset.csv"
     elif file_type in ['NSL-KDD', 'NSL_KDD']:
-        file_path = "../Dataset/load_dataset/NSL-KDD/test/test_payload_multiclass.csv"
+        file_path = "../Dataset/load_dataset/NSL-KDD/test/test_payload.csv"
     elif file_type in ['DARPA', 'DARPA98']:
         file_path = "../Dataset/load_dataset/DARPA98/test/DARPA98.csv"
     else:
