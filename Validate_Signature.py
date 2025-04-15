@@ -87,6 +87,11 @@ def main():
 
     timing_info['2_anomal_judgment'] = time.time() - start
 
+    data = time_scalar_transfer(data, file_type)
+
+
+    start = time.time()
+
 
     mapped_info_path = f"../Dataset/signature/{file_type}/{file_type}_{file_number}_mapped_info.csv"
     association_result_path = f"../Dataset/signature/{file_type}/{file_type}_{association_rule}_{file_number}_{association_metric}_signature_train.csv"
@@ -94,9 +99,33 @@ def main():
     # Load data in an optimized way
     mapped_info_df = load_csv_safely('DARPA', mapped_info_path)
     association_result = pd.read_csv(association_result_path)
+
+    # Extract mapping information from mapped_info_df
+    category_mapping = {}
+    for column in mapped_info_df.columns:
+        mapping = {}
+        for value in mapped_info_df[column].dropna().unique():
+            if '=' in str(value):
+                original, group = value.split('=')
+                mapping[original.strip()] = int(group)
+        if mapping:
+            category_mapping[column] = mapping
     
+    # Map data to groups
+    group_mapped_df, _ = map_intervals_to_groups(data, category_mapping, list(category_mapping.keys()), regul='N')
+
+
+    timing_info['3_group_mapping'] = time.time() - start
+
+    
+    start = time.time()
+
+
     # Extract signatures from association_result
     signatures = association_result['signature_name'].apply(lambda x: eval(x)['Signature_dict']).tolist()
+
+
+     timing_info['4_signature_extraction'] = time.time() - start
     
     # 1. basic signature evaluation
     signature_result = signature_evaluate(mapped_info_df, signatures)
@@ -114,6 +143,9 @@ def main():
     print_signature_overfit_report(overfit_results)
 
 
+     timing_info['5_signature_evaluation'] = time.time() - start
+
+
     # Save all results to CSV
     save_validation_results(
         file_type=file_type,
@@ -123,6 +155,11 @@ def main():
         fp_results=fp_results,
         overfit_results=overfit_results
     )
+
+
+    timing_info['total_execution_time'] = time.time() - total_start_time
+
+    time_save_csv_CS(file_type, file_number, association_rule, timing_info)
 
 
 if __name__ == "__main__":
