@@ -22,11 +22,11 @@ def anomal_judgment_nonlabel(data_type, data):
     
 
 def anomal_judgment_label(data):
-    if data['Label']:
+    if 'Label' in data.columns:
         return data['Label']
-    elif data['label']:
+    elif 'label' in data.columns:
         return data['label']
     else:
-        print("label data error!")
-        return
+        print("label data error! No 'Label' or 'label' column found in the dataset")
+        return None
     
