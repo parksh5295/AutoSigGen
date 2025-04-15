@@ -9,7 +9,7 @@ payload_expanded1 = df1["payload"].str.split(" ", expand=True)
 payload_expanded2 = df2["payload"].str.split(" ", expand=True)
 
 payload_expanded1 = pd.concat([payload_expanded1, df1["label_encoded"]], axis=1)
-payload_expanded2 = pd.concat([payload_expanded2, df2["label_encoded"]], axis=1)
+payload_expanded2 = pd.concat([payload_expanded2, df2["binary_label"]], axis=1)
 
 # 3. 42 new column names
 columns_42 = [
