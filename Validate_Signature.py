@@ -21,7 +21,7 @@ from Dataset_Choose_Rule.save_csv import csv_association
 from Dataset_Choose_Rule.time_save import time_save_csv_CS
 import pandas as pd
 from Modules.Signature_evaluation_module import signature_evaluate
-from Rebuild_Method.FalsePositive_Check import evaluate_false_positives
+from Rebuild_Method.FalsePositive_Check import evaluate_false_positives, apply_signatures_to_dataset, calculate_fp_scores, summarize_fp_by_signature
 from Rebuild_Method.Overfiting_Check import evaluate_signature_overfitting, print_signature_overfit_report
 from Dataset_Choose_Rule.save_signature_validation import save_validation_results
 
@@ -130,17 +130,35 @@ def main():
     start = time.time()
 
     # 1. basic signature evaluation
-    signature_result = signature_evaluate(mapped_info_df, signatures)
+    signature_result = signature_evaluate(group_mapped_df, signatures)
     print("\n=== Basic Signature Evaluation ===")
     print(signature_result)
     
     # 2. False Positive check
-    fp_results = evaluate_false_positives(mapped_info_df, signatures)
+    formatted_signatures = [
+        {
+            'id': f'SIG_{idx}',
+            'name': f'Signature_{idx}',
+            'condition': lambda row, sig=sig: all(
+                row[k] == v for k, v in sig.items()
+            )
+        }
+        for idx, sig in enumerate(signatures)
+    ]
+
+    alerts_df = apply_signatures_to_dataset(group_mapped_df, formatted_signatures)
+    normal_data = group_mapped_df[group_mapped_df['label'] == 0].copy()
+    attack_free_alerts = apply_signatures_to_dataset(normal_data, formatted_signatures)
+
+    fp_scores = calculate_fp_scores(alerts_df, attack_free_alerts)
+    fp_summary = summarize_fp_by_signature(fp_scores)
+
     print("\n=== False Positive Analysis ===")
-    print(fp_results)
+    print("FP Summary by Signature:")
+    print(fp_summary)
     
     # 3. Overfitting check
-    overfit_results = evaluate_signature_overfitting(mapped_info_df, signatures)
+    overfit_results = evaluate_signature_overfitting(group_mapped_df, signatures)
     print("\n=== Overfitting Analysis ===")
     print_signature_overfit_report(overfit_results)
 
@@ -154,7 +172,7 @@ def main():
         file_number=file_number,
         association_rule=association_rule,
         basic_eval=signature_result,
-        fp_results=fp_results,
+        fp_results=fp_summary,
         overfit_results=overfit_results
     )
 
