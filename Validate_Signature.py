@@ -125,8 +125,10 @@ def main():
     signatures = association_result['signature_name'].apply(lambda x: eval(x)['Signature_dict']).tolist()
 
 
-     timing_info['4_signature_extraction'] = time.time() - start
+    timing_info['4_signature_extraction'] = time.time() - start
     
+    start = time.time()
+
     # 1. basic signature evaluation
     signature_result = signature_evaluate(mapped_info_df, signatures)
     print("\n=== Basic Signature Evaluation ===")
@@ -143,7 +145,7 @@ def main():
     print_signature_overfit_report(overfit_results)
 
 
-     timing_info['5_signature_evaluation'] = time.time() - start
+    timing_info['5_signature_evaluation'] = time.time() - start
 
 
     # Save all results to CSV
