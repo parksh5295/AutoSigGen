@@ -3,7 +3,7 @@
 import argparse
 import numpy as np
 import time
-from Dataset_Choose_Rule.association_data_choose import file_path_line_association
+from Dataset_Choose_Rule.association_data_choose import file_path_line_signatures
 from Dataset_Choose_Rule.choose_amount_dataset import file_cut
 from definition.Anomal_Judgment import anomal_judgment_label, anomal_judgment_nonlabel
 from utils.time_transfer import time_scalar_transfer
