@@ -111,8 +111,7 @@ def main():
     for column in mapped_info_df.columns:
         column_mappings = []
         for value in mapped_info_df[column].dropna():  # Process only non-NaN values
-            if '=' in str(value):  # If mapping information exists
-                # Use the original value and group number as is
+            if isinstance(value, str) and '=' in value:  # If mapping information exists
                 column_mappings.append(value)
         
         if column_mappings:  # If mapping exists, add it
