@@ -139,8 +139,6 @@ def main():
         raise KeyError("'label' column is missing in the mapped data. Please ensure the label column is preserved during mapping.")
 
     # Signature evaluation
-    signature_result = signature_evaluate(group_mapped_df, signatures)
-
     timing_info['3_group_mapping'] = time.time() - start
 
     
@@ -226,4 +224,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-    
