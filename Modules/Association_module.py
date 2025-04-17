@@ -21,7 +21,7 @@ def association_module(df, association_rule_choose, min_support, min_confidence,
     elif association_rule_choose in ['fpgrowth', 'FPGrowth']:
         # association_list = FPGrowth_rule(df, min_support, min_confidence)   # PyFim
         association_list = FPGrowth_rule(df, min_support, min_confidence, association_metric) # mlxtend
-    elif association_rule_choose == 'eclat':
+    elif association_rule_choose == ['Eclat', 'eclat']:
         association_list = eclat(df, min_support, min_confidence)
     elif association_rule_choose in ['rarm', 'RARM']:
         association_list = rarm(df, min_support, min_confidence)
