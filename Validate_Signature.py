@@ -94,7 +94,7 @@ def main():
 
 
     mapped_info_path = f"../Dataset/signature/{file_type}/{file_type}_{file_number}_mapped_info.csv"
-    association_result_path = f"../Dataset/signature/{file_type}/{file_type}_{association_rule}_{file_number}_{association_metric}_signature_train_ea{signature_ea}.csv"
+    association_result_path = f"../Dataset/signature/{file_type}/{file_type}_{Association_mathod}_{file_number}_{association_metric}_signature_train_ea{signature_ea}.csv"
     
     # Load data in an optimized way
     mapped_info_df = load_csv_safely('DARPA', mapped_info_path)
@@ -170,7 +170,7 @@ def main():
     save_validation_results(
         file_type=file_type,
         file_number=file_number,
-        association_rule=association_rule,
+        association_rule=Association_mathod,
         basic_eval=signature_result,
         fp_results=fp_summary,
         overfit_results=overfit_results
@@ -179,7 +179,7 @@ def main():
 
     timing_info['total_execution_time'] = time.time() - total_start_time
 
-    time_save_csv_VS(file_type, file_number, association_rule, timing_info)
+    time_save_csv_VS(file_type, file_number, Association_mathod, timing_info)
 
 
 if __name__ == "__main__":
