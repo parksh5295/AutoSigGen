@@ -98,6 +98,7 @@ def main():
     
     # Load data in an optimized way
     mapped_info_df = load_csv_safely('DARPA', mapped_info_path)
+    print("Loading association result from:", association_result_path)
     association_result = pd.read_csv(association_result_path)
 
     # Extract mapping information from mapped_info_df
@@ -134,12 +135,25 @@ def main():
 
 
     # Extract signatures from association_result
-    signatures = association_result['Verified_Signatures'].apply(lambda x: eval(x) if isinstance(x, str) else x).tolist()
+    signatures = []
+    for sig in association_result['Verified_Signatures']:
+        if isinstance(sig, str):
+            try:
+                # Convert string to dictionary
+                sig_dict = eval(sig)
+                if isinstance(sig_dict, dict):
+                    signatures.append(sig_dict)
+                elif isinstance(sig_dict, list):
+                    signatures.extend(sig_dict)
+            except:
+                print(f"Warning: Could not parse signature: {sig}")
+        elif isinstance(sig, dict):
+            signatures.append(sig)
+        else:
+            print(f"Warning: Unexpected signature format: {type(sig)}")
 
-
-    timing_info['4_signature_extraction'] = time.time() - start
-    
-    start = time.time()
+    print("\nProcessed signatures:")
+    print(signatures)
 
     # 1. basic signature evaluation
     signature_result = signature_evaluate(group_mapped_df, signatures)
