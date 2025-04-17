@@ -12,6 +12,8 @@ from Association_Rule.SaM import sam
 
 
 def association_module(df, association_rule_choose, min_support, min_confidence, association_metric):
+    association_list = []  # Initialize with empty list
+
     if association_rule_choose == 'conditional_probability':
         association_list = conditional_probability(df, min_confidence)
     elif association_rule_choose in ['apriori', 'Apriori']:
