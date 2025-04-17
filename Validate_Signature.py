@@ -18,7 +18,7 @@ from Modules.Signature_underlimit import under_limit
 from Evaluation.calculate_signature import calculate_signatures
 from Modules.Difference_sets import dict_list_difference
 from Dataset_Choose_Rule.save_csv import csv_association
-from Dataset_Choose_Rule.time_save import time_save_csv_CS
+from Dataset_Choose_Rule.time_save import time_save_csv_VS
 import pandas as pd
 from Modules.Signature_evaluation_module import signature_evaluate
 from Rebuild_Method.FalsePositive_Check import apply_signatures_to_dataset, calculate_fp_scores, summarize_fp_by_signature
@@ -179,7 +179,7 @@ def main():
 
     timing_info['total_execution_time'] = time.time() - total_start_time
 
-    time_save_csv_CS(file_type, file_number, association_rule, timing_info)
+    time_save_csv_VS(file_type, file_number, association_rule, timing_info)
 
 
 if __name__ == "__main__":
