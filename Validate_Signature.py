@@ -101,7 +101,12 @@ def main():
     association_result = pd.read_csv(association_result_path)
 
     # Extract mapping information from mapped_info_df
-    category_mapping = {}
+    category_mapping = {
+        'interval': {},
+        'categorical': pd.DataFrame(),
+        'binary': pd.DataFrame()
+    }
+
     for column in mapped_info_df.columns:
         mapping = {}
         for value in mapped_info_df[column].dropna().unique():
@@ -109,7 +114,12 @@ def main():
                 original, group = value.split('=')
                 mapping[original.strip()] = int(group)
         if mapping:
-            category_mapping[column] = mapping
+            # All columns are processed as intervals (already grouped data)
+            category_mapping['interval'][column] = mapping
+
+    # Create a DataFrame from the mapped data
+    interval_mapping_df = pd.DataFrame(category_mapping['interval'])
+    category_mapping['interval'] = interval_mapping_df
     
     # Map data to groups
     group_mapped_df, _ = map_intervals_to_groups(data, category_mapping, list(category_mapping.keys()), regul='N')
