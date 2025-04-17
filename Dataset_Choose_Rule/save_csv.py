@@ -39,13 +39,13 @@ def csv_compare_matrix_clustering(file_type, file_number, clusterint_method, met
     return metrics_df
 
 
-def csv_association(file_type, file_number, association_rule, association_result, association_metric):
+def csv_association(file_type, file_number, association_rule, association_result, association_metric, signature_ea):
     df = pd.DataFrame([association_result])
 
     save_path = f"../Dataset/signature/{file_type}/"
     ensure_directory_exists(save_path)  # Verify and create the folder
 
-    file_path = f"{save_path}{file_type}_{association_rule}_{file_number}_{association_metric}_signature_train.csv"
+    file_path = f"{save_path}{file_type}_{association_rule}_{file_number}_{association_metric}_signature_train_ea{signature_ea}.csv"
 
     df.to_csv(file_path, index=False)
     
