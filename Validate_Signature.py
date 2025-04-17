@@ -135,18 +135,28 @@ def main():
 
 
     # Extract signatures from association_result
-    signatures = []
-    for sig_info in association_result['signature_name']:
-        if isinstance(sig_info, str):
-            try:
-                # Evaluate string to Python object
-                sig_dict = eval(sig_info)
-                if isinstance(sig_dict, dict) and 'Signature_dict' in sig_dict:
-                    signatures.append(sig_dict['Signature_dict'])
-            except:
-                print(f"Error parsing signature: {sig_info}")
-
-    print("\nExtracted signatures:", signatures)
+    verified_sigs = association_result['Verified_Signatures'].iloc[0]  # Get the value from the first row
+    if isinstance(verified_sigs, str):
+        try:
+            # Evaluate string to Python object
+            sig_list = eval(verified_sigs)  # This will be a list
+            
+            # Extract Signature_dict from each signature
+            signatures = []
+            for sig in sig_list:
+                if isinstance(sig, dict) and 'signature_name' in sig:
+                    sig_info = sig['signature_name']
+                    if isinstance(sig_info, dict) and 'Signature_dict' in sig_info:
+                        signatures.append(sig_info['Signature_dict'])
+            
+            print(f"Found {len(signatures)} valid signatures")
+            
+        except Exception as e:
+            print(f"Error parsing signatures: {e}")
+            signatures = []
+    else:
+        print(f"Unexpected type for Verified_Signatures: {type(verified_sigs)}")
+        signatures = []
 
     # 1. basic signature evaluation
     if signatures:
