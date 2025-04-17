@@ -124,9 +124,22 @@ def main():
     # Create data_list - list of DataFrames with empty columns
     data_list = [pd.DataFrame(), pd.DataFrame()]  # Add empty DataFrames at the beginning and end
 
+    # Save label column separately before mapping
+    label_series = data['label'] if 'label' in data.columns else None
+
     # Perform mapping
     group_mapped_df, _ = map_intervals_to_groups(data, category_mapping, data_list, regul='N')
 
+    # Add label column back after mapping
+    if label_series is not None:
+        group_mapped_df['label'] = label_series
+
+    # Check if 'label' column exists in mapped data
+    if 'label' not in group_mapped_df.columns:
+        raise KeyError("'label' column is missing in the mapped data. Please ensure the label column is preserved during mapping.")
+
+    # Signature evaluation
+    signature_result = signature_evaluate(group_mapped_df, signatures)
 
     timing_info['3_group_mapping'] = time.time() - start
 
