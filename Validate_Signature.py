@@ -107,13 +107,13 @@ def main():
         'binary': pd.DataFrame()
     }
 
+    # Process interval mapping
     for column in mapped_info_df.columns:
         column_mappings = []
-        for idx, value in mapped_info_df[column].items():
-            if pd.notna(value):  # If value is not NaN
-                # Create a string by connecting the index and value with '='
-                mapping_str = f"{idx}={int(value)}"
-                column_mappings.append(mapping_str)
+        for value in mapped_info_df[column].dropna():  # Process only non-NaN values
+            if '=' in str(value):  # If mapping information exists
+                # Use the original value and group number as is
+                column_mappings.append(value)
         
         if column_mappings:  # If mapping exists, add it
             category_mapping['interval'][column] = pd.Series(column_mappings)
