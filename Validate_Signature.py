@@ -136,29 +136,23 @@ def main():
 
     # Extract signatures from association_result
     signatures = []
-    for sig in association_result['Verified_Signatures']:
-        if isinstance(sig, str):
+    for sig_info in association_result['signature_name']:
+        if isinstance(sig_info, str):
             try:
-                # Convert string to dictionary
-                sig_dict = eval(sig)
-                if isinstance(sig_dict, dict):
-                    signatures.append(sig_dict)
-                elif isinstance(sig_dict, list):
-                    signatures.extend(sig_dict)
+                # Evaluate string to Python object
+                sig_dict = eval(sig_info)
+                if isinstance(sig_dict, dict) and 'Signature_dict' in sig_dict:
+                    signatures.append(sig_dict['Signature_dict'])
             except:
-                print(f"Warning: Could not parse signature: {sig}")
-        elif isinstance(sig, dict):
-            signatures.append(sig)
-        else:
-            print(f"Warning: Unexpected signature format: {type(sig)}")
+                print(f"Error parsing signature: {sig_info}")
 
-    print("\nProcessed signatures:")
-    print(signatures)
+    print("\nExtracted signatures:", signatures)
 
     # 1. basic signature evaluation
-    signature_result = signature_evaluate(group_mapped_df, signatures)
-    print("\n=== Basic Signature Evaluation ===")
-    print(signature_result)
+    if signatures:
+        signature_result = signature_evaluate(group_mapped_df, signatures)
+    else:
+        print("Error: No valid signatures found")
     
     # 2. False Positive check
     formatted_signatures = [
