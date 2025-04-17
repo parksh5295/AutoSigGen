@@ -120,8 +120,11 @@ def main():
     # Convert to DataFrame
     category_mapping['interval'] = pd.DataFrame(category_mapping['interval'])
 
-    # Map data to groups
-    group_mapped_df, _ = map_intervals_to_groups(data, category_mapping, list(category_mapping.keys()), regul='N')
+    # Create data_list - list of DataFrames with empty columns
+    data_list = [pd.DataFrame(), pd.DataFrame()]  # Add empty DataFrames at the beginning and end
+
+    # Perform mapping
+    group_mapped_df, _ = map_intervals_to_groups(data, category_mapping, data_list, regul='N')
 
 
     timing_info['3_group_mapping'] = time.time() - start
