@@ -108,19 +108,19 @@ def main():
     }
 
     for column in mapped_info_df.columns:
-        mapping = {}
-        for value in mapped_info_df[column].dropna().unique():
-            if '=' in str(value):
-                original, group = value.split('=')
-                mapping[original.strip()] = int(group)
-        if mapping:
-            # All columns are processed as intervals (already grouped data)
-            category_mapping['interval'][column] = mapping
+        column_mappings = []
+        for idx, value in mapped_info_df[column].items():
+            if pd.notna(value):  # If value is not NaN
+                # Create a string by connecting the index and value with '='
+                mapping_str = f"{idx}={int(value)}"
+                column_mappings.append(mapping_str)
+        
+        if column_mappings:  # If mapping exists, add it
+            category_mapping['interval'][column] = pd.Series(column_mappings)
 
-    # Create a DataFrame from the mapped data
-    interval_mapping_df = pd.DataFrame(category_mapping['interval'])
-    category_mapping['interval'] = interval_mapping_df
-    
+    # Convert to DataFrame
+    category_mapping['interval'] = pd.DataFrame(category_mapping['interval'])
+
     # Map data to groups
     group_mapped_df, _ = map_intervals_to_groups(data, category_mapping, list(category_mapping.keys()), regul='N')
 
