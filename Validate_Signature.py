@@ -134,7 +134,7 @@ def main():
 
 
     # Extract signatures from association_result
-    signatures = association_result['signature_name'].apply(lambda x: eval(x)['Signature_dict']).tolist()
+    signatures = association_result['Verified_Signatures'].apply(lambda x: eval(x) if isinstance(x, str) else x).tolist()
 
 
     timing_info['4_signature_extraction'] = time.time() - start
