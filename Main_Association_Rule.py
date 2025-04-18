@@ -129,8 +129,8 @@ def main():
     confidence_values = np.arange(0.1, 1.0, 0.05)
     best_recall = 0
 
-    anomal_grouped_data = remove_rare_columns(anomal_grouped_data, min_support)
-    nomal_grouped_data = remove_rare_columns(nomal_grouped_data, min_support)
+    anomal_grouped_data = remove_rare_columns(anomal_grouped_data, min_support, file_type)
+    nomal_grouped_data = remove_rare_columns(nomal_grouped_data, min_support, file_type)
 
     timing_info['4_association_setting'] = time.time() - start
 
