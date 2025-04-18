@@ -117,8 +117,12 @@ def main():
     # 4. Set association statements (confidence ratios, etc.)
     start = time.time()
 
-    # I need to let them choose if they want confidence to be selected automatically.
-    min_support = 0.1
+    # Use a lower min_support value for NSL-KDD
+    if file_type in ['NSL-KDD', 'NSL_KDD']:
+        min_support = 0.05  # Low support values for NSL-KDD
+    else:
+        min_support = 0.1   # Existing support values for other datasets
+
     best_confidence = 0.8    # Initialize the variables to change
     # Considering anomalies and nomals simultaneously
 
