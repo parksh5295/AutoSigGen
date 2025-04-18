@@ -1,4 +1,7 @@
-def evaluate_signature_overfitting(train_alerts, test_alerts):
+import pandas as pd
+
+
+def evaluate_signature_overfitting(data_df, signatures):
     """
     Evaluate whether a signature is overfitted based on its performance
     across training and testing datasets.
@@ -16,26 +19,29 @@ def evaluate_signature_overfitting(train_alerts, test_alerts):
         }
 
     report = {}
-    all_signatures = set(train_alerts['signature_id']) | set(test_alerts['signature_id'])
-
-    for sig in all_signatures:
-        train_df = train_alerts[train_alerts['signature_id'] == sig]
-        test_df = test_alerts[test_alerts['signature_id'] == sig]
-
-        train_metrics = compute_fp_tp(train_df)
-        test_metrics = compute_fp_tp(test_df)
-
-        delta_tpr = train_metrics['tpr'] - test_metrics['tpr']
-        delta_fpr = test_metrics['fpr'] - train_metrics['fpr']
-
-        overfit = delta_tpr > 0.2 or delta_fpr > 0.2
-
-        report[sig] = {
-            'train': train_metrics,
-            'test': test_metrics,
-            'delta_tpr': round(delta_tpr, 3),
-            'delta_fpr': round(delta_fpr, 3),
-            'overfit_risk': overfit
+    
+    # Perform an evaluation for each signature
+    for idx, signature in enumerate(signatures, 1):
+        sig_name = f"Signature_{idx}"
+        
+        # Apply a signature to the dataset
+        formatted_sig = {
+            'id': f'SIG_{idx}',
+            'name': sig_name,
+            'condition': lambda row, sig=signature: all(
+                row[k] == v for k, v in sig.items()
+            )
+        }
+        
+        # Create alerts
+        alerts = apply_signatures_to_dataset(data_df, [formatted_sig])
+        
+        # Calculate performance metrics
+        metrics = compute_fp_tp(alerts)
+        
+        report[sig_name] = {
+            'metrics': metrics,
+            'overfit_risk': metrics['fpr'] > 0.2  # If FPR is 20% or more, consider it overfitting
         }
 
     return report
@@ -47,12 +53,23 @@ def print_signature_overfit_report(report, signature_names=None):
     for sig_id, metrics in report.items():
         name = signature_names.get(sig_id, f"Signature {sig_id}") if signature_names else f"Signature {sig_id}"
         print(f"{name}:")
-        print(f"  Train TPR: {metrics['train']['tpr']:.2f}, FPR: {metrics['train']['fpr']:.2f}")
-        print(f"  Test  TPR: {metrics['test']['tpr']:.2f}, FPR: {metrics['test']['fpr']:.2f}")
-        print(f"  Delta TPR: {metrics['delta_tpr']:.2f}, Delta FPR: {metrics['delta_fpr']:.2f}")
+        print(f"  TPR: {metrics['metrics']['tpr']:.2f}, FPR: {metrics['metrics']['fpr']:.2f}")
         print(f"  Overfit Risk: {'YES' if metrics['overfit_risk'] else 'NO'}")
         print("-" * 60)
 
 # Example usage (assuming train_alerts and test_alerts are available DataFrames)
 # report = evaluate_signature_overfitting(train_alerts, test_alerts)
 # print_signature_overfit_report(report, signature_names={9001: 'ICMP Zero Bytes', 9002: 'Low SYN Packet'})
+
+def evaluate_single_signature(df, signature):
+    """
+    Apply a single signature to a dataframe and return matching rows
+    """
+    conditions = []
+    for feature, value in signature.items():
+        if isinstance(value, (list, tuple)):
+            conditions.append(df[feature].between(value[0], value[1]))
+        else:
+            conditions.append(df[feature] == value)
+    
+    return pd.concat(conditions, axis=1).all(axis=1)
