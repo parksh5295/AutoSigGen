@@ -21,9 +21,10 @@ from Dataset_Choose_Rule.save_csv import csv_association
 from Dataset_Choose_Rule.time_save import time_save_csv_VS
 import pandas as pd
 from Modules.Signature_evaluation_module import signature_evaluate
-from Rebuild_Method.FalsePositive_Check import apply_signatures_to_dataset, calculate_fp_scores, summarize_fp_by_signature
+from Rebuild_Method.FalsePositive_Check import apply_signatures_to_dataset, calculate_fp_scores, summarize_fp_by_signature, evaluate_false_positives
 from Rebuild_Method.Overfiting_Check import evaluate_signature_overfitting, print_signature_overfit_report
 from Dataset_Choose_Rule.save_signature_validation import save_validation_results
+import ast  # Added for ast.literal_eval
 
 
 def main():
@@ -147,11 +148,11 @@ def main():
 
     # Extract signatures from association_result
     signatures = []
-    verified_sigs = association_result['Verified_Signatures'].iloc[0]  # Get the value from the first row
-    if isinstance(verified_sigs, str):
+    verified_sigs = ast.literal_eval(association_result['Verified_Signatures'].iloc[0])
+    if isinstance(verified_sigs, list):
         try:
             # Evaluate string to Python object
-            sig_list = eval(verified_sigs)  # This will be a list
+            sig_list = verified_sigs  # This will be a list
             
             # Extract Signature_dict from each signature
             for sig in sig_list:
@@ -186,6 +187,16 @@ def main():
     ]
 
     alerts_df = apply_signatures_to_dataset(group_mapped_df, formatted_signatures)
+    
+    # Add new FP check logic
+    fp_results = evaluate_false_positives(
+        alerts_df,
+        time_window=3600,
+        alert_threshold=3,
+        pattern_threshold=0.7
+    )
+    
+    # Keep the original FP check logic
     normal_data = group_mapped_df[group_mapped_df['label'] == 0].copy()
     attack_free_alerts = apply_signatures_to_dataset(normal_data, formatted_signatures)
 
@@ -193,8 +204,10 @@ def main():
     fp_summary = summarize_fp_by_signature(fp_scores)
 
     print("\n=== False Positive Analysis ===")
-    print("FP Summary by Signature:")
+    print("Traditional FP Summary by Signature:")
     print(fp_summary)
+    print("\nEnhanced FP Analysis Results:")
+    print(fp_results[['signature_id', 'excessive_alerts', 'ip_pattern_score', 'likely_false_positive']])
     
     # 3. Overfitting check
     overfit_results = evaluate_signature_overfitting(group_mapped_df, signatures)

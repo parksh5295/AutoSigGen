@@ -8,16 +8,25 @@ def evaluate_signature_overfitting(data_df, signatures):
     across training and testing datasets.
     """
     def compute_fp_tp(df):
-        total = len(df)
-        tp = len(df[df['original_label'] != 'normal'])
-        fp = len(df[df['original_label'] == 'normal'])
-        return {
-            'total': total,
-            'tp': tp,
-            'fp': fp,
-            'tpr': tp / total if total > 0 else 0,
-            'fpr': fp / total if total > 0 else 0
-        }
+        # NSL-KDD can use ‘label’ or ‘class’ columns
+        label_column = None
+        possible_label_columns = ['original_label', 'label', 'class', 'Class']
+        
+        for col in possible_label_columns:
+            if col in df.columns:
+                label_column = col
+                break
+        
+        if label_column is None:
+            print("Available columns:", df.columns.tolist())
+            raise KeyError("No label column found in the dataset. Expected one of: " + str(possible_label_columns))
+        
+        # NSL-KDD의 경우 'normal'이 아닌 다른 값(예: '0' 또는 'normal.')일 수 있음
+        normal_values = ['normal', '0', 'normal.', 'Normal', 'benign', 'BENIGN']
+        tp = len(df[~df[label_column].isin(normal_values)])
+        fp = len(df[df[label_column].isin(normal_values)])
+        
+        return tp, fp
 
     report = {}
     
@@ -42,7 +51,7 @@ def evaluate_signature_overfitting(data_df, signatures):
         
         report[sig_name] = {
             'metrics': metrics,
-            'overfit_risk': metrics['fpr'] > 0.2  # If FPR is 20% or more, consider it overfitting
+            'overfit_risk': metrics[1] / (metrics[0] + metrics[1]) > 0.2  # If FPR is 20% or more, consider it overfitting
         }
 
     return report
@@ -54,7 +63,7 @@ def print_signature_overfit_report(report, signature_names=None):
     for sig_id, metrics in report.items():
         name = signature_names.get(sig_id, f"Signature {sig_id}") if signature_names else f"Signature {sig_id}"
         print(f"{name}:")
-        print(f"  TPR: {metrics['metrics']['tpr']:.2f}, FPR: {metrics['metrics']['fpr']:.2f}")
+        print(f"  TPR: {metrics['metrics'][0] / (metrics['metrics'][0] + metrics['metrics'][1]):.2f}, FPR: {metrics['metrics'][1] / (metrics['metrics'][0] + metrics['metrics'][1]):.2f}")
         print(f"  Overfit Risk: {'YES' if metrics['overfit_risk'] else 'NO'}")
         print("-" * 60)
 
