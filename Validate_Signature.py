@@ -131,13 +131,13 @@ def main():
     # Perform mapping
     group_mapped_df, _ = map_intervals_to_groups(data, category_mapping, data_list, regul='N')
 
-    # Add label column back after mapping
-    if label_series is not None:
-        group_mapped_df['label'] = label_series
+    # Add the label from the source data to group_mapped_df
+    group_mapped_df['label'] = data['label']
 
-    # Check if 'label' column exists in mapped data
-    if 'label' not in group_mapped_df.columns:
-        raise KeyError("'label' column is missing in the mapped data. Please ensure the label column is preserved during mapping.")
+    print("\nVerifying label addition:")
+    print(f"Original data shape: {data.shape}")
+    print(f"Mapped data shape: {group_mapped_df.shape}")
+    print(f"Label column exists in mapped data: {'label' in group_mapped_df.columns}")
 
     # Signature evaluation
     timing_info['3_group_mapping'] = time.time() - start
