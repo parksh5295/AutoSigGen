@@ -4,57 +4,57 @@ from Rebuild_Method.FalsePositive_Check import apply_signatures_to_dataset
 
 def evaluate_signature_overfitting(data_df, signatures):
     """
-    Evaluate whether a signature is overfitted based on its performance
-    across training and testing datasets.
+    Evaluate signature overfitting using the entire dataset.
     """
-    def compute_fp_tp(df):
-        # NSL-KDD can use ‘label’ or ‘class’ columns
-        label_column = None
-        possible_label_columns = ['original_label', 'label', 'class', 'Class']
-        
-        for col in possible_label_columns:
-            if col in df.columns:
-                label_column = col
-                break
-        
-        if label_column is None:
-            print("Available columns:", df.columns.tolist())
-            raise KeyError("No label column found in the dataset. Expected one of: " + str(possible_label_columns))
-        
-        # NSL-KDD의 경우 'normal'이 아닌 다른 값(예: '0' 또는 'normal.')일 수 있음
-        normal_values = ['normal', '0', 'normal.', 'Normal', 'benign', 'BENIGN']
-        tp = len(df[~df[label_column].isin(normal_values)])
-        fp = len(df[df[label_column].isin(normal_values)])
-        
-        return tp, fp
-
-    report = {}
+    alerts = []
     
-    # Perform an evaluation for each signature
-    for idx, signature in enumerate(signatures, 1):
-        sig_name = f"Signature_{idx}"
-        
-        # Apply a signature to the dataset
-        formatted_sig = {
-            'id': f'SIG_{idx}',
-            'name': sig_name,
-            'condition': lambda row, sig=signature: all(
-                row[k] == v for k, v in sig.items()
+    # Ensure label column exists in input df
+    label_col = None
+    for col in ['label', 'class', 'Class']:
+        if col in df.columns:
+            label_col = col
+            break
+    if label_col is None:
+        print("Available columns in df for overfitting check:", df.columns.tolist())
+        raise KeyError("No label column found in the input DataFrame for overfitting check.")
+    
+    for i, row in df.iterrows():
+        for sig_idx, sig in enumerate(signatures):
+            # signature_name에서 Signature_dict 추출
+            sig_dict = sig.get('Signature_dict', sig)  # Handle different signature formats
+            
+            match = all(
+                k in row and row[k] == v 
+                for k, v in sig_dict.items()
             )
-        }
-        
-        # Create alerts
-        alerts = apply_signatures_to_dataset(data_df, [formatted_sig])
-        
-        # Calculate performance metrics
-        metrics = compute_fp_tp(alerts)
-        
-        report[sig_name] = {
-            'metrics': metrics,
-            'overfit_risk': metrics[1] / (metrics[0] + metrics[1]) > 0.2  # If FPR is 20% or more, consider it overfitting
-        }
+            
+            if match:
+                alerts.append({
+                    'timestamp': pd.Timestamp.now(), # Dummy timestamp
+                    'signature_id': f"SIG_{sig_idx}",
+                    'original_label': row[label_col]  # *** 여기가 중요: 원본 레이블 포함 ***
+                })
+                break  # Apply only one signature per row
+    
+    alerts_df = pd.DataFrame(alerts)
+    
+    if alerts_df.empty:
+        print("No alerts generated during overfitting check.")
+        return {'tp': 0, 'fp': 0, 'fn': 0, 'tn': 0, 'precision': 0, 'recall': 0, 'f1': 0}
 
-    return report
+    # Check if 'original_label' is included
+    if 'original_label' not in alerts_df.columns:
+         print("Error: 'original_label' not found in alerts_df within evaluate_signature_overfitting")
+         print("Alerts columns:", alerts_df.columns.tolist())
+         # Temporary solution to add label (should be included above)
+         alerts_df['original_label'] = 'unknown' 
+    
+    # Call compute_fp_tp here
+    metrics = compute_fp_tp(alerts_df) 
+    
+    # Return performance metrics
+    # ... (existing return logic) ...
+    return metrics # Example, actual return value may differ
 
 
 def print_signature_overfit_report(report, signature_names=None):
