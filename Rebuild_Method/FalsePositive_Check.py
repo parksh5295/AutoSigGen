@@ -13,15 +13,19 @@ def apply_signatures_to_dataset(df, signatures, base_time=datetime(2025, 4, 14, 
         for sig in signatures:
             try:
                 if sig['condition'](row):
-                    alerts.append({
+                    alert = {
                         'timestamp': base_time + timedelta(seconds=i * 2),
                         'src_ip': f"192.168.1.{random.randint(1, 254)}",
                         'dst_ip': f"10.0.0.{random.randint(1, 254)}",
                         'signature_id': sig['id'],
                         'signature_name': sig['name'],
-                        'original_label': row.get('label', 'unknown')
-                    })
-                    break  # Apply only one signature
+                    }
+                    # Copy all label columns from the original data
+                    for label_col in ['label', 'class', 'Class']:
+                        if label_col in df.columns:
+                            alert[label_col] = row[label_col]
+                    alerts.append(alert)
+                    break
             except:
                 continue  # To avoid conditional errors
 
