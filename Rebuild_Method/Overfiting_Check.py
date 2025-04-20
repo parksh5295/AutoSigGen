@@ -35,109 +35,53 @@ def compute_fp_tp(df):
     return tp, fp
 
 
-def evaluate_signature_overfitting(df: pd.DataFrame, signatures: list):
+def evaluate_signature_overfitting(total_signatures_count: int, high_fp_signatures_count: int):
     """
-    Evaluate signature overfitting using the entire dataset.
+    Calculate overfitting score based on the ratio of high FP signatures to total signatures.
+    No label usage.
+
+    Args:
+        total_signatures_count: The total number of signatures evaluated.
+        high_fp_signatures_count: The number of signatures identified as 'high FP' in the FalsePositive_Check step.
+
+    Returns:
+        dict: Overfitting-related information (score, total count, FP count)
     """
-    print(f"\nOverfitting check started - input data shape: {df.shape}")
-    print(f"Input data columns: {df.columns.tolist()}")
+    print(f"\nOverfitting score calculation started:")
+    print(f"  - Total signatures count: {total_signatures_count}")
+    print(f"  - High FP signatures count: {high_fp_signatures_count}")
 
-    alerts = []
-    
-    # Ensure label column exists in input df
-    label_col = None
-    for col in ['label', 'class', 'Class']:
-        if col in df.columns:
-            label_col = col
-            print(f"Found label column '{label_col}' in input data.")
-            break
-    if label_col is None:
-        print("Error: Label column not found in input DataFrame 'df' for overfitting check.")
-        raise KeyError(f"Label column ({['label', 'class', 'Class']}) not found in input DataFrame.")
-    
-    print(f"Generating alerts for {len(signatures)} signatures...")
-    for i, row in df.iterrows():
-        for sig_idx, sig in enumerate(signatures):
-            # signature_name에서 Signature_dict 추출
-            sig_dict = sig.get('Signature_dict', sig)  # Handle different signature formats
-            
-            match = all(
-                k in row and row[k] == v 
-                for k, v in sig_dict.items()
-            )
-            
-            if match:
-                alerts.append({
-                    'timestamp': pd.Timestamp.now(), # Dummy timestamp
-                    'signature_id': f"SIG_{sig_idx}",
-                    'original_label': row[label_col]  # *** 여기가 중요: 원본 레이블 포함 ***
-                })
-                break  # Apply only one signature per row
-    print(f"Alert generation complete. Total alerts: {len(alerts)}")
-    
-    alerts_df = pd.DataFrame(alerts)
-    
-    if alerts_df.empty:
-        print("No alerts generated during overfitting check.")
-        return {'tp': 0, 'fp': 0, 'fn': 0, 'tn': 0, 'precision': 0, 'recall': 0, 'f1': 0}
+    if total_signatures_count <= 0:
+        print("  - Total signatures count is 0, so score calculation is not possible.")
+        overfitting_score = 0.0 # or None or NaN
+    else:
+        # Calculate overfitting score (high FP ratio)
+        overfitting_score = high_fp_signatures_count / total_signatures_count
+        print(f"  - Calculated overfitting score (high FP ratio): {overfitting_score:.4f}")
 
-    # Check if 'original_label' is included
-    if 'original_label' not in alerts_df.columns:
-         print("Fatal error: 'original_label' column not found in generated alerts_df!")
-         raise ValueError("'original_label' not found in alerts_df.")
-    
-    # Call compute_fp_tp here
-    tp, fp = compute_fp_tp(alerts_df) 
-    
-    # Calculate FN, TN based on original DataFrame 'df'
-    # (Assumes normal=0, non-normal=0. Modify if needed)
-    try:
-        # Compare based on label type
-        if pd.api.types.is_numeric_dtype(df[label_col]):
-            total_positives_actual = len(df[df[label_col] != 0])
-            total_negatives_actual = len(df[df[label_col] == 0])
-        else:
-            # Process string 'normal' etc. (convert to lowercase)
-            normal_str_values = {str(v).lower() for v in normal_values}
-            is_actual_normal = df[label_col].astype(str).str.lower().isin(normal_str_values)
-            total_positives_actual = len(df[~is_actual_normal])
-            total_negatives_actual = len(df[is_actual_normal])
-    except Exception as e:
-         print(f"Error calculating actual positives/negatives: {e}")
-         total_positives_actual = 0
-         total_negatives_actual = len(df) # Fallback
-
-    fn = max(0, total_positives_actual - tp) # False Negatives
-    tn = max(0, total_negatives_actual - fp) # True Negatives
-
-    # Calculate Precision, Recall, F1
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-
-    print(f"Overfitting check results: TP={tp}, FP={fp}, FN={fn}, TN={tn}")
-    print(f"Precision={precision:.4f}, Recall={recall:.4f}, F1-Score={f1:.4f}")
-
-    metrics_results = {
-        'tp': tp, 'fp': fp, 'fn': fn, 'tn': tn,
-        'precision': precision, 'recall': recall, 'f1': f1
+    results = {
+        'overfitting_score': overfitting_score,
+        'total_signatures': total_signatures_count,
+        'high_fp_signatures': high_fp_signatures_count
     }
-    
-    return metrics_results
+    return results
 
 
 def print_signature_overfit_report(results):
-    print("Overfitting Report:")
+    """
+    Print the new overfitting score results in the specified format.
+    """
+    print("Overfitting Score Report:")
     if isinstance(results, dict):
-        for key, value in results.items():
-            if isinstance(value, float):
-                print(f"  {key.capitalize()}: {value:.4f}")
-            else:
-                print(f"  {key.capitalize()}: {value}")
-    elif isinstance(results, pd.DataFrame):
-         print(results.to_string())
+        score = results.get('overfitting_score', 'N/A')
+        total_sigs = results.get('total_signatures', 'N/A')
+        fp_sigs = results.get('high_fp_signatures', 'N/A')
+
+        print(f"  - Overfitting Score (High FP Ratio): {score:.4f}" if isinstance(score, float) else f"  - Overfitting Score (High FP Ratio): {score}")
+        print(f"  - Total Signatures Considered: {total_sigs}")
+        print(f"  - High FP Signatures Identified: {fp_sigs}")
     else:
-        print(results)
+        print("  - Invalid results format provided.")
 
 # Example usage (assuming train_alerts and test_alerts are available DataFrames)
 # report = evaluate_signature_overfitting(train_alerts, test_alerts)

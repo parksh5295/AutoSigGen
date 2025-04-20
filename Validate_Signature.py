@@ -30,6 +30,7 @@ import os
 import random # Add random import 
 from datetime import datetime, timedelta # Add datetime import 
 
+KNOWN_FP_FILE = "known_high_fp_signatures.json" # Known FP signature save file
 
 def ensure_directory_exists(filepath):
     directory = os.path.dirname(filepath)
@@ -221,9 +222,17 @@ def main():
     print(fp_results[['signature_id', 'excessive_alerts', 'ip_pattern_score', 'likely_false_positive']])
     
     # 3. Overfitting check
-    overfit_results = evaluate_signature_overfitting(group_mapped_df, signatures)
-    print("\n=== Overfitting Analysis ===")
-    print_signature_overfit_report(overfit_results)
+    high_fp_sig_ids = set(high_fp_sigs['signature_id'].tolist()) # Calculated in the previous step
+    high_fp_signatures_count = len(high_fp_sig_ids)
+    total_signatures_count = len(initial_signatures_dicts) # Total number of initial signatures
+
+    print("\n=== Overfitting score calculation ===") # Step name changed
+    # Modified function call (pass count)
+    overfit_results = evaluate_signature_overfitting(
+        total_signatures_count=total_signatures_count,
+        high_fp_signatures_count=high_fp_signatures_count
+    )
+    print_signature_overfit_report(overfit_results) # modified report function call
 
 
     timing_info['5_signature_evaluation'] = time.time() - start
@@ -243,6 +252,102 @@ def main():
     timing_info['total_execution_time'] = time.time() - total_start_time
 
     time_save_csv_VS(file_type, file_number, Association_mathod, timing_info)
+
+    # Load a known FP signature
+    known_fp_sig_dicts = []
+    if os.path.exists(KNOWN_FP_FILE):
+        try:
+            with open(KNOWN_FP_FILE, 'r') as f:
+                known_fp_sig_dicts = json.load(f)
+            print(f"Loaded {len(known_fp_sig_dicts)} known high-FP signatures from {KNOWN_FP_FILE}")
+        except json.JSONDecodeError:
+            print(f"Warning: Could not decode JSON from {KNOWN_FP_FILE}. Starting with empty list.")
+        except Exception as e:
+            print(f"Warning: Error loading {KNOWN_FP_FILE}: {e}. Starting with empty list.")
+
+    # Create current signature map (ID -> Dict)
+    current_signatures_map = {
+        f"SIG_{idx}": sig_dict
+        for idx, sig_dict in enumerate(signatures)
+    }
+
+    # --- FP analysis (modified function call) ---
+    print("\n=== False Positive analysis (Enhanced + Superset Logic) ===")
+    fp_results_detailed = evaluate_false_positives(
+        alerts_df.copy(),
+        current_signatures_map=current_signatures_map, # Pass current signature map
+        known_fp_sig_dicts=known_fp_sig_dicts,      # Pass known FP list
+        belief_threshold=0.5,                       # Default threshold
+        superset_strictness=0.9,                    # Superset strictness
+        attack_free_df=attack_free_alerts          # Pass attack_free_df for UFP calculation
+    )
+    fp_summary_enhanced = summarize_fp_results(fp_results_detailed) # Call summary function
+
+    print("Enhanced FP analysis results (summary):")
+    if not fp_summary_enhanced.empty:
+        print(fp_summary_enhanced.to_string())
+    else:
+        print("Enhanced FP summary results not found.")
+    # ---------------------------------
+
+    # --- Identify and report high FP signatures ---
+    # Use 'final_likely_fp' returned from summarize_fp_results
+    newly_identified_fp = fp_summary_enhanced[fp_summary_enhanced['final_likely_fp']]
+    newly_identified_fp_ids = set(newly_identified_fp['signature_id'].tolist())
+    newly_identified_fp_dicts = [
+        current_signatures_map[sig_id] for sig_id in newly_identified_fp_ids if sig_id in current_signatures_map
+    ]
+
+    print(f"\nSignatures identified as high FP in this run: {len(newly_identified_fp_ids)}")
+    if newly_identified_fp_ids:
+        print("High FP signature IDs:", ", ".join(sorted(list(newly_identified_fp_ids))))
+        # Print detailed information (optional)
+        # print("Detailed information:")
+        # print(newly_identified_fp)
+
+    # --- Update and save known FP list ---
+    # Merge existing list with newly identified list (remove duplicates)
+    # Dictionaries cannot be directly converted to sets, so we need to use a different method
+    updated_known_fp_sig_dicts = known_fp_sig_dicts[:] # Create a copy
+    existing_fp_strings = {json.dumps(d, sort_keys=True) for d in known_fp_sig_dicts}
+    added_count = 0
+    for new_fp_dict in newly_identified_fp_dicts:
+         new_fp_string = json.dumps(new_fp_dict, sort_keys=True)
+         if new_fp_string not in existing_fp_strings:
+             updated_known_fp_sig_dicts.append(new_fp_dict)
+             existing_fp_strings.add(new_fp_string)
+             added_count += 1
+
+    if added_count > 0:
+        print(f"{added_count} new high FP signatures saved.")
+        try:
+            with open(KNOWN_FP_FILE, 'w') as f:
+                json.dump(updated_known_fp_sig_dicts, f, indent=4)
+            print(f"Updated known FP signature list saved: {KNOWN_FP_FILE}")
+        except Exception as e:
+            print(f"Error: Failed to save known FP signature list: {e}")
+    else:
+        print("No new high FP signatures to save.")
+    # ---------------------------------------
+
+    # --- Filter signatures (remove high FP) ---
+    # Use newly_identified_fp_ids
+    filtered_signatures_dicts = [
+        sig_dict for idx, sig_dict in enumerate(signatures)
+        if f"SIG_{idx}" not in newly_identified_fp_ids
+    ]
+    print(f"Signatures removed (high FP): {len(filtered_signatures_dicts)}")
+    # -----------------------------------
+
+    # ... (After removal, performance evaluation and comparison - keep previous answer code) ...
+    # Calculate initial_overfit_results
+    # Calculate filtered_overfit_results
+    # Print performance comparison
+
+    # ... (Save final results - keep previous answer code) ...
+    # Consider passing fp_results=fp_summary_enhanced to save_validation_results
+
+    # ... (Save timing information - keep previous answer code) ...
 
 
 if __name__ == "__main__":
