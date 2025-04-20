@@ -21,10 +21,21 @@ from Dataset_Choose_Rule.save_csv import csv_association
 from Dataset_Choose_Rule.time_save import time_save_csv_VS
 import pandas as pd
 from Modules.Signature_evaluation_module import signature_evaluate
-from Rebuild_Method.FalsePositive_Check import apply_signatures_to_dataset, calculate_fp_scores, summarize_fp_by_signature, evaluate_false_positives
+from Rebuild_Method.FalsePositive_Check import apply_signatures_to_dataset, calculate_fp_scores, summarize_fp_by_signature, evaluate_false_positives, summarize_fp_results
 from Rebuild_Method.Overfiting_Check import evaluate_signature_overfitting, print_signature_overfit_report
 from Dataset_Choose_Rule.save_signature_validation import save_validation_results
 import ast  # Added for ast.literal_eval
+import json
+import os
+import random # Add random import 
+from datetime import datetime, timedelta # Add datetime import 
+
+
+def ensure_directory_exists(filepath):
+    directory = os.path.dirname(filepath)
+    if directory and not os.path.exists(directory):
+        print(f"Creating directory: {directory}")
+        os.makedirs(directory)
 
 
 def main():
@@ -98,7 +109,7 @@ def main():
     association_result_path = f"../Dataset/signature/{file_type}/{file_type}_{Association_mathod}_{file_number}_{association_metric}_signature_train_ea{signature_ea}.csv"
     
     # Load data in an optimized way
-    mapped_info_df = load_csv_safely('DARPA', mapped_info_path)
+    mapped_info_df = load_csv_safely(file_type, mapped_info_path)
     print("Loading association result from:", association_result_path)
     association_result = pd.read_csv(association_result_path)
 

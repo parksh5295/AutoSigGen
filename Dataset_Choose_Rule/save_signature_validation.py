@@ -1,4 +1,12 @@
 import pandas as pd
+import os
+
+def ensure_directory_exists(filepath):
+    """If the directory of the specified file path does not exist, create it."""
+    directory = os.path.dirname(filepath)
+    if directory and not os.path.exists(directory):
+        print(f"Creating directory: {directory}")
+        os.makedirs(directory)
 
 def save_validation_results(file_type, file_number, association_rule, basic_eval, fp_results, overfit_results):
     """
