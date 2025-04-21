@@ -101,7 +101,7 @@ def main():
     print("data-X col: ", diff_columns)
 
 
-    if file_type in [DARPA98, DARPA]:
+    if file_type in ['DARPA98', 'DARPA']:
         pca_want = 'Y'
     else:
         pca_want = 'N'
