@@ -41,7 +41,7 @@ def file_cut(file_type, file_path, cut_type='random'):
 
         # Select row numbers to randomly sample
         # num_rows_to_sample = int(input("Enter the desired number of rows of data: "))
-        num_rows_to_sample = 10000
+        num_rows_to_sample = 3000
         sampled_rows = sorted(random.sample(range(1, total_rows + 1), num_rows_to_sample))
 
         # Read only selected rows (but keep headers)
