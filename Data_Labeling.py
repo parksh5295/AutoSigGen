@@ -102,9 +102,9 @@ def main():
 
 
     if file_type in ['DARPA98', 'DARPA']:
-        pca_want = 'Y'
-    else:
         pca_want = 'N'
+    else:
+        pca_want = 'Y'
 
     # pca_want = str(input("\nDo you want to do PCA? (Y/n): "))
     if pca_want in ['Y', 'y']:
