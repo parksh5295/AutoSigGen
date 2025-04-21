@@ -1,7 +1,9 @@
-# Methods for choosing the best clustering method for your dataset
+# clustering_recommender.py
 
 import argparse
 import time
+import os
+import pandas as pd
 from Dataset_Choose_Rule.choose_amount_dataset import file_path_line_nonnumber, file_cut
 from definition.Anomal_Judgment import anomal_judgment_nonlabel, anomal_judgment_label
 from utils.time_transfer import time_scalar_transfer
@@ -16,14 +18,59 @@ def smart_clustering_selector(X_df, raw_df, threshold_sample=500, threshold_dim=
 
     if n_samples < threshold_sample or n_features < threshold_dim:
         print("[Strategy] Using feature-type-based recommendation (small data).")
-        return recommend_clustering_by_feature_types(X_df)
+        algorithms, metrics, stats = recommend_clustering_by_feature_types(X_df)
+        reason_summary = explain_recommendation(algorithms[0], metrics, stats)
     else:
         print("[Strategy] Using distribution-based recommendation.")
         try:
-            return recommend_clustering_by_distribution(X_df)
+            algorithms, metrics, stats, reason_summary = recommend_clustering_by_distribution(X_df)
         except Exception as e:
             print(f"[Fallback] Distribution-based failed due to: {e}")
-            return recommend_clustering_by_feature_types(X_df)
+            algorithms, metrics, stats = recommend_clustering_by_feature_types(X_df)
+            reason_summary = explain_recommendation(algorithms[0], metrics, stats)
+
+    return algorithms, metrics, stats, reason_summary
+
+
+def explain_recommendation(algorithm, metrics, stats):
+    explanation = f"[Recommendation] {algorithm}\n"
+
+    if 'covariance_diagonal_ratio' in stats:
+        diag_ratio = stats['covariance_diagonal_ratio']
+        explanation += f"[Recommendation Reason] The average covariance matrix has a diagonal ratio of {diag_ratio:.2f}, which suggests that GMM(diagonal) can effectively describe the data distribution.\n"
+
+    if 'estimated_clusters' in metrics:
+        n_clusters = metrics['estimated_clusters']
+        explanation += f"[Recommendation Reason] The estimated number of clusters is {n_clusters}.\n"
+
+    if 'n_samples' in stats and 'estimated_clusters' in metrics:
+        ratio = metrics['estimated_clusters'] / stats['n_samples']
+        explanation += f"[Recommendation Reason] The ratio of the number of samples to the number of clusters is {ratio:.4f}.\n"
+
+    return explanation
+
+
+def save_recommendation_to_csv(file_type, file_number, algorithms, metrics, stats, reason_summary):
+    output_dir = f"../Dataset/recommend/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    file_type_dir = os.path.join(output_dir, file_type)
+    os.makedirs(file_type_dir, exist_ok=True)
+
+    save_path = os.path.join(file_type_dir, f"{file_type}_{file_number}_recommendation.csv")
+
+    df = pd.DataFrame({
+        "Recommended_Algorithms": algorithms,
+        "Best_Algorithm": [algorithms[0]] * len(algorithms),
+        "Estimated_Clusters": [metrics.get("estimated_clusters", None)] * len(algorithms),
+        "Cov_Diagonal_Ratio": [stats.get("covariance_diagonal_ratio", None)] * len(algorithms),
+        "n_Samples": [stats.get("n_samples", None)] * len(algorithms),
+        "n_Features": [stats.get("n_features", None)] * len(algorithms),
+        "Reason_Summary": [reason_summary] * len(algorithms),
+    })
+
+    df.to_csv(save_path, index=False)
+    print(f"\nSaved recommendation result to: {save_path}")
 
 
 def main():
@@ -39,7 +86,7 @@ def main():
 
     # 1. Load data
     file_path, _ = file_path_line_nonnumber(file_type, file_number)
-    cut_type = 'random' if file_type in ['DARPA98', 'DARPA', 'NSL-KDD'] else 'all'
+    cut_type = 'random' if file_type in ['DARPA98', 'DARPA', 'NSL-KDD', 'NSL_KDD'] else 'all'
     data = file_cut(file_type, file_path, cut_type)
 
     # 2. Apply label
@@ -60,13 +107,18 @@ def main():
     X, _ = map_intervals_to_groups(embedded_df, category_mapping, data_list, regul='N')
 
     # 4. Recommend clustering method
-    recommendations = smart_clustering_selector(X, data)
+    recommendations, metrics, stats, recommendation_explanation = smart_clustering_selector(X, data)
 
-    print("\n Recommended Clustering Algorithms:")
+    print("\nRecommended Clustering Algorithms:")
     for i, algo in enumerate(recommendations, 1):
         print(f"  {i}. {algo}")
 
-    print(f"\n Done in {time.time() - total_start:.2f} seconds.")
+    print(f"\nExplanation:\n{recommendation_explanation}")
+
+    # 5. Save to CSV
+    save_recommendation_to_csv(file_type, file_number, recommendations, metrics, stats, recommendation_explanation)
+
+    print(f"\nDone in {time.time() - total_start:.2f} seconds.")
 
 
 if __name__ == '__main__':
