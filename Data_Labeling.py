@@ -51,7 +51,8 @@ def main():
     start = time.time()
 
     file_path, file_number = file_path_line_nonnumber(file_type, file_number)
-    cut_type = str(input("Enter the data cut type: "))
+    # cut_type = str(input("Enter the data cut type: "))
+    cut_type = 'all'
     data = file_cut(file_type, file_path, cut_type)
 
     timing_info['1_load_data'] = time.time() - start
