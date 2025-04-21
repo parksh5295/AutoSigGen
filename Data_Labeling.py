@@ -120,12 +120,15 @@ def main():
     # 5. Clustering and Mapping
     start = time.time()
 
+    '''
     max_clusters_want = str(input("\nDo you need to enter the number of max_clusters? (Y/n): "))
     if max_clusters_want in ['Y', 'y']:
         max_clusters = int(input("\nEnter the desired number of max_clusters: "))
     else:
         print("\nThe number of max_clusters is set to the default value of 1000.")
         max_clusters = 1000
+    '''
+    max_clusters = 300
     
     Hyperparameter_optimization = str(input("\nDo you need to do Hyperparameter_optimization? (Y/n): "))
     if Hyperparameter_optimization in ['Y', 'y']:
