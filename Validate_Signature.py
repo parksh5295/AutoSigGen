@@ -275,13 +275,18 @@ def main():
     print("\n=== False Positive analysis (Enhanced + Superset Logic) ===")
     fp_results_detailed = evaluate_false_positives(
         alerts_df.copy(),
-        current_signatures_map=current_signatures_map, # Pass current signature map
-        known_fp_sig_dicts=known_fp_sig_dicts,      # Pass known FP list
-        belief_threshold=0.5,                       # Default threshold
-        superset_strictness=0.9,                    # Superset strictness
-        attack_free_df=attack_free_alerts          # Pass attack_free_df for UFP calculation
+        current_signatures_map=current_signatures_map,
+        known_fp_sig_dicts=known_fp_sig_dicts,
+        attack_free_df=attack_free_alerts,
+        belief_threshold=0.5,
+        superset_strictness=0.9,
+        t0_nra=60,
+        n0_nra=20,
+        lambda_haf=100.0,
+        lambda_ufp=10.0,
+        combine_method='max'
     )
-    fp_summary_enhanced = summarize_fp_results(fp_results_detailed) # Call summary function
+    fp_summary_enhanced = summarize_fp_results(fp_results_detailed)
 
     print("Enhanced FP analysis results (summary):")
     if not fp_summary_enhanced.empty:

@@ -237,102 +237,106 @@ def check_temporal_ip_patterns(alerts_df, time_window=300):
     return pattern_scores
 
 def is_superset_of_known_fps(current_sig_dict, known_fp_sig_dicts):
-    """현재 시그니처가 알려진 FP 시그니처 중 하나의 슈퍼셋인지 확인"""
+    """Verify that the current signature is a superset of one of the known FP signatures"""
     if not known_fp_sig_dicts or not isinstance(known_fp_sig_dicts, list):
-        return False # 알려진 FP 없으면 False
+        return False # False if there is no known FP
     if not current_sig_dict or not isinstance(current_sig_dict, dict):
-        return False # 현재 시그니처 없으면 False
+        return False # False if there is no current signature
 
     for fp_sig_dict in known_fp_sig_dicts:
-        if not isinstance(fp_sig_dict, dict): continue # FP 시그니처 포맷 오류 시 건너뛰기
+        if not isinstance(fp_sig_dict, dict): continue # Skip if FP signature format error
 
-        # fp_sig_dict의 모든 항목(키, 값)이 current_sig_dict에 존재하는지 확인
+        # Check if all items (keys, values) in fp_sig_dict exist in current_sig_dict
         is_superset = all(
             item in current_sig_dict.items() for item in fp_sig_dict.items()
         )
-        if is_superset and len(current_sig_dict) > len(fp_sig_dict): # 진부분집합 방지 (옵션)
+        if is_superset and len(current_sig_dict) > len(fp_sig_dict): # Avoid strict subset (optional)
              # print(f"Debug: {current_sig_dict} is superset of {fp_sig_dict}")
              return True
     return False
 
 def evaluate_false_positives(
         alerts_df: pd.DataFrame,
-        current_signatures_map: dict, # 현재 시그니처 ID -> dict 맵
-        known_fp_sig_dicts: list = None, # 알려진 FP 시그니처 dict 리스트
-        belief_threshold: float = 0.5, # 기본 FP 임계값
-        superset_strictness: float = 0.9, # 슈퍼셋일 경우 엄격도 (90%)
-        attack_free_df: pd.DataFrame = None # attack_free_df 파라미터 추가 (calculate_fp_scores용)
+        current_signatures_map: dict,
+        known_fp_sig_dicts: list = None,
+        attack_free_df: pd.DataFrame = None, # For UFP calculations
+        # Add calculate_fp_scores parameters (set default values)
+        t0_nra: int = 60,
+        n0_nra: int = 20,
+        lambda_haf: float = 100.0,
+        lambda_ufp: float = 10.0,
+        combine_method: str = 'max', # Changed from existing combine parameter (avoid Python reserved word conflict)
+        # FP decision parameters
+        belief_threshold: float = 0.5,
+        superset_strictness: float = 0.9
     ):
     """
-    FP 점수 계산 및 슈퍼셋 로직을 적용하여 최종 FP 판정.
-    Args:
-        alerts_df: 현재 알림 데이터
-        current_signatures_map: {'SIG_1': {...}, 'SIG_2': {...}} 형태의 맵
-        known_fp_sig_dicts: [{'DstPort': 80}, ...] 형태의 리스트
-        belief_threshold: FP 판단 기준값
-        superset_strictness: 슈퍼셋일 때 적용할 임계값 비율 (예: 0.9)
-        attack_free_df: UFP 계산용 attack free 알림 데이터
+    Calculate FP scores and apply superset logic to determine final FP decision.
     """
     if attack_free_df is None:
-         # attack_free_df가 없으면 UFP 계산 불가 -> 임시 DataFrame 또는 에러 처리
-         print("Warning: attack_free_df not provided for UFP calculation in evaluate_false_positives.")
-         attack_free_df = pd.DataFrame(columns=alerts_df.columns) # 빈 DataFrame 사용 (UFP 점수 0됨)
-         # 또는 raise ValueError("attack_free_df is required for UFP calculation.")
+         print("Warning: attack_free_df not provided for UFP calculation.")
+         attack_free_df = pd.DataFrame(columns=alerts_df.columns)
 
-    # 1. 기본 FP 점수 계산 (NRA, HAF, UFP, belief)
-    fp_scores_df = calculate_fp_scores(alerts_df, attack_free_df) # attack_free_df 전달
+    # 1. Calculate basic FP scores (use received parameters)
+    fp_scores_df = calculate_fp_scores(
+        alerts_df,
+        attack_free_df,
+        t0_nra=t0_nra,
+        n0_nra=n0_nra,
+        lambda_haf=lambda_haf,
+        lambda_ufp=lambda_ufp,
+        combine=combine_method # Use modified parameter name
+    )
 
-    # 결과 저장을 위한 초기화
+    # Initialize for saving results
     fp_results = fp_scores_df.copy()
     fp_results['is_superset'] = False
     fp_results['applied_threshold'] = belief_threshold
     fp_results['likely_false_positive'] = False
 
-    # 알려진 FP 리스트가 없으면 초기화
+    # If known FP list is not provided, initialize
     if known_fp_sig_dicts is None:
         known_fp_sig_dicts = []
 
-    # 2. 각 시그니처에 대해 슈퍼셋 검사 및 최종 FP 판정
+    # 2. Check superset and determine final FP decision for each signature
     for index, row in fp_results.iterrows():
         sig_id = row['signature_id']
         belief_score = row['belief']
 
-        # 현재 시그니처 딕셔너리 가져오기
+        # Get current signature dictionary
         current_sig_dict = current_signatures_map.get(sig_id)
         if not current_sig_dict:
             # print(f"Warning: Signature dictionary not found for {sig_id} in current_signatures_map.")
-            continue # 맵에 없으면 건너뛰기
+            continue # Skip if not in map
 
-        # 슈퍼셋 검사
+        # Check superset
         is_super = is_superset_of_known_fps(current_sig_dict, known_fp_sig_dicts)
         fp_results.loc[index, 'is_superset'] = is_super
 
-        # 임계값 적용
-        threshold = belief_threshold
-        if is_super:
-            threshold = belief_threshold * superset_strictness
-            fp_results.loc[index, 'applied_threshold'] = threshold
+        # Apply threshold
+        threshold = belief_threshold * superset_strictness if is_super else belief_threshold
+        fp_results.loc[index, 'applied_threshold'] = threshold
 
-        # 최종 FP 판정
+        # Final FP decision
         fp_results.loc[index, 'likely_false_positive'] = belief_score < threshold
 
-    # 최종 결과 DataFrame 반환 (요약 전)
+    # Return final result DataFrame (before summarization)
     return fp_results[['signature_id', 'signature_name', 'nra_score', 'haf_score', 'ufp_score', 'belief', 'is_superset', 'applied_threshold', 'likely_false_positive']]
 
 def summarize_fp_results(detailed_fp_results: pd.DataFrame):
-     """ 그룹별로 FP 판정 결과 요약 """
+     """ Summarize FP decision results by group """
      if detailed_fp_results.empty:
           return pd.DataFrame()
 
      summary = detailed_fp_results.groupby(['signature_id', 'signature_name']).agg(
-         alerts_count=('likely_false_positive', 'size'), # 총 알림 수 (그룹 크기)
-         likely_fp_count=('likely_false_positive', 'sum'), # FP로 판정된 알림 수
+         alerts_count=('likely_false_positive', 'size'), # Total alerts (group size)
+         likely_fp_count=('likely_false_positive', 'sum'), # Number of alerts determined as FP
          avg_belief=('belief', 'mean'),
-         is_superset=('is_superset', 'first'), # 슈퍼셋 여부 (어차피 시그니처별로 동일)
-         applied_threshold=('applied_threshold', 'first') # 적용된 임계값
+         is_superset=('is_superset', 'first'), # Superset status (same for each signature)
+         applied_threshold=('applied_threshold', 'first') # Applied threshold
      ).reset_index()
 
      summary['likely_fp_rate'] = summary['likely_fp_count'] / summary['alerts_count']
-     summary['final_likely_fp'] = summary['likely_fp_rate'] > 0.5 # 예시: 절반 이상 FP면 최종 FP (조정 가능)
+     summary['final_likely_fp'] = summary['likely_fp_rate'] > 0.5 # Example: If more than half are FP, then final FP (adjustable)
 
      return summary[['signature_id', 'signature_name', 'alerts_count', 'likely_fp_count', 'likely_fp_rate', 'avg_belief', 'is_superset', 'applied_threshold', 'final_likely_fp']]
