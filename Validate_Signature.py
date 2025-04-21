@@ -214,27 +214,15 @@ def main():
 
     alerts_df = apply_signatures_to_dataset(group_mapped_df, formatted_signatures)
     
-    # Add new FP check logic
-    fp_results = evaluate_false_positives(
-        alerts_df,
-        time_window=3600,
-        alert_threshold=3,
-        pattern_threshold=0.7
-    )
-    
-    # Keep the original FP check logic
+    # Traditional FP 계산 (옵션: 비교용으로 남겨둘 수 있음)
     normal_data = group_mapped_df[group_mapped_df['label'] == 0].copy()
     attack_free_alerts = apply_signatures_to_dataset(normal_data, formatted_signatures)
 
     fp_scores = calculate_fp_scores(alerts_df, attack_free_alerts)
     fp_summary = summarize_fp_by_signature(fp_scores)
-
-    print("\n=== False Positive Analysis ===")
-    print("Traditional FP Summary by Signature:")
+    print("\n=== Traditional FP Summary (For Reference) ===")
     print(fp_summary)
-    print("\nEnhanced FP Analysis Results:")
-    print(fp_results[['signature_id', 'excessive_alerts', 'ip_pattern_score', 'likely_false_positive']])
-    
+
     # 3. Overfitting check
     high_fp_sig_ids = set(high_fp_sigs['signature_id'].tolist()) # Calculated in the previous step
     high_fp_signatures_count = len(high_fp_sig_ids)
@@ -291,7 +279,7 @@ def main():
         alerts_df.copy(),
         current_signatures_map=current_signatures_map,
         known_fp_sig_dicts=known_fp_sig_dicts,
-        attack_free_df=attack_free_alerts,
+        attack_free_df=attack_free_alerts, # Traditional 계산에서 생성된 것 사용
         belief_threshold=fp_belief_threshold,
         superset_strictness=fp_superset_strictness,
         t0_nra=fp_t0_nra,
@@ -307,7 +295,7 @@ def main():
         print(fp_summary_enhanced.to_string())
     else:
         print("Enhanced FP summary results not found.")
-    # ---------------------------------
+    # ------------------------------------------
 
     # --- Identify and report high FP signatures ---
     # Use 'final_likely_fp' returned from summarize_fp_results
