@@ -78,7 +78,8 @@ def main():
 
     data = time_scalar_transfer(data, file_type)
 
-    regul = str(input("\nDo you want to Regulation? (Y/n): ")) # Whether to normalize or not
+    # regul = str(input("\nDo you want to Regulation? (Y/n): ")) # Whether to normalize or not
+    regul = 'N'
 
     embedded_dataframe, feature_list, category_mapping, data_list = choose_heterogeneous_method(data, file_type, heterogeneous_method, regul)
     print("embedded_dataframe: ", embedded_dataframe)
