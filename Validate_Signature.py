@@ -55,6 +55,13 @@ def main():
     parser.add_argument('--precision_underlimit', type=float, default=0.6)
     parser.add_argument('--signature_ea', type=int, default=15)
     parser.add_argument('--association_metric', type=str, default='confidence')
+    parser.add_argument('--fp_belief_threshold', type=float, default=0.5)
+    parser.add_argument('--fp_superset_strictness', type=float, default=0.9)
+    parser.add_argument('--fp_t0_nra', type=int, default=60)
+    parser.add_argument('--fp_n0_nra', type=int, default=20)
+    parser.add_argument('--fp_lambda_haf', type=float, default=100.0)
+    parser.add_argument('--fp_lambda_ufp', type=float, default=10.0)
+    parser.add_argument('--fp_combine_method', type=str, default='max')
 
     # Save the above in args
     args = parser.parse_args()
@@ -70,6 +77,13 @@ def main():
     precision_underlimit = args.precision_underlimit
     signature_ea = args.signature_ea
     association_metric = args.association_metric
+    fp_belief_threshold = args.fp_belief_threshold
+    fp_superset_strictness = args.fp_superset_strictness
+    fp_t0_nra = args.fp_t0_nra
+    fp_n0_nra = args.fp_n0_nra
+    fp_lambda_haf = args.fp_lambda_haf
+    fp_lambda_ufp = args.fp_lambda_ufp
+    fp_combine_method = args.fp_combine_method
 
     total_start_time = time.time()  # Start All Time
     timing_info = {}  # For step-by-step time recording
@@ -278,13 +292,13 @@ def main():
         current_signatures_map=current_signatures_map,
         known_fp_sig_dicts=known_fp_sig_dicts,
         attack_free_df=attack_free_alerts,
-        belief_threshold=0.5,
-        superset_strictness=0.9,
-        t0_nra=60,
-        n0_nra=20,
-        lambda_haf=100.0,
-        lambda_ufp=10.0,
-        combine_method='max'
+        belief_threshold=fp_belief_threshold,
+        superset_strictness=fp_superset_strictness,
+        t0_nra=fp_t0_nra,
+        n0_nra=fp_n0_nra,
+        lambda_haf=fp_lambda_haf,
+        lambda_ufp=fp_lambda_ufp,
+        combine_method=fp_combine_method
     )
     fp_summary_enhanced = summarize_fp_results(fp_results_detailed)
 
