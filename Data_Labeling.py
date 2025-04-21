@@ -132,7 +132,8 @@ def main():
     '''
     max_clusters = 300
     
-    Hyperparameter_optimization = str(input("\nDo you need to do Hyperparameter_optimization? (Y/n): "))
+    # Hyperparameter_optimization = str(input("\nDo you need to do Hyperparameter_optimization? (Y/n): "))
+    Hyperparameter_optimization = 'Y'
     if Hyperparameter_optimization in ['Y', 'y']:
         clustering, GMM_type = choose_clustering_algorithm(data, X_reduced, clustering_algorithm, max_clusters)
     elif Hyperparameter_optimization in ['N', 'n']:
