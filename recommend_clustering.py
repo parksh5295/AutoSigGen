@@ -9,7 +9,84 @@ from definition.Anomal_Judgment import anomal_judgment_nonlabel, anomal_judgment
 from utils.time_transfer import time_scalar_transfer
 from Modules.Heterogeneous_module import choose_heterogeneous_method
 from Heterogeneous_Method.separate_group_mapping import map_intervals_to_groups
-from Clustering_Method.recommend_clustering_method import recommend_clustering_by_distribution, recommend_clustering_by_feature_types
+import numpy as np
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import KMeans, DBSCAN, MeanShift
+from sklearn.metrics import silhouette_score
+from scipy.stats import kurtosis
+
+
+def recommend_clustering_by_distribution(X_df):
+    X = X_df.values
+    n_samples, n_features = X.shape
+    stats = {'n_samples': n_samples, 'n_features': n_features}
+
+    # GMM covariance ratio
+    gmm_diag = GaussianMixture(n_components=2, covariance_type='diag', random_state=0).fit(X)
+    gmm_full = GaussianMixture(n_components=2, covariance_type='full', random_state=0).fit(X)
+    diag_ratios = [np.sum(np.diag(f)) / np.sum(f) for f in gmm_full.covariances_]
+    avg_diag_ratio = np.mean(diag_ratios)
+    stats['covariance_diagonal_ratio'] = avg_diag_ratio
+
+    est_n_clusters = estimate_clusters(X)
+    metrics = {'estimated_clusters': est_n_clusters}
+
+    # Recommendation algorithm limit
+    recommendations = []
+
+    if avg_diag_ratio > 0.85:
+        recommendations += ['GMM', 'KMeans', 'SGMM']
+    elif avg_diag_ratio > 0.65:
+        recommendations += ['GK', 'GMM', 'KMeans']
+    else:
+        recommendations += ['DBSCAN', 'MeanShift', 'FCM']
+
+    recommendations += ['NeuralGas']
+
+    reason_summary = f"""
+        [Distribution-Based Recommendation]
+        - Covariance Diagonal Ratio: {avg_diag_ratio:.2f}
+        - Estimated #Clusters: {est_n_clusters}
+        - Sample/Cluster Ratio: {n_samples / est_n_clusters:.2f}
+        """
+
+    return recommendations, metrics, stats, reason_summary.strip()
+
+
+def recommend_clustering_by_feature_types(X_df):
+    X = X_df.values
+    n_samples, n_features = X.shape
+    stats = {'n_samples': n_samples, 'n_features': n_features}
+    metrics = {'estimated_clusters': min(5, max(2, n_samples // 100))}
+
+    # Recommend simple and stable clustering methods (within specified 11)
+    recommendations = ['KMeans', 'K-Medians', 'GMeans', 'NeuralGas']
+
+    reason_summary = f"""
+        [Feature-Type-Based Recommendation]
+        - Sample Size: {n_samples}, Feature Dim: {n_features}
+        - Estimated #Clusters: {metrics['estimated_clusters']}
+        - Using simple clustering methods for small or mixed feature data
+        """
+
+    return recommendations, metrics, stats, reason_summary.strip()
+
+
+def estimate_clusters(X):
+    # Simple cluster number estimation (silhouette optimization)
+    best_score = -1
+    best_k = 2
+    for k in range(2, min(10, len(X))):
+        try:
+            labels = KMeans(n_clusters=k, random_state=0).fit_predict(X)
+            score = silhouette_score(X, labels)
+            if score > best_score:
+                best_score = score
+                best_k = k
+        except:
+            continue
+    return best_k
+
 
 
 def smart_clustering_selector(X_df, raw_df, threshold_sample=500, threshold_dim=10):
