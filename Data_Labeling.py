@@ -98,7 +98,13 @@ def main():
     diff_columns = list(set(columns_data) - set(columns_X))
     print("data-X col: ", diff_columns)
 
-    pca_want = str(input("\nDo you want to do PCA? (Y/n): "))
+
+    if file_type in [DARPA98, DARPA]:
+        pca_want = 'Y'
+    else:
+        pca_want = 'N'
+
+    # pca_want = str(input("\nDo you want to do PCA? (Y/n): "))
     if pca_want in ['Y', 'y']:
         if clustering_algorithm in ['CANNwKNN', 'CANN']:
             print("CANN is a classification, which means you need to use the full data.")
