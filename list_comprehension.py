@@ -4,7 +4,7 @@ import glob
 
 # Get paths to list files (e.g., *.list)
 # list_files = glob.glob('D:\\AutoSigGen_withData\\Dataset\\load_dataset\\DARPA98\\train\*\*.list')
-list_files = glob.glob('D:\\AutoSigGen_withData\\Dataset\\load_dataset\\DARPA98\\test\*\*.list')
+list_files = glob.glob('D:\\AutoSigGen_withData\\Dataset\\load_dataset\\DARPA98\\test\*\*.lllist')
 
 # output_csv = 'D:\\AutoSigGen_withData\\Dataset\\load_dataset\\DARPA98\\train\\DARPA98.csv'
 output_csv = 'D:\\AutoSigGen_withData\\Dataset\\load_dataset\\DARPA98\\test\\DARPA98.csv'
