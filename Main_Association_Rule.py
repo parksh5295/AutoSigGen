@@ -99,6 +99,16 @@ def main():
 
     group_mapped_df['label'] = data['label']
 
+    # ===== Check group_mapped_df before splitting =====
+    print(f"Shape of group_mapped_df: {group_mapped_df.shape}")
+    if 'label' in group_mapped_df.columns:
+        print("Label distribution in group_mapped_df:")
+        print(group_mapped_df['label'].value_counts())
+    else:
+        print("Warning: 'label' column not found in group_mapped_df before splitting.")
+    # ====================================================
+
+
     # Information about how to set up association rule groups
     anomal_grouped_data = anomal_class_data(group_mapped_df)
     anomal_grouped_data = without_label(anomal_grouped_data)
