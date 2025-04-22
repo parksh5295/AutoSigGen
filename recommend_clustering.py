@@ -69,7 +69,7 @@ def recommend_clustering_by_feature_types(X_df):
     metrics = {'estimated_clusters': min(5, max(2, n_samples // 100))}
 
     # Recommend simple and stable clustering methods (within specified 11)
-    recommendations = ['KMeans', 'K-Medians', 'GMeans', 'NeuralGas']
+    recommendations = ['KMeans', 'Kmedians', 'GMeans', 'NeuralGas']
 
     if n_features > 20:
         recommendations += ['SGMM']
