@@ -58,7 +58,8 @@ def main():
         cut_type = 'all'
     data = file_cut(file_type, file_path, cut_type)
 
-    print(data.columns.tolist())
+    # Clean column names by stripping leading/trailing whitespace
+    data.columns = data.columns.str.strip()
 
     timing_info['1_load_data'] = time.time() - start
 
