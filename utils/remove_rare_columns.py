@@ -1,10 +1,12 @@
 # Functions to proactively remove rare items
 def remove_rare_columns(df, min_support_ratio, file_type=None):
+    '''
     if file_type in ['NSL-KDD', 'NSL_KDD']:
         # NSL-KDD is applied with a lower threshold (only 20% of the original min_support_ratio)
         threshold = int(len(df) * min_support_ratio * 0.2)
     else:
-        threshold = int(len(df) * min_support_ratio)
+    '''
+    threshold = int(len(df) * min_support_ratio)
     
     if file_type in ['NSL-KDD', 'NSL_KDD']:
         # NSL-KDD modified logic
