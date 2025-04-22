@@ -104,16 +104,14 @@ def smart_clustering_selector(X_df, raw_df, threshold_sample=500, threshold_dim=
 
     if n_samples < threshold_sample or n_features < threshold_dim:
         print("[Strategy] Using feature-type-based recommendation (small data).")
-        algorithms, metrics, stats = recommend_clustering_by_feature_types(X_df)
-        reason_summary = explain_recommendation(algorithms[0], metrics, stats)
+        algorithms, metrics, stats, reason_summary = recommend_clustering_by_feature_types(X_df)
     else:
         print("[Strategy] Using distribution-based recommendation.")
         try:
             algorithms, metrics, stats, reason_summary = recommend_clustering_by_distribution(X_df)
         except Exception as e:
             print(f"[Fallback] Distribution-based failed due to: {e}")
-            algorithms, metrics, stats = recommend_clustering_by_feature_types(X_df)
-            reason_summary = explain_recommendation(algorithms[0], metrics, stats)
+            algorithms, metrics, stats, reason_summary = recommend_clustering_by_feature_types(X_df)
 
     return algorithms, metrics, stats, reason_summary
 
