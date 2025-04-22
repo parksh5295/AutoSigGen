@@ -173,6 +173,9 @@ def main():
     cut_type = 'random' if file_type in ['DARPA98', 'DARPA', 'NSL-KDD', 'NSL_KDD'] else 'all'
     data = file_cut(file_type, file_path, cut_type)
 
+    # Clean column names by stripping leading/trailing whitespace
+    data.columns = data.columns.str.strip()
+
     # 2. Apply label
     if file_type in ['MiraiBotnet', 'NSL-KDD']:
         data['label'], _ = anomal_judgment_nonlabel(file_type, data)
