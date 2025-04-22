@@ -179,7 +179,7 @@ def main():
     # 3. Time + embedding
     data = time_scalar_transfer(data, file_type)
     embedded_df, feature_list, category_mapping, data_list = choose_heterogeneous_method(
-        data, file_type, heterogeneous_method="Interval_inverse", regul='N'
+        data, file_type, het_method="Interval_inverse", regul='N'
     )
     X, _ = map_intervals_to_groups(embedded_df, category_mapping, data_list, regul='N')
 
