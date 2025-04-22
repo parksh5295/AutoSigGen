@@ -102,12 +102,14 @@ def main():
     # Information about how to set up association rule groups
     anomal_grouped_data = anomal_class_data(group_mapped_df)
     anomal_grouped_data = without_label(anomal_grouped_data)
+    print("anomal_grouped_data: ", anomal_grouped_data)
     # anomal_grouped_data is DataFrame
     # fl: feature list; Same contents but not used because it's not inside a DF.
 
     # Make nomal row
     nomal_grouped_data = nomal_class_data(group_mapped_df)
     nomal_grouped_data = without_label(nomal_grouped_data)
+    print("nomal_grouped_data: ", nomal_grouped_data)
     # nomal_grouped_data is DataFrame
     # flo: feature list; Same contents but not used because it's not inside a DF.
 
