@@ -99,6 +99,18 @@ def main():
 
     group_mapped_df['label'] = data['label']
 
+    # ===== Convert NSL-KDD string labels to numeric =====
+    if file_type in ['NSL-KDD', 'NSL_KDD']:
+        print("Converting NSL-KDD labels ('normal'->0, 'attack'->1)...")
+        # Make sure the mapping matches the actual string values
+        # It seems the label might be 'attack' based on user output, not 'anomal'
+        label_map = {'normal': 0, 'attack': 1} 
+        group_mapped_df['label'] = group_mapped_df['label'].map(label_map)
+        # Verify conversion
+        print("Label distribution after NSL-KDD conversion:")
+        print(group_mapped_df['label'].value_counts())
+    # =====================================================
+
     # ===== Check group_mapped_df before splitting =====
     print(f"Shape of group_mapped_df: {group_mapped_df.shape}")
     if 'label' in group_mapped_df.columns:
