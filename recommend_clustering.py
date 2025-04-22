@@ -43,7 +43,7 @@ def recommend_clustering_by_distribution(X_df):
     # Recommendation algorithm limit
     recommendations = []
 
-    if avg_diag_ratio > 0.85:
+    if avg_diag_ratio > 0.7:
         recommendations += ['GMM', 'KMeans', 'SGMM']
     elif avg_diag_ratio > 0.65:
         recommendations += ['GK', 'GMM', 'KMeans']
@@ -70,6 +70,9 @@ def recommend_clustering_by_feature_types(X_df):
 
     # Recommend simple and stable clustering methods (within specified 11)
     recommendations = ['KMeans', 'K-Medians', 'GMeans', 'NeuralGas']
+
+    if n_features > 20:
+        recommendations += ['SGMM']
 
     reason_summary = f"""
         [Feature-Type-Based Recommendation]
