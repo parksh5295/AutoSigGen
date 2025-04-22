@@ -104,10 +104,7 @@ def Heterogeneous_Feature_named_featrues(file_type):
             'Init_Win_bytes_forward', 'Init_Win_bytes_backward',
             'act_data_pkt_fwd', 'min_seg_size_forward',
             'Fwd Header Length', 'Bwd Header Length',
-            'Down/Up Ratio', 'Average Packet Size',
-            'Subflow Fwd Packets', 'Subflow Bwd Packets',
-            'Init_Win_bytes_forward', 'Init_Win_bytes_backward',
-            'act_data_pkt_fwd', 'min_seg_size_forward'
+            'Down/Up Ratio', 'Average Packet Size'
         ]
         binary_features = [
             'FIN Flag Count', 'SYN Flag Count', 'RST Flag Count', 'PSH Flag Count',
