@@ -22,10 +22,19 @@ def recommend_clustering_by_distribution(X_df):
     stats = {'n_samples': n_samples, 'n_features': n_features}
 
     # GMM covariance ratio
-    gmm_diag = GaussianMixture(n_components=2, covariance_type='diag', random_state=0).fit(X)
-    gmm_full = GaussianMixture(n_components=2, covariance_type='full', random_state=0).fit(X)
-    diag_ratios = [np.sum(np.diag(f)) / np.sum(f) for f in gmm_full.covariances_]
-    avg_diag_ratio = np.mean(diag_ratios)
+    reg_value = 1e-6 # Add regularization for numerical stability
+    try:
+        gmm_diag = GaussianMixture(n_components=2, covariance_type='diag', random_state=0, reg_covar=reg_value).fit(X)
+        gmm_full = GaussianMixture(n_components=2, covariance_type='full', random_state=0, reg_covar=reg_value).fit(X)
+        diag_ratios = [np.sum(np.diag(f)) / np.sum(f) for f in gmm_full.covariances_]
+        avg_diag_ratio = np.mean(diag_ratios)
+    except np.linalg.LinAlgError as e:
+        print(f"[Warning] GMM fitting failed due to LinAlgError: {e}. Using default avg_diag_ratio = 0.5")
+        avg_diag_ratio = 0.5 # Assign a default value or handle differently
+    except ValueError as e:
+        print(f"[Warning] GMM fitting failed due to ValueError: {e}. Using default avg_diag_ratio = 0.5")
+        avg_diag_ratio = 0.5 # Handle cases like insufficient samples
+
     stats['covariance_diagonal_ratio'] = avg_diag_ratio
 
     est_n_clusters = estimate_clusters(X)
