@@ -333,7 +333,19 @@ def main():
 
     print("Enhanced FP analysis results (summary):")
     if not fp_summary_enhanced.empty:
-        print(fp_summary_enhanced.to_string())
+        # ===== Setting Pandas Output Options =====
+        original_width = pd.get_option('display.width')
+        original_max_colwidth = pd.get_option('display.max_colwidth')
+        pd.set_option('display.width', 200) # Set a sufficiently wide width (adjustable)
+        pd.set_option('display.max_colwidth', None) # Prevent column content truncation
+        # ===============================
+
+        print(fp_summary_enhanced.to_string(index=False)) # Cleaner output with index=False
+
+        # ===== Restore original options (optional) =====
+        pd.set_option('display.width', original_width)
+        pd.set_option('display.max_colwidth', original_max_colwidth)
+        # =====================================
     else:
         print("Enhanced FP summary results not found.")
 
