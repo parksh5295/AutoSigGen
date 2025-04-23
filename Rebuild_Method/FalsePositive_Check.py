@@ -508,10 +508,11 @@ def check_temporal_ip_patterns(alerts_df, time_window=300):
             ip_similarity = (same_src + same_dst) / (window_size * 2) if (has_src_ip or has_dst_ip) else 0
             # Handle case where time_weights might be empty if all diffs are zero
             time_density = time_weights.mean() if not time_weights.empty else 0
-                pattern_score = (ip_similarity + time_density) / 2
-                ip_pattern_scores.append(pattern_score)
+            # Align the following lines correctly within the loop
+            pattern_score = (ip_similarity + time_density) / 2
+            ip_pattern_scores.append(pattern_score)
         
-        # Final pattern score for each signature
+        # Final pattern score for each signature (after loop)
         pattern_scores[sig_id] = np.mean(ip_pattern_scores) if ip_pattern_scores else 0
     
     return pattern_scores
