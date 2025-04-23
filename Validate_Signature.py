@@ -206,16 +206,21 @@ def main():
     start = time.time() # Restart timer for FP/Overfitting
 
     # 2. False Positive check Preparation
+    # Create a list of signatures formatted for the vectorized function
     formatted_signatures = [
         {
             'id': f'SIG_{idx}',
             'name': f'Signature_{idx}',
-            'condition': lambda row, sig=sig: all(
-                row.get(k) == v for k, v in sig.items() # Use .get for safety
-            )
+            # Store the actual rule dictionary instead of a lambda function
+            'rule_dict': sig
         }
-        for idx, sig in enumerate(signatures)
+        for idx, sig in enumerate(signatures) # 'signatures' holds the original rule dicts
     ]
+
+    # --- The following calls will eventually use the vectorized function ---
+    # --- For now, the original apply_signatures_to_dataset might fail ---
+    # --- because it expects 'condition' lambda, not 'rule_dict'.       ---
+    # --- We will replace the function definition in the next step.     ---
 
     alerts_df = apply_signatures_to_dataset(group_mapped_df, formatted_signatures)
 

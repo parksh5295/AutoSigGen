@@ -5,31 +5,129 @@ import numpy as np
 from datetime import datetime, timedelta
 import random
 
-# 1. Apply a signature to create an alert
+# 1. Apply a signature to create an alert (Optimized Vectorized Version)
 def apply_signatures_to_dataset(df, signatures, base_time=datetime(2025, 4, 14, 12, 0, 0)):
+    """
+    Applies signatures to a DataFrame using vectorized operations for potentially faster performance.
+
+    Args:
+        df (pd.DataFrame): Input data, pre-processed (e.g., group mapped).
+        signatures (list): List of signature dictionaries, each with 'id', 'name',
+                           and 'rule_dict' containing the rule conditions.
+        base_time (datetime): Base timestamp for alerts.
+
+    Returns:
+        pd.DataFrame: DataFrame containing generated alerts.
+    """
     alerts = []
+    # Preview the label column name in the source data
+    label_col_name = None
+    label_cols_present = []
+    for col in ['label', 'class', 'Class']:
+        if col in df.columns:
+            label_cols_present.append(col)
+            if label_col_name is None: # Use the first found label column
+                label_col_name = col
 
-    for i, row in df.iterrows():
-        for sig in signatures:
-            try:
-                if sig['condition'](row):
-                    alert = {
-                        'timestamp': base_time + timedelta(seconds=i * 2),
-                        'src_ip': f"192.168.1.{random.randint(1, 254)}",
-                        'dst_ip': f"10.0.0.{random.randint(1, 254)}",
-                        'signature_id': sig['id'],
-                        'signature_name': sig['name'],
-                    }
-                    # Copy all label columns from the original data
-                    for label_col in ['label', 'class', 'Class']:
-                        if label_col in df.columns:
-                            alert[label_col] = row[label_col]
-                    alerts.append(alert)
+    # Ensure input DataFrame index is unique if it's not already
+    if not df.index.is_unique:
+        print("Warning: DataFrame index is not unique. Resetting index.")
+        df = df.reset_index(drop=True)
+
+
+    # Initialize temporary columns to store results (indexes to calculate matched signature ID and time)
+    # Use a temporary DataFrame to avoid modifying the original df if passed by reference elsewhere
+    temp_df = pd.DataFrame(index=df.index)
+    temp_df['_match_sig_id'] = pd.NA # Use pandas NA for better compatibility
+    temp_df['_row_index'] = np.arange(len(df)) # For time calculation
+
+    # Create signature_id and name mapping (pre-generate for faster lookup)
+    sig_id_to_name = {s.get('id'): s.get('name', 'UNKNOWN_NAME') for s in signatures if s.get('id')}
+
+
+    # Iterate through each signature condition and apply vectorized approach
+    for sig_info in signatures:
+        sig_id = sig_info.get('id', 'UNKNOWN_ID') # Use .get for safety
+
+        # Check if 'rule_dict' key exists and is a dictionary
+        if 'rule_dict' not in sig_info or not isinstance(sig_info['rule_dict'], dict):
+             print(f"Warning: Skipping signature {sig_id} due to missing or invalid 'rule_dict'.")
+             continue
+        sig_condition_dict = sig_info['rule_dict']
+
+        # Skip if the condition is empty
+        if not sig_condition_dict:
+            # print(f"Info: Skipping signature {sig_id} because its rule_dict is empty.")
+            continue
+
+        # Create a mask to find rows that satisfy all conditions (column=value)
+        mask = pd.Series(True, index=df.index) # Start with all rows as True
+        valid_signature = True # Signature validity flag
+        try:
+            for col, value in sig_condition_dict.items():
+                if col in df.columns:
+                    # Safely handle NaN values (NaN != value, NaN != NaN)
+                    col_series = df[col] # Use original df for comparison
+                    if pd.api.types.is_numeric_dtype(col_series) and pd.api.types.is_numeric_dtype(value):
+                         mask &= (col_series.astype(float) == float(value))
+                    elif pd.isna(value):
+                         mask &= col_series.isna()
+                    else:
+                         mask &= col_series.eq(value)
+
+                    # If mask becomes all False, no need to check further conditions
+                    if not mask.any():
+                        break
+                else:
+                    print(f"Warning: Column '{col}' needed by signature {sig_id} not found in DataFrame. Skipping this signature for matching.")
+                    valid_signature = False
                     break
-            except:
-                continue  # To avoid conditional errors
 
-    return pd.DataFrame(alerts)
+            if not valid_signature:
+                 mask = pd.Series(False, index=df.index)
+
+        except Exception as e:
+             print(f"Warning: Error creating mask for signature {sig_id}: {e}")
+             mask = pd.Series(False, index=df.index)
+
+
+        # Record sig_id for rows that haven't matched any signature yet and satisfy current signature condition
+        if mask.any():
+            # Use temp_df for assigning match_sig_id
+            match_indices = temp_df.index[mask & temp_df['_match_sig_id'].isna()]
+            if not match_indices.empty:
+                temp_df.loc[match_indices, '_match_sig_id'] = sig_id
+
+    # Filter only matched alerts (Use temp_df to filter)
+    alerts_df_raw = temp_df[temp_df['_match_sig_id'].notna()].copy()
+    # Join back with original df to get necessary columns like labels
+    alerts_df_raw = alerts_df_raw.join(df[[col for col in label_cols_present if col in df.columns]])
+
+
+    if alerts_df_raw.empty:
+        print("Info: No alerts generated after applying all signatures.")
+        return pd.DataFrame()
+
+    print(f"Info: Generated {len(alerts_df_raw)} raw alerts.")
+
+    # Create final alert DataFrame
+    alerts_final = pd.DataFrame({
+        'timestamp': alerts_df_raw['_row_index'].apply(lambda i: base_time + timedelta(seconds=i * 2)),
+        'src_ip': [f"192.168.1.{random.randint(1, 254)}" for _ in range(len(alerts_df_raw))],
+        'dst_ip': [f"10.0.0.{random.randint(1, 254)}" for _ in range(len(alerts_df_raw))],
+        'signature_id': alerts_df_raw['_match_sig_id'],
+        'signature_name': alerts_df_raw['_match_sig_id'].map(sig_id_to_name)
+    })
+
+    # Copy label information from original data
+    for col in label_cols_present:
+         if col in alerts_df_raw.columns: # Check if column exists after join
+            alerts_final[col] = alerts_df_raw[col].values
+         else:
+             print(f"Warning: Label column '{col}' not found in alerts_df_raw after join.")
+
+
+    return alerts_final
 
 # 2. Paper-based false positive determination
 def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame, 
