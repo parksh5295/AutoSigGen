@@ -113,6 +113,8 @@ def main():
     parser.add_argument('--fp_lambda_haf', type=float, default=100.0)
     parser.add_argument('--fp_lambda_ufp', type=float, default=10.0)
     parser.add_argument('--fp_combine_method', type=str, default='max')
+    parser.add_argument('--reset-known-fp', action='store_true',
+                        help='Ignore existing known_high_fp_signatures.json and start fresh.')
 
     # Save the above in args
     args = parser.parse_args()
@@ -135,6 +137,7 @@ def main():
     fp_lambda_haf = args.fp_lambda_haf
     fp_lambda_ufp = args.fp_lambda_ufp
     fp_combine_method = args.fp_combine_method
+    reset_known_fp = args.reset_known_fp
 
     total_start_time = time.time()  # Start All Time
     timing_info = {}  # For step-by-step time recording
@@ -287,7 +290,9 @@ def main():
 
     # --- Load Known FP Signatures ---
     known_fp_sig_dicts = []
-    if os.path.exists(KNOWN_FP_FILE):
+    if reset_known_fp:
+        print("INFO: --reset-known-fp flag is set. Ignoring existing known FP file.")
+    elif os.path.exists(KNOWN_FP_FILE):
         try:
             with open(KNOWN_FP_FILE, 'r') as f:
                 known_fp_sig_dicts = json.load(f)
