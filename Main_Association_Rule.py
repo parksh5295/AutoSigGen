@@ -146,11 +146,13 @@ def main():
 
     # Use a lower min_support value for NSL-KDD
     if file_type in ['NSL-KDD', 'NSL_KDD']:
-        min_support_ratio = 0.3  # Low support values for NSL-KDD
+        # Restore to previously successful settings
+        min_support_ratio_for_rare = 0.01
+        min_distinct = 2
+        print(f"NSL-KDD settings for remove_rare_columns: min_support_ratio={min_support_ratio_for_rare}, min_distinct={min_distinct}") # 값 확인용
     else:
-        min_support_ratio = 0.1   # Existing support values for other datasets
-    
-    # min_support = 0.1   # Existing support values for other datasets
+        min_support_ratio_for_rare = 0.1   # Other dataset defaults
+        min_distinct = 2 # Other dataset defaults
 
     best_confidence = 0.8    # Initialize the variables to change
     # Considering anomalies and nomals simultaneously
@@ -159,8 +161,13 @@ def main():
     best_recall = 0
 
     print("min_support: ", min_support)
-    anomal_grouped_data = remove_rare_columns(anomal_grouped_data, min_support_ratio, file_type)
-    nomal_grouped_data = remove_rare_columns(nomal_grouped_data, min_support_ratio, file_type)
+    print("Applying remove_rare_columns...")
+    # Assuming you call utils.remove_rare_columns
+    anomal_grouped_data = remove_rare_columns(anomal_grouped_data, min_support_ratio_for_rare, file_type, min_distinct_frequent_values=min_distinct)
+    nomal_grouped_data = remove_rare_columns(nomal_grouped_data, min_support_ratio_for_rare, file_type, min_distinct_frequent_values=min_distinct)
+    print("Finished remove_rare_columns.")
+    print("Anomal data shape after pruning:", anomal_grouped_data.shape) # Result check
+    print("Normal data shape after pruning:", nomal_grouped_data.shape) # Result check
 
     timing_info['4_association_setting'] = time.time() - start
 
