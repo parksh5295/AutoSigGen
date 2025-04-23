@@ -494,9 +494,9 @@ def check_temporal_ip_patterns(alerts_df, time_window=300):
             same_src = 0
             same_dst = 0
             if has_src_ip:
-            same_src = (window_alerts['src_ip'] == alert['src_ip']).sum()
+                same_src = (window_alerts['src_ip'] == alert['src_ip']).sum()
             if has_dst_ip:
-            same_dst = (window_alerts['dst_ip'] == alert['dst_ip']).sum()
+                same_dst = (window_alerts['dst_ip'] == alert['dst_ip']).sum()
             
             # Time proximity weight
             time_diffs = np.abs((window_alerts['timestamp'] - alert['timestamp']).dt.total_seconds())
