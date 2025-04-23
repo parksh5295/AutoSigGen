@@ -40,6 +40,56 @@ def recommend_clustering_by_distribution(X_df):
     est_n_clusters = estimate_clusters(X)
     metrics = {'estimated_clusters': est_n_clusters}
 
+        # Apply score-based ranking
+    def score_algorithm(name, diag_ratio, n_samples, n_features, est_clusters):
+        score = 0
+        if name == "GMM":
+            if diag_ratio > 0.7:
+                score += 3
+            elif diag_ratio > 0.6:
+                score += 2
+            else:
+                score -= 1
+            if n_features > 10:
+                score += 1
+        elif name == "KMeans":
+            score += 2
+            if diag_ratio > 0.6:
+                score += 1
+        elif name == "DBSCAN":
+            if diag_ratio < 0.6:
+                score += 3
+            if n_samples > 10000:
+                score += 1
+            if n_features > 20:
+                score -= 1
+        elif name == "SGMM":
+            if diag_ratio > 0.7:
+                score += 2
+            if n_features > 15:
+                score += 2
+        elif name == "GK":
+            if diag_ratio > 0.65:
+                score += 3
+        elif name == "NeuralGas":
+            score += 1
+        elif name == "MeanShift":
+            if diag_ratio < 0.6:
+                score += 2
+        elif name == "FCM":
+            if diag_ratio < 0.65:
+                score += 2
+        elif name == "GMeans":
+            if est_clusters >= 5:
+                score += 2
+        elif name == "Kmedians":
+            score += 1
+        return score
+
+    recommendations = list(set(recommendations))  # Remove duplicates just in case
+    recommendations.sort(key=lambda name: -score_algorithm(name, avg_diag_ratio, n_samples, n_features, est_n_clusters))
+
+
     # Recommendation algorithm limit
     recommendations = []
 
