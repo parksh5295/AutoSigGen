@@ -466,10 +466,10 @@ def main():
         basic_eval=signature_result, # Original evaluation results
         fp_results=fp_summary_enhanced, # Use enhanced FP summary (includes rules)
         overfit_results=overfit_results, # Use calculated overfitting results
-        filtered_eval=filtered_signature_result # Optional: Add evaluation of filtered sigs if calculated
-        Optional: Add recall values to save function if modified
-        recall_before = recall_before_fp,
-        recall_after = recall_after_fp
+        # filtered_eval=filtered_signature_result # Optional: Add evaluation of filtered sigs if calculated
+        # Optional: Add recall values to save function if modified
+        # recall_before = recall_before_fp,
+        # recall_after = recall_after_fp
     )
 
     # --- Save Timing Information ---
