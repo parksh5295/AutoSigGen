@@ -534,9 +534,9 @@ def is_superset_of_known_fps(current_sig_dict, known_fp_sig_dicts):
         except TypeError:
             # Handle cases where values might not be comparable (e.g., NaN)
             # Fallback to original check
-        is_superset = all(
+            is_superset = all(
                  k in current_sig_dict and current_sig_dict[k] == v for k, v in fp_sig_dict.items()
-            )
+                )
 
         # Original logic checked only subset, let's keep the superset check
         # is_superset = all(
