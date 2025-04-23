@@ -141,12 +141,14 @@ def main():
     # 4. Set association statements (confidence ratios, etc.)
     start = time.time()
 
-    
+
+    min_support = 0.1
+
     # Use a lower min_support value for NSL-KDD
     if file_type in ['NSL-KDD', 'NSL_KDD']:
-        min_support = 0.3  # Low support values for NSL-KDD
+        min_support_ratio = 0.5  # Low support values for NSL-KDD
     else:
-        min_support = 0.1   # Existing support values for other datasets
+        min_support_ratio = 0.1   # Existing support values for other datasets
     
     # min_support = 0.1   # Existing support values for other datasets
 
@@ -157,8 +159,8 @@ def main():
     best_recall = 0
 
     print("min_support: ", min_support)
-    anomal_grouped_data = remove_rare_columns(anomal_grouped_data, min_support, file_type)
-    nomal_grouped_data = remove_rare_columns(nomal_grouped_data, min_support, file_type)
+    anomal_grouped_data = remove_rare_columns(anomal_grouped_data, min_support_ratio, file_type)
+    nomal_grouped_data = remove_rare_columns(nomal_grouped_data, min_support_ratio, file_type)
 
     timing_info['4_association_setting'] = time.time() - start
 
