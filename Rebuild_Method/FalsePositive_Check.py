@@ -224,12 +224,14 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
                 # Count neighbors directly from the boolean mask's sum
                 nra = np.sum(combined_ip_mask)
 
-        nra_scores.append(min(nra, n0_nra) / n0_nra)
+            # Ensure append is inside the loop
+            nra_scores.append(min(nra, n0_nra) / n0_nra)
 
-        # Optional progress indicator using integer position 'i'
-        if (i + 1) % 50000 == 0: # Print less frequently
-            print(f"  NRA progress: {i + 1}/{n}")
+            # Optional progress indicator using integer position 'i'
+            if (i + 1) % 50000 == 0: # Print less frequently
+                 print(f"  NRA progress: {i + 1}/{n}")
 
+    # Assign after the loop completes
     df['nra_score'] = nra_scores
 
     # Restore original index if it was stored
