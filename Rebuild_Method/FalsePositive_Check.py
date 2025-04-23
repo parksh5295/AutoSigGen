@@ -152,7 +152,7 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
     df = alerts_df.copy()
     # Ensure timestamp is datetime and handle potential errors
     try:
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
     except Exception as e:
         print(f"Error converting timestamp column to datetime: {e}. Attempting to continue, but results may be affected.")
         df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
