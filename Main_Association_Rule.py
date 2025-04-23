@@ -146,7 +146,7 @@ def main():
 
     # Use a lower min_support value for NSL-KDD
     if file_type in ['NSL-KDD', 'NSL_KDD']:
-        min_support_ratio = 0.01  # Low support values for NSL-KDD
+        min_support_ratio = 0.05  # Low support values for NSL-KDD
     else:
         min_support_ratio = 0.1   # Existing support values for other datasets
     
