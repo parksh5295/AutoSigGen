@@ -38,6 +38,57 @@ def ensure_directory_exists(filepath):
         print(f"Creating directory: {directory}")
         os.makedirs(directory)
 
+# ===== Recall Calculation Helper Functions =====
+def calculate_overall_recall(group_mapped_df, alerts_df, signature_map, relevant_signature_ids=None):
+    '''
+    Calculates the overall recall for a given set of signatures.
+
+    Args:
+        group_mapped_df (pd.DataFrame): DataFrame with original data and 'label' column.
+        alerts_df (pd.DataFrame): DataFrame returned by apply_signatures_to_dataset.
+                                    Expected columns: 'alert_index', 'signature_id'.
+        signature_map (dict): Dictionary mapping signature_id to signature rule dict.
+        relevant_signature_ids (set, optional): Set of signature IDs to consider.
+                                                If None, all signatures in alerts_df are considered.
+
+    Returns:
+        float: Overall recall value (0.0 to 1.0).
+    '''
+    if 'label' not in group_mapped_df.columns:
+        print("Error: 'label' column not found in group_mapped_df for recall calculation.")
+        return 0.0
+    if 'alert_index' not in alerts_df.columns or 'signature_id' not in alerts_df.columns:
+         print("Error: 'alert_index' or 'signature_id' column not found in alerts_df for recall calculation.")
+         return 0.0
+
+    total_anomalous_alerts = group_mapped_df['label'].sum()
+    if total_anomalous_alerts == 0:
+        print("Warning: No anomalous alerts found in group_mapped_df.")
+        return 0.0 # Avoid division by zero
+
+    # Get indices of anomalous alerts in the original data
+    anomalous_indices = set(group_mapped_df[group_mapped_df['label'] == 1].index)
+
+    # Filter alerts that correspond to anomalous original data
+    anomalous_alerts_df = alerts_df[alerts_df['alert_index'].isin(anomalous_indices)].copy()
+
+    # Filter by relevant signature IDs if provided
+    if relevant_signature_ids is not None:
+        print(f"Calculating recall based on {len(relevant_signature_ids)} signatures.")
+        anomalous_alerts_df = anomalous_alerts_df[anomalous_alerts_df['signature_id'].isin(relevant_signature_ids)]
+    else:
+         print("Calculating recall based on all signatures present in alerts_df.")
+
+
+    # Count unique anomalous alerts detected by the relevant signatures
+    detected_anomalous_alerts = anomalous_alerts_df['alert_index'].nunique()
+
+    recall = detected_anomalous_alerts / total_anomalous_alerts
+    print(f"Total Anomalous Alerts: {total_anomalous_alerts}")
+    print(f"Detected Anomalous Alerts (by relevant signatures): {detected_anomalous_alerts}")
+
+    return recall
+
 
 def main():
     # argparser
@@ -251,6 +302,7 @@ def main():
         f"SIG_{idx}": sig_dict
         for idx, sig_dict in enumerate(signatures)
     }
+    initial_signature_ids = set(current_signatures_map.keys()) # All initial signature IDs set
 
     # --- Enhanced FP analysis ---
     print("\n=== False Positive analysis (Enhanced + Superset Logic) ===")
@@ -345,6 +397,13 @@ def main():
     )
     print_signature_overfit_report(overfit_results) # Use the calculated overfit_results
 
+    # ===== Explicitly print Overfitting Score =====
+    if 'overfitting_score' in overfit_results:
+         print(f"Overall Overfitting Score: {overfit_results['overfitting_score']:.4f}")
+    else:
+         print("Could not determine overall overfitting score from results.")
+    # ==========================================
+
     # --- Timing ---
     timing_info['5_fp_overfitting_check'] = time.time() - start # Combined timing step
 
@@ -353,10 +412,33 @@ def main():
         sig_dict for idx, sig_dict in enumerate(signatures)
         if f"SIG_{idx}" not in newly_identified_fp_ids
     ]
+    filtered_signature_ids = initial_signature_ids - newly_identified_fp_ids # Filtered signature IDs set
     print(f"\nOriginal signature count: {len(signatures)}")
     print(f"Signatures identified as high FP: {len(newly_identified_fp_ids)}")
     print(f"Filtered signature count: {len(filtered_signatures_dicts)}")
     # -----------------------------------
+
+    # ===== Overall Recall Calculation and Output =====
+    print("\n=== Overall Recall Calculation ===")
+    # Assuming alerts_df contains 'alert_index' from apply_signatures_to_dataset
+    if 'alert_index' in alerts_df.columns:
+        print("\n--- Recall BEFORE FP Removal ---")
+        recall_before_fp = calculate_overall_recall(group_mapped_df, alerts_df, current_signatures_map, initial_signature_ids)
+        print(f"Recall (Before FP Removal): {recall_before_fp:.4f}")
+
+        print("\n--- Recall AFTER FP Removal ---")
+        if filtered_signature_ids:
+            recall_after_fp = calculate_overall_recall(group_mapped_df, alerts_df, current_signatures_map, filtered_signature_ids)
+            print(f"Recall (After FP Removal): {recall_after_fp:.4f}")
+        else:
+            print("No signatures left after filtering, Recall (After FP Removal): 0.0000")
+            recall_after_fp = 0.0
+    else:
+        print("Warning: Cannot calculate overall recall because 'alert_index' is missing in alerts_df.")
+        recall_before_fp = None
+        recall_after_fp = None
+    # =======================================
+
 
     # ... (Optional: Re-evaluate performance with filtered signatures if needed) ...
     # Example: Evaluate filtered signatures
@@ -384,7 +466,10 @@ def main():
         basic_eval=signature_result, # Original evaluation results
         fp_results=fp_summary_enhanced, # Use enhanced FP summary (includes rules)
         overfit_results=overfit_results, # Use calculated overfitting results
-        # filtered_eval=filtered_signature_result # Optional: Add evaluation of filtered sigs if calculated
+        filtered_eval=filtered_signature_result # Optional: Add evaluation of filtered sigs if calculated
+        Optional: Add recall values to save function if modified
+        recall_before = recall_before_fp,
+        recall_after = recall_after_fp
     )
 
     # --- Save Timing Information ---
