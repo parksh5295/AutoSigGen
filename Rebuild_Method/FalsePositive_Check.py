@@ -115,6 +115,7 @@ def apply_signatures_to_dataset(df, signatures, base_time=datetime(2025, 4, 14, 
 
     # Create final alert DataFrame
     alerts_final = pd.DataFrame({
+        'alert_index': alerts_df_raw.index,
         'timestamp': alerts_df_raw['_row_index'].apply(lambda i: base_time + timedelta(seconds=i * 2)),
         'src_ip': [f"192.168.1.{random.randint(1, 254)}" for _ in range(len(alerts_df_raw))],
         'dst_ip': [f"10.0.0.{random.randint(1, 254)}" for _ in range(len(alerts_df_raw))],
