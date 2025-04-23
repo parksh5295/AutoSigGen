@@ -135,10 +135,10 @@ def apply_signatures_to_dataset(df, signatures, base_time=datetime(2025, 4, 14, 
 
 # --- Start Replacement ---
 # 2. Paper-based false positive determination (HAF Optimized, NRA slightly optimized)
-def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
-                        t0_nra: int = 60, n0_nra: int = 20,
-                        lambda_haf: float = 100.0,
-                        lambda_ufp: float = 10.0,
+def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame, 
+                        t0_nra: int = 60, n0_nra: int = 20, 
+                        lambda_haf: float = 100.0, 
+                        lambda_ufp: float = 10.0, 
                         belief_threshold: float = 0.5,
                         combine='max'):
     """Calculates FP scores (NRA, HAF, UFP) with HAF optimized and NRA slightly improved."""
@@ -151,7 +151,7 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
     df = alerts_df.copy()
     # Ensure timestamp is datetime and handle potential errors
     try:
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
     except Exception as e:
         print(f"Error converting timestamp column to datetime: {e}. Attempting to continue, but results may be affected.")
         df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
@@ -223,13 +223,13 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
                 # Count neighbors directly from the boolean mask's sum
                 nra = np.sum(combined_ip_mask)
 
-            nra_scores.append(min(nra, n0_nra) / n0_nra)
+        nra_scores.append(min(nra, n0_nra) / n0_nra)
 
             # Optional progress indicator using integer position 'i'
             if (i + 1) % 50000 == 0: # Print less frequently
                  print(f"  NRA progress: {i + 1}/{n}")
 
-        df['nra_score'] = nra_scores
+    df['nra_score'] = nra_scores
 
     # Restore original index if it was stored
     df.index = df_original_index
@@ -283,7 +283,7 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
     elif 'signature_id' not in df.columns:
          print("Error: 'signature_id' column missing from main DataFrame for UFP.")
          df['ufp_score'] = 0.0
-    else:
+        else:
         af_counts = attack_free_df['signature_id'].value_counts()
         af_total = len(attack_free_df)
         af_freqs_map = (af_counts / af_total).to_dict() if af_total > 0 else {}
@@ -325,7 +325,7 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
         elif combine == 'min':
             df['belief'] = df[score_cols].min(axis=1)
 
-        df['is_false_positive'] = df['belief'] < belief_threshold
+    df['is_false_positive'] = df['belief'] < belief_threshold
 
     print("FP score calculation complete.")
     # Ensure all required columns are present before returning
@@ -413,17 +413,17 @@ def check_superset_signatures(new_signatures, known_fp_signatures):
              if 'signature_name' not in fp_sig or not isinstance(fp_sig['signature_name'], dict) or 'Signature_dict' not in fp_sig['signature_name']:
                  print(f"Warning: Skipping known FP signature in superset check due to unexpected structure.")
                  continue
-             fp_sig_dict = fp_sig['signature_name']['Signature_dict']
+            fp_sig_dict = fp_sig['signature_name']['Signature_dict']
             
-             # Check if all conditions of fp_sig are included in new_sig
+            # Check if all conditions of fp_sig are included in new_sig
              if isinstance(new_sig_dict, dict) and isinstance(fp_sig_dict, dict): # Ensure they are dicts
-                 if all(k in new_sig_dict and new_sig_dict[k] == v for k, v in fp_sig_dict.items()):
-                     is_superset = True
-                     break
+            if all(k in new_sig_dict and new_sig_dict[k] == v for k, v in fp_sig_dict.items()):
+                is_superset = True
+                break
              else:
                   print(f"Warning: Invalid dictionary types for superset check. New: {type(new_sig_dict)}, FP: {type(fp_sig_dict)}")
 
-
+        
         # Use signature ID if name is complex/missing
         sig_key = new_sig.get('id', new_sig.get('signature_name', str(new_sig))) 
         superset_check[sig_key] = is_superset
@@ -493,22 +493,22 @@ def check_temporal_ip_patterns(alerts_df, time_window=300):
             same_src = 0
             same_dst = 0
             if has_src_ip:
-                same_src = (window_alerts['src_ip'] == alert['src_ip']).sum()
+            same_src = (window_alerts['src_ip'] == alert['src_ip']).sum()
             if has_dst_ip:
-                same_dst = (window_alerts['dst_ip'] == alert['dst_ip']).sum()
+            same_dst = (window_alerts['dst_ip'] == alert['dst_ip']).sum()
             
             # Time proximity weight
             time_diffs = np.abs((window_alerts['timestamp'] - alert['timestamp']).dt.total_seconds())
             # Avoid division by zero if time_diff is exactly 0 (the alert itself)
             time_weights = 1 / (1 + time_diffs[time_diffs > 1e-9]) # Exclude self comparison potentially
-
+            
             # Calculate IP pattern score
             window_size = len(window_alerts) # Already checked > 1
             ip_similarity = (same_src + same_dst) / (window_size * 2) if (has_src_ip or has_dst_ip) else 0
             # Handle case where time_weights might be empty if all diffs are zero
             time_density = time_weights.mean() if not time_weights.empty else 0
-            pattern_score = (ip_similarity + time_density) / 2
-            ip_pattern_scores.append(pattern_score)
+                pattern_score = (ip_similarity + time_density) / 2
+                ip_pattern_scores.append(pattern_score)
         
         # Final pattern score for each signature
         pattern_scores[sig_id] = np.mean(ip_pattern_scores) if ip_pattern_scores else 0
@@ -532,7 +532,7 @@ def is_superset_of_known_fps(current_sig_dict, known_fp_sig_dicts):
         except TypeError:
             # Handle cases where values might not be comparable (e.g., NaN)
             # Fallback to original check
-            is_superset = all(
+        is_superset = all(
                  k in current_sig_dict and current_sig_dict[k] == v for k, v in fp_sig_dict.items()
             )
 

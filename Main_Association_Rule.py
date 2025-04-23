@@ -147,7 +147,7 @@ def main():
     # Use a lower min_support value for NSL-KDD
     if file_type in ['NSL-KDD', 'NSL_KDD']:
         # Restore to previously successful settings
-        min_support_ratio_for_rare = 0.05
+        min_support_ratio_for_rare = 0.07
         min_distinct = 2
         print(f"NSL-KDD settings for remove_rare_columns: min_support_ratio={min_support_ratio_for_rare}, min_distinct={min_distinct}") # 값 확인용
     else:
