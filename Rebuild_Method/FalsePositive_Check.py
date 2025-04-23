@@ -226,9 +226,9 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
 
         nra_scores.append(min(nra, n0_nra) / n0_nra)
 
-            # Optional progress indicator using integer position 'i'
-            if (i + 1) % 50000 == 0: # Print less frequently
-                 print(f"  NRA progress: {i + 1}/{n}")
+        # Optional progress indicator using integer position 'i'
+        if (i + 1) % 50000 == 0: # Print less frequently
+            print(f"  NRA progress: {i + 1}/{n}")
 
     df['nra_score'] = nra_scores
 
