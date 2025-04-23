@@ -284,7 +284,7 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
     elif 'signature_id' not in df.columns:
          print("Error: 'signature_id' column missing from main DataFrame for UFP.")
          df['ufp_score'] = 0.0
-        else:
+    else:
         af_counts = attack_free_df['signature_id'].value_counts()
         af_total = len(attack_free_df)
         af_freqs_map = (af_counts / af_total).to_dict() if af_total > 0 else {}
