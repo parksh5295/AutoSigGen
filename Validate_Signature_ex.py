@@ -32,6 +32,8 @@ from datetime import datetime, timedelta # Add datetime import
 from copy import deepcopy
 
 KNOWN_FP_FILE = "known_high_fp_signatures.json" # Known FP signature save file
+RECALL_CONTRIBUTION_THRESHOLD = 0.1 # Threshold for whitelisting signatures
+NUM_FAKE_FP_SIGNATURES = 3 # Number of fake FP signatures to inject
 
 # ===== Helper Function: Calculate Recall Contribution Per Signature =====
 def calculate_recall_contribution(group_mapped_df, alerts_df, signature_map):
