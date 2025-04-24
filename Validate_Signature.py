@@ -120,22 +120,22 @@ def main():
     args = parser.parse_args()
 
     # <<< START: Conditional FP Parameter Override for DARPA98 >>>
-    if args.file_type == "DARPA98":
+    if args.file_type in ["DARPA98", "DARPA"]:
         print("INFO: File type is 'DARPA98'. Applying specific stricter FP parameters.")
         # Override parameters only if they were not explicitly provided by the user
         # (We achieve this by checking if the current value is the standard default)
         if args.fp_belief_threshold == 0.5: # Standard default
-             args.fp_belief_threshold = 0.8 # DARPA98 specific
+             args.fp_belief_threshold = 0.95 # DARPA98 specific
         if args.fp_superset_strictness == 0.9:
-             args.fp_superset_strictness = 0.95
+             args.fp_superset_strictness = 0.6
         if args.fp_t0_nra == 60:
-             args.fp_t0_nra = 120
+             args.fp_t0_nra = 180
         if args.fp_n0_nra == 20:
-             args.fp_n0_nra = 40
+             args.fp_n0_nra = 100
         if args.fp_lambda_haf == 100.0:
-             args.fp_lambda_haf = 50.0
+             args.fp_lambda_haf = 25.0
         if args.fp_lambda_ufp == 10.0:
-             args.fp_lambda_ufp = 5.0
+             args.fp_lambda_ufp = 2.5
     # <<< END: Conditional FP Parameter Override >>>
 
     # Output the value of the input arguments
