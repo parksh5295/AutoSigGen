@@ -392,6 +392,15 @@ def main():
     print(f"\nSignatures identified as high FP in this run: {len(newly_identified_fp_ids)}")
     if newly_identified_fp_ids:
         print("High FP signature IDs:", ", ".join(sorted(list(newly_identified_fp_ids))))
+        # --- START: Print High FP Rules --- 
+        print("--- Rules of High FP Signatures ---")
+        for fp_id in sorted(list(newly_identified_fp_ids)):
+            if fp_id in current_signatures_map:
+                print(f"  ID: {fp_id}, Rule: {current_signatures_map[fp_id]}")
+            else:
+                print(f"  ID: {fp_id}, Rule: Not found in current map (unexpected error)")
+        print("----------------------------------")
+        # --- END: Print High FP Rules --- 
         # Print detailed information (optional)
         # print("Detailed information on newly identified High FP signatures:")
         # print(newly_identified_fp.to_string())

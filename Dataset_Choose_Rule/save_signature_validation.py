@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import json
+import numpy as np
 
 
 def ensure_directory_exists(filepath):
@@ -9,6 +10,22 @@ def ensure_directory_exists(filepath):
     if directory and not os.path.exists(directory):
         print(f"Creating directory: {directory}")
         os.makedirs(directory)
+
+# Helper function to convert numpy types
+def convert_numpy_types(obj):
+    if isinstance(obj, dict):
+        return {k: convert_numpy_types(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(i) for i in obj]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return convert_numpy_types(obj.tolist()) # Convert arrays to lists first
+    elif pd.isna(obj): # Handle pandas NA/NaN specifically for JSON
+        return None # Represent NaN as null in JSON
+    return obj
 
 def save_validation_results(file_type, file_number, association_rule, basic_eval, fp_results, overfit_results,
                             recall_before=None, recall_after=None, filtered_eval=None):
@@ -28,6 +45,10 @@ def save_validation_results(file_type, file_number, association_rule, basic_eval
         'Filtered_Signature_Evaluation': filtered_eval.to_dict('records') if isinstance(filtered_eval, pd.DataFrame) else filtered_eval
     }
 
+    # --- Convert numpy types before saving --- 
+    validation_results_serializable = convert_numpy_types(validation_results)
+    # -----------------------------------------
+
     # Convert results to DataFrame and save (with JSON fallback)
     try:
         # Attempt to flatten the structure for CSV if possible, or save selectively
@@ -35,19 +56,21 @@ def save_validation_results(file_type, file_number, association_rule, basic_eval
         # Consider saving key summary stats to CSV and full details to JSON.
 
         # Simple CSV save attempt (might fail or be messy)
-        validation_df = pd.DataFrame([validation_results])
-        validation_path = f"{save_path}{file_type}_{association_rule}_{file_number}_validation_results.csv"
-        validation_df.to_csv(validation_path, index=False)
-        print(f"Attempted to save validation results to CSV: {validation_path}")
+        # Note: Converting the complex structure to a single-row DataFrame for CSV isn't ideal.
+        # Consider creating a summary DataFrame instead if CSV is strictly needed.
+        try:
+            validation_df = pd.DataFrame([validation_results_serializable]) # Use serializable version
+            validation_path = f"{save_path}{file_type}_{association_rule}_{file_number}_validation_results.csv"
+            validation_df.to_csv(validation_path, index=False)
+            print(f"Attempted to save validation results summary to CSV: {validation_path}")
+        except Exception as csv_e:
+            print(f"Warning: Could not save detailed results to CSV directly due to complex structure: {csv_e}")
+            print("Saving full results reliably to JSON instead.")
 
         # Always save to JSON for reliable complex structure storage
         json_path = f"{save_path}{file_type}_{association_rule}_{file_number}_validation_results.json"
         with open(json_path, 'w') as f:
-            # Convert DataFrames within the dict to list of records for JSON
-            for key, value in validation_results.items():
-                if isinstance(value, pd.DataFrame):
-                    validation_results[key] = value.to_dict('records')
-            json.dump(validation_results, f, indent=4)
+            json.dump(validation_results_serializable, f, indent=4) # Use serializable version
         print(f"Validation results reliably saved as JSON: {json_path}")
 
     except Exception as e:
@@ -55,12 +78,9 @@ def save_validation_results(file_type, file_number, association_rule, basic_eval
         # Fallback JSON save if initial try block failed before JSON save
         if 'json_path' in locals():
              try:
-                 # Ensure dataframes are converted before saving
-                 for key, value in validation_results.items():
-                     if isinstance(value, pd.DataFrame):
-                         validation_results[key] = value.to_dict('records')
                  with open(json_path, 'w') as f:
-                     json.dump(validation_results, f, indent=4)
+                     # Use the already converted dictionary
+                     json.dump(validation_results_serializable, f, indent=4) # Use serializable version
                  print(f"Fallback save successful as JSON: {json_path}")
              except Exception as json_e:
                  print(f"Error during fallback JSON save: {json_e}")
