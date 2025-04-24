@@ -563,7 +563,7 @@ def evaluate_false_positives(
         lambda_ufp: float = 10.0,
         combine_method: str = 'max', # Changed from existing combine parameter (avoid Python reserved word conflict)
         # FP decision parameters
-        belief_threshold: float = 0.5,
+        belief_threshold: float = 0.8,
         superset_strictness: float = 0.9
     ):
     """
