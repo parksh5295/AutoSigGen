@@ -607,11 +607,11 @@ def main():
     final_signature_ids = set(current_signatures_map.keys()) - actually_removed_ids
 
     # Update print statements for clarity
-    print(f"Original signature count (before injection): {len(original_signatures_for_recall)}\") # Use count before injection
-    print(f"Injected fake signature count: {injected_fake_count}\")
-    print(f"Total signatures before filtering: {len(current_signatures_map)}\")
-    print(f"Final count of signatures removed: {len(actually_removed_ids)}\")
-    print(f"Filtered signature count (remaining): {len(filtered_signatures_dicts)}\")
+    print(f"Original signature count (before injection): {len(original_signatures_for_recall)}") # Use count before injection
+    print(f"Injected fake signature count: {injected_fake_count}")
+    print(f"Total signatures before filtering: {len(current_signatures_map)}")
+    print(f"Final count of signatures removed: {len(actually_removed_ids)}")
+    print(f"Filtered signature count (remaining): {len(filtered_signatures_dicts)}")
     # -----------------------------------
 
     # ===== Overall Recall Calculation and Output =====
@@ -628,7 +628,7 @@ def main():
              set(original_current_signatures_map_for_recall.keys())
          )
          if recall_before_fp is not None:
-             print(f"Recall (Original Signatures): {recall_before_fp:.4f}\")
+             print(f"Recall (Original Signatures): {recall_before_fp:.4f}")
          else:
              print("Could not calculate recall for original signatures.")
 
@@ -643,11 +643,11 @@ def main():
                  final_signature_ids # Only consider alerts from the final set
              )
              if recall_after_fp is not None:
-                 print(f"Recall (After FP Removal & Whitelisting): {recall_after_fp:.4f}\")
+                 print(f"Recall (After FP Removal & Whitelisting): {recall_after_fp:.4f}")
              else:
                   print("Could not calculate recall for final filtered signatures.")
          else:
-             print("No signatures left after filtering, Recall (After FP Removal): 0.0000\")
+             print("No signatures left after filtering, Recall (After FP Removal): 0.0000")
              recall_after_fp = 0.0
     else:
          print("Warning: Cannot calculate overall recall because 'label' is missing in group_mapped_df.")
