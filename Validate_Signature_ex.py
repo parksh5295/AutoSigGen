@@ -204,7 +204,6 @@ def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_l
         rules_df = association_module(
             normal_mapped_df,
             association_method,
-            ea=num_fake_signatures * 2, # Generate slightly more rules than needed
             min_support=min_support,
             min_confidence=min_confidence,
             file_type=file_type # Pass necessary args
