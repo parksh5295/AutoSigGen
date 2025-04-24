@@ -159,6 +159,8 @@ def Heterogeneous_Feature_named_featrues(file_type):
 
 def Heterogeneous_Feature_named_combine(categorical_features, time_features, packet_length_features, count_features, binary_features, data):
     encoder = LabelEncoder()
+    categorical_mapping_df = pd.DataFrame()
+    binary_mapping_df = pd.DataFrame()
 
     if not categorical_features:
         categorical_data = np.empty((len(data), 0))
@@ -166,18 +168,25 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
         categorical_data = pd.DataFrame()
         categorical_mapping_info = {}
         for col in categorical_features:
-            categorical_data[col] = encoder.fit_transform(data[col]) + 1  # Mapping to values starting at 1
-            categorical_mapping_info[col] = dict(zip(encoder.classes_, encoder.transform(encoder.classes_) + 1))
+            try:
+                encoded_col = encoder.fit_transform(data[col].astype(str)) + 1
+                categorical_data[col] = encoded_col
+                categorical_mapping_info[col] = dict(zip(encoder.classes_, encoder.transform(encoder.classes_) + 1))
+            except Exception as e:
+                print(f"Warning: Could not process categorical column '{col}'. Error: {e}. Skipping this column.")
+                if col not in categorical_data.columns:
+                    categorical_data[col] = pd.NA
 
         # Organize mapping information in a value=number format
-        max_len = max(len(mapping) for mapping in categorical_mapping_info.values())
+        max_len = max(len(mapping) for mapping in categorical_mapping_info.values()) if categorical_mapping_info else 0
         formatted_columns = {}
         for feature, mapping in categorical_mapping_info.items():
             items = [f"{k}={v}" for k, v in mapping.items()]
             items += [""] * (max_len - len(items))  # Align length
             formatted_columns[feature] = items
 
-        categorical_mapping_df = pd.DataFrame(formatted_columns)
+        if formatted_columns:
+            categorical_mapping_df = pd.DataFrame(formatted_columns)
 
     if not time_features:
         time_data = np.empty((len(data), 0))
@@ -202,14 +211,15 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
         for col in binary_features:
             binary_mapping_info[col] = {0: 0, 1: 1}
 
-        max_len = max(len(mapping) for mapping in binary_mapping_info.values())
+        max_len = max(len(mapping) for mapping in binary_mapping_info.values()) if binary_mapping_info else 0
         formatted_binary = {}
         for feature, mapping in binary_mapping_info.items():
             items = [f"{k}={v}" for k, v in mapping.items()]
             items += [""] * (max_len - len(items))
             formatted_binary[feature] = items
 
-        binary_mapping_df = pd.DataFrame(formatted_binary)
+        if formatted_binary:
+            binary_mapping_df = pd.DataFrame(formatted_binary)
 
     # Combine all processed data into a list
     data_list = [categorical_data, time_data, packet_length_data, packet_count_data, flow_flag_data]
