@@ -642,7 +642,17 @@ def main():
     print(f"\nInitially flagged as High FP by logic: {len(initially_flagged_fp_ids)}")
 
     # --- Apply Whitelist --- 
-    # ... (logic to calculate ids_to_remove and actually_removed_ids remains the same) ...
+    # Ensure whitelist_ids is defined (should be from recall contribution step)
+    if 'whitelist_ids' not in locals():
+         print("Error: whitelist_ids is not defined before applying whitelist! Initializing to empty set.")
+         whitelist_ids = set()
+         
+    # Ensure initially_flagged_fp_ids is defined *right before* use
+    if 'initially_flagged_fp_ids' not in locals():
+        print("Warning: initially_flagged_fp_ids was not defined before Apply Whitelist. Initializing to empty set.")
+        initially_flagged_fp_ids = set()
+        
+    # Now perform the set operation
     ids_to_remove = initially_flagged_fp_ids - whitelist_ids
     removed_due_to_whitelist = initially_flagged_fp_ids.intersection(whitelist_ids)
     actually_removed_ids = initially_flagged_fp_ids - removed_due_to_whitelist # IDs that are flagged AND not whitelisted
