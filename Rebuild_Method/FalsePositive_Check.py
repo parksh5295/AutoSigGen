@@ -141,7 +141,8 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
                         lambda_haf: float = 100.0, 
                         lambda_ufp: float = 10.0, 
                         belief_threshold: float = 0.5,
-                        combine='max'):
+                        combine='max', 
+                        file_type: str = None):
     """Calculates FP scores (NRA, HAF, UFP) with HAF optimized and NRA slightly improved."""
     if alerts_df.empty:
         print("Warning: calculate_fp_scores received an empty alerts_df. Returning empty DataFrame.")
@@ -165,6 +166,11 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
     if df.empty:
         print("Warning: All rows dropped after handling invalid timestamps.")
         return pd.DataFrame(columns=['nra_score', 'haf_score', 'ufp_score', 'belief', 'is_false_positive', 'signature_id', 'timestamp', 'src_ip', 'dst_ip', 'signature_name'])
+
+    n0_nra_to_use = n0_nra
+    if file_type and file_type in ['DARPA', 'DARPA98']:
+        n0_nra_to_use = 10
+        print(f"INFO: Using adjusted n0_nra = {n0_nra_to_use} for file type '{file_type}'.")
 
     # --- NRA Optimization Step 1: Sort DataFrame by timestamp BEFORE the loop ---
     print("Sorting alerts by timestamp for NRA calculation...")
@@ -225,7 +231,7 @@ def calculate_fp_scores(alerts_df: pd.DataFrame, attack_free_df: pd.DataFrame,
                 nra = np.sum(combined_ip_mask)
 
             # Ensure append is inside the loop
-            nra_scores.append(min(nra, n0_nra) / n0_nra)
+            nra_scores.append(min(nra, n0_nra_to_use) / n0_nra_to_use)
 
             # Optional progress indicator using integer position 'i'
             if (i + 1) % 50000 == 0: # Print less frequently
@@ -555,17 +561,15 @@ def evaluate_false_positives(
         alerts_df: pd.DataFrame,
         current_signatures_map: dict,
         known_fp_sig_dicts: list = None,
-        attack_free_df: pd.DataFrame = None, # For UFP calculations
-        # Add calculate_fp_scores parameters (set default values)
+        attack_free_df: pd.DataFrame = None,
         t0_nra: int = 60,
         n0_nra: int = 20,
         lambda_haf: float = 100.0,
         lambda_ufp: float = 10.0,
-        combine_method: str = 'max', # Changed from existing combine parameter (avoid Python reserved word conflict)
-        # FP decision parameters
-        belief_threshold: float = 0.8,
-        superset_strictness: float = 0.9
-    ):
+        combine_method: str = 'max',
+        belief_threshold: float = 0.5,
+        superset_strictness: float = 0.9,
+        file_type: str = None):
     """
     Calculate FP scores and apply superset logic to determine final FP decision.
     """
@@ -588,7 +592,8 @@ def evaluate_false_positives(
         n0_nra=n0_nra,
         lambda_haf=lambda_haf,
         lambda_ufp=lambda_ufp,
-        combine=combine_method # Use modified parameter name
+        combine=combine_method,
+        file_type=file_type
     )
     print("Initial FP score calculation finished.")
 

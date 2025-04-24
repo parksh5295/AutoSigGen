@@ -162,72 +162,87 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
     categorical_mapping_df = pd.DataFrame()
     binary_mapping_df = pd.DataFrame()
 
+    # If index is not unique, reset it to avoid issues during potential joins/merges later
+    original_index = data.index
+    df_index_to_use = data.index # Store the index to use for empty DataFrames
+    # It might be safer to always work with a consistent index if concat is involved
+    # data = data.reset_index(drop=True)
+    # df_index_to_use = data.index
+
+
     if not categorical_features:
-        categorical_data = np.empty((len(data), 0))
+        # 수정: np.empty 대신 빈 DataFrame 할당 (인덱스 유지)
+        categorical_data = pd.DataFrame(index=df_index_to_use)
     else:
-        categorical_data = pd.DataFrame()
+        categorical_data = pd.DataFrame(index=df_index_to_use) # Initialize with index
         categorical_mapping_info = {}
         for col in categorical_features:
             try:
-                encoded_col = encoder.fit_transform(data[col].astype(str)) + 1
-                categorical_data[col] = encoded_col
-                categorical_mapping_info[col] = dict(zip(encoder.classes_, encoder.transform(encoder.classes_) + 1))
+                 encoded_col = encoder.fit_transform(data[col].astype(str)) + 1
+                 # Use .loc to assign with correct index alignment
+                 categorical_data.loc[df_index_to_use, col] = encoded_col
+                 categorical_mapping_info[col] = dict(zip(encoder.classes_, encoder.transform(encoder.classes_) + 1))
             except Exception as e:
-                print(f"Warning: Could not process categorical column '{col}'. Error: {e}. Skipping this column.")
-                if col not in categorical_data.columns:
-                    categorical_data[col] = pd.NA
+                 print(f"Warning: Could not process categorical column '{col}'. Error: {e}. Skipping this column.")
+                 categorical_data[col] = pd.NA # Assign NA to the column
 
-        # Organize mapping information in a value=number format
         max_len = max(len(mapping) for mapping in categorical_mapping_info.values()) if categorical_mapping_info else 0
         formatted_columns = {}
         for feature, mapping in categorical_mapping_info.items():
             items = [f"{k}={v}" for k, v in mapping.items()]
-            items += [""] * (max_len - len(items))  # Align length
+            items += [""* (max_len - len(items))]
             formatted_columns[feature] = items
 
         if formatted_columns:
             categorical_mapping_df = pd.DataFrame(formatted_columns)
 
     if not time_features:
-        time_data = np.empty((len(data), 0))
+        # 수정: np.empty 대신 빈 DataFrame 할당 (인덱스 유지)
+        time_data = pd.DataFrame(index=df_index_to_use)
     else:
-        time_data = data[time_features]
+        # Ensure selection uses the correct index
+        time_data = data.loc[df_index_to_use, time_features].copy()
 
     if not packet_length_features:
-        packet_length_data = np.empty((len(data), 0))
+        # 수정: np.empty 대신 빈 DataFrame 할당 (인덱스 유지)
+        packet_length_data = pd.DataFrame(index=df_index_to_use)
     else:
-        packet_length_data = data[packet_length_features]
+        packet_length_data = data.loc[df_index_to_use, packet_length_features].copy()
 
     if not count_features:
-        packet_count_data = np.empty((len(data), 0))
+        # 수정: np.empty 대신 빈 DataFrame 할당 (인덱스 유지)
+        packet_count_data = pd.DataFrame(index=df_index_to_use)
     else:
-        packet_count_data = data[count_features]
+        packet_count_data = data.loc[df_index_to_use, count_features].copy()
 
     if not binary_features:
-        flow_flag_data = np.empty((len(data), 0))
+        # 수정: np.empty 대신 빈 DataFrame 할당 (인덱스 유지)
+        flow_flag_data = pd.DataFrame(index=df_index_to_use)
     else:
-        flow_flag_data = data[binary_features]
+        flow_flag_data = data.loc[df_index_to_use, binary_features].copy()
         binary_mapping_info = {}
         for col in binary_features:
-            binary_mapping_info[col] = {0: 0, 1: 1}
+             binary_mapping_info[col] = {0: 0, 1: 1}
 
         max_len = max(len(mapping) for mapping in binary_mapping_info.values()) if binary_mapping_info else 0
         formatted_binary = {}
         for feature, mapping in binary_mapping_info.items():
             items = [f"{k}={v}" for k, v in mapping.items()]
-            items += [""] * (max_len - len(items))
+            items += [""* (max_len - len(items))]
             formatted_binary[feature] = items
 
         if formatted_binary:
             binary_mapping_df = pd.DataFrame(formatted_binary)
 
-    # Combine all processed data into a list
+    # Ensure all dataframes in data_list use the same index
+    # No need to set index again if we used df_index_to_use consistently
     data_list = [categorical_data, time_data, packet_length_data, packet_count_data, flow_flag_data]
+
     category_mapping = {
         'categorical': categorical_mapping_df,
         'binary': binary_mapping_df
     }
-    print("flag_data: ", data_list[4])
+    # print("flag_data: ", data_list[4])
 
     return data_list, category_mapping
 

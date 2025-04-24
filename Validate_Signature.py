@@ -322,7 +322,8 @@ def main():
         n0_nra=fp_n0_nra,
         lambda_haf=fp_lambda_haf,
         lambda_ufp=fp_lambda_ufp,
-        combine_method=fp_combine_method
+        combine_method=fp_combine_method,
+        file_type=file_type
     )
     fp_summary_enhanced = summarize_fp_results(fp_results_detailed)
 
@@ -456,21 +457,19 @@ def main():
         recall_after_fp = None
     # =======================================
 
-
-    # ... (Optional: Re-evaluate performance with filtered signatures if needed) ...
-    # Example: Evaluate filtered signatures
-    # if filtered_signatures_dicts:
-    #    print("\n=== Evaluating Filtered Signatures ===")
-    #    filtered_formatted_signatures = [
-    #        {'id': f'FSIG_{idx}', 'name': f'FilteredSig_{idx}', 'condition': lambda row, sig=sig: all(row.get(k) == v for k, v in sig.items())}
-    #        for idx, sig in enumerate(filtered_signatures_dicts)
-    #    ]
-    #    filtered_signature_result = signature_evaluate(group_mapped_df, filtered_signatures_dicts)
-    #    print("Filtered Signature Evaluation Results:")
-    #    print(filtered_signature_result)
-    # else:
-    #    print("No signatures remaining after filtering.")
-    #    filtered_signature_result = pd.DataFrame()
+    # --- Evaluate performance with filtered signatures ---
+    print("\n=== Evaluating Filtered Signatures ===")
+    if filtered_signatures_dicts:
+        # Re-use the signature_evaluate function
+        # Need to re-format if signature_evaluate expects the original format
+        # Assuming signature_evaluate can take list of dicts directly:
+        filtered_signature_result = signature_evaluate(group_mapped_df, filtered_signatures_dicts)
+        print("Filtered Signature Evaluation Results (first 5 rows):")
+        print(filtered_signature_result.head().to_string() if not filtered_signature_result.empty else "No results")
+    else:
+        print("No signatures remaining after filtering.")
+        # Define filtered_signature_result as empty DataFrame for consistent saving
+        filtered_signature_result = pd.DataFrame()
 
 
     # --- Save all results to CSV ---
@@ -483,10 +482,9 @@ def main():
         basic_eval=signature_result, # Original evaluation results
         fp_results=fp_summary_enhanced, # Use enhanced FP summary (includes rules)
         overfit_results=overfit_results, # Use calculated overfitting results
-        # filtered_eval=filtered_signature_result # Optional: Add evaluation of filtered sigs if calculated
-        # Optional: Add recall values to save function if modified
-        # recall_before = recall_before_fp,
-        # recall_after = recall_after_fp
+        filtered_eval=filtered_signature_result, # <--- Delivering filtered assessment results
+        recall_before=recall_before_fp,
+        recall_after=recall_after_fp
     )
 
     # --- Save Timing Information ---
