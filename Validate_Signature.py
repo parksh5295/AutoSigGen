@@ -106,7 +106,7 @@ def main():
     parser.add_argument('--precision_underlimit', type=float, default=0.6)
     parser.add_argument('--signature_ea', type=int, default=15)
     parser.add_argument('--association_metric', type=str, default='confidence')
-    parser.add_argument('--fp_belief_threshold', type=float, default=0.5)
+    parser.add_argument('--fp_belief_threshold', type=float, default=0.8)
     parser.add_argument('--fp_superset_strictness', type=float, default=0.9)
     parser.add_argument('--fp_t0_nra', type=int, default=60)
     parser.add_argument('--fp_n0_nra', type=int, default=20)
@@ -119,6 +119,25 @@ def main():
     # Save the above in args
     args = parser.parse_args()
 
+    # <<< START: Conditional FP Parameter Override for DARPA98 >>>
+    if args.file_type == "DARPA98":
+        print("INFO: File type is 'DARPA98'. Applying specific stricter FP parameters.")
+        # Override parameters only if they were not explicitly provided by the user
+        # (We achieve this by checking if the current value is the standard default)
+        if args.fp_belief_threshold == 0.5: # Standard default
+             args.fp_belief_threshold = 0.8 # DARPA98 specific
+        if args.fp_superset_strictness == 0.9:
+             args.fp_superset_strictness = 0.95
+        if args.fp_t0_nra == 60:
+             args.fp_t0_nra = 120
+        if args.fp_n0_nra == 20:
+             args.fp_n0_nra = 40
+        if args.fp_lambda_haf == 100.0:
+             args.fp_lambda_haf = 50.0
+        if args.fp_lambda_ufp == 10.0:
+             args.fp_lambda_ufp = 5.0
+    # <<< END: Conditional FP Parameter Override >>>
+
     # Output the value of the input arguments
     file_type = args.file_type
     file_number = args.file_number
@@ -130,6 +149,7 @@ def main():
     precision_underlimit = args.precision_underlimit
     signature_ea = args.signature_ea
     association_metric = args.association_metric
+    # Use potentially overridden values from args
     fp_belief_threshold = args.fp_belief_threshold
     fp_superset_strictness = args.fp_superset_strictness
     fp_t0_nra = args.fp_t0_nra
@@ -463,8 +483,12 @@ def main():
         # Re-use the signature_evaluate function
         # Need to re-format if signature_evaluate expects the original format
         # Assuming signature_evaluate can take list of dicts directly:
-        filtered_signature_result = signature_evaluate(group_mapped_df, filtered_signatures_dicts)
+        # Call signature_evaluate and convert the resulting list to a DataFrame
+        filtered_signature_result_list = signature_evaluate(group_mapped_df, filtered_signatures_dicts)
+        filtered_signature_result = pd.DataFrame(filtered_signature_result_list) # <-- Convert list to DataFrame
+
         print("Filtered Signature Evaluation Results (first 5 rows):")
+        # Now filtered_signature_result is a DataFrame, so .head() and .empty work
         print(filtered_signature_result.head().to_string() if not filtered_signature_result.empty else "No results")
     else:
         print("No signatures remaining after filtering.")
