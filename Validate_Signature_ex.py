@@ -575,10 +575,10 @@ def main():
 
     print(f"Applying whitelist ({len(whitelist_ids)} IDs)...")
     if removed_due_to_whitelist:
-        print(f"Prevented removal of {len(removed_due_to_whitelist)} whitelisted IDs: {', '.join(sorted(list(removed_due_to_whitelist)))}\")
-    print(f"Final IDs identified for removal (High FP & not whitelisted): {len(actually_removed_ids)}\")
+        print(f"Prevented removal of {len(removed_due_to_whitelist)} whitelisted IDs: {', '.join(sorted(list(removed_due_to_whitelist)))}")
+    print(f"Final IDs identified for removal (High FP & not whitelisted): {len(actually_removed_ids)}")
     if actually_removed_ids:
-        print(f"IDs to remove: {\', \'.join(sorted(list(actually_removed_ids)))}\")
+        print(f"IDs to remove: {', '.join(sorted(list(actually_removed_ids)))}")
 
 
     # --- Update and save known FP list ---
