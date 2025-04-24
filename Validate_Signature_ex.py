@@ -33,6 +33,47 @@ from copy import deepcopy
 
 KNOWN_FP_FILE = "known_high_fp_signatures.json" # Known FP signature save file
 
+# ===== Helper Function: Calculate Recall Contribution Per Signature =====
+def calculate_recall_contribution(group_mapped_df, alerts_df, signature_map):
+    """
+    Calculates the recall contribution for each signature.
+
+    Args:
+        group_mapped_df (pd.DataFrame): DataFrame with original data and 'label' column.
+        alerts_df (pd.DataFrame): DataFrame from apply_signatures_to_dataset (covering all signatures).
+        signature_map (dict): Dictionary mapping signature_id to signature rule dict.
+
+    Returns:
+        dict: Dictionary mapping signature_id to its recall contribution (0.0 to 1.0).
+              Returns empty dict if errors occur.
+    """
+    recall_contributions = {}
+    if 'label' not in group_mapped_df.columns:
+        print("Error: 'label' column not found in group_mapped_df for recall contribution.")
+        return recall_contributions
+    if 'alert_index' not in alerts_df.columns or 'signature_id' not in alerts_df.columns:
+         print("Error: 'alert_index' or 'signature_id' column not found in alerts_df for recall contribution.")
+         return recall_contributions
+
+    anomalous_indices = set(group_mapped_df[group_mapped_df['label'] == 1].index)
+    total_anomalous_alerts = len(anomalous_indices)
+
+    if total_anomalous_alerts == 0:
+        print("Warning: No anomalous alerts found in group_mapped_df for recall contribution.")
+        return {sig_id: 0.0 for sig_id in signature_map.keys()} # All contribute 0
+
+    print(f"\nCalculating recall contribution for {len(signature_map)} signatures...")
+    for sig_id in signature_map.keys():
+        sig_alerts = alerts_df[alerts_df['signature_id'] == sig_id]
+        detected_by_sig = anomalous_indices.intersection(set(sig_alerts['alert_index']))
+        contribution = len(detected_by_sig) / total_anomalous_alerts
+        recall_contributions[sig_id] = contribution
+        # Optional: print contribution per signature
+        # print(f"  - {sig_id}: {contribution:.4f}")
+
+    return recall_contributions
+# ====================================================================
+
 def ensure_directory_exists(filepath):
     directory = os.path.dirname(filepath)
     if directory and not os.path.exists(directory):
