@@ -190,7 +190,7 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
         formatted_columns = {}
         for feature, mapping in categorical_mapping_info.items():
             items = [f"{k}={v}" for k, v in mapping.items()]
-            items += [""* (max_len - len(items))]
+            items += [""] * (max_len - len(items))
             formatted_columns[feature] = items
 
         if formatted_columns:
@@ -228,7 +228,7 @@ def Heterogeneous_Feature_named_combine(categorical_features, time_features, pac
         formatted_binary = {}
         for feature, mapping in binary_mapping_info.items():
             items = [f"{k}={v}" for k, v in mapping.items()]
-            items += [""* (max_len - len(items))]
+            items += [""] * (max_len - len(items))
             formatted_binary[feature] = items
 
         if formatted_binary:
