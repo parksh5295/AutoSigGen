@@ -190,6 +190,17 @@ def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_l
         normal_mapped_df, _ = map_intervals_to_groups(normal_data_to_map, category_mapping, data_list, regul='N')
         print(f"Mapped normal data shape: {normal_mapped_df.shape}")
 
+        # --- Handle NaN values before association mining ---
+        rows_before_dropna = normal_mapped_df.shape[0]
+        normal_mapped_df = normal_mapped_df.dropna()
+        rows_after_dropna = normal_mapped_df.shape[0]
+        if rows_before_dropna > rows_after_dropna:
+            print(f"Dropped {rows_before_dropna - rows_after_dropna} rows containing NaN values from mapped normal data.")
+        if normal_mapped_df.empty:
+            print("Warning: No data left after dropping NaN rows. Cannot generate fake signatures.")
+            return []
+        # -------------------------------------------------
+
         # 5. Run association rule mining on normal mapped data
         print(f"Running {association_method} on normal data (min_support={min_support}, min_confidence={min_confidence})...")
         # Note: association_module might expect specific parameters or return formats. Adjust as needed.
