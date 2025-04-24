@@ -624,7 +624,22 @@ def main():
         print("Enhanced FP summary results not found.")
 
     # --- Identify and report high FP signatures --- 
-    # ... (logic to get initially_flagged_fp_ids remains the same) ...
+    # Initialize the variable before the if/else block to ensure it's always defined
+    initially_flagged_fp_ids = set()
+    
+    # Now, try to populate it based on FP summary results
+    if not fp_summary_enhanced.empty and 'final_likely_fp' in fp_summary_enhanced.columns:
+        # Identify ALL signatures initially flagged as high FP by the logic
+        try: # Add try-except for robustness during set creation
+            initially_flagged_fp_ids = set(fp_summary_enhanced[fp_summary_enhanced['final_likely_fp']]['signature_id'].tolist())
+        except Exception as e:
+            print(f"Error extracting initially flagged FP IDs: {e}")
+            initially_flagged_fp_ids = set() # Fallback to empty set on error
+    else:
+        print("Warning: Could not determine newly identified FP signatures. 'final_likely_fp' column missing or summary empty.")
+        # initially_flagged_fp_ids is already an empty set from initialization
+
+    print(f"\nInitially flagged as High FP by logic: {len(initially_flagged_fp_ids)}")
 
     # --- Apply Whitelist --- 
     # ... (logic to calculate ids_to_remove and actually_removed_ids remains the same) ...
