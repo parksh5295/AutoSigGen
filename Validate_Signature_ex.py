@@ -159,6 +159,11 @@ def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_l
         file_path, _ = file_path_line_signatures(file_type, file_number)
         full_data = file_cut(file_type, file_path, 'all') # Load all data
 
+        # --- Add time scalar transfer step --- 
+        print("Applying time scalar transfer...")
+        full_data = time_scalar_transfer(full_data, file_type)
+        # -------------------------------------
+
         # 2. Assign labels
         print("Assigning labels...")
         if file_type in ['MiraiBotnet']:
