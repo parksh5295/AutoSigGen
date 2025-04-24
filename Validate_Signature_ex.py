@@ -133,7 +133,7 @@ def calculate_overall_recall(group_mapped_df, alerts_df, signature_map, relevant
 
     return recall
 
-def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_list, association_method, num_fake_signatures=3, min_support=0.3, min_confidence=0.8):
+def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_list, association_method, association_metric, num_fake_signatures=3, min_support=0.3, min_confidence=0.8):
     """
     Generates fake FP signatures by running association rule mining on normal data.
 
@@ -143,6 +143,7 @@ def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_l
         category_mapping (dict): Mapping information loaded from mapped_info.csv.
         data_list (list): List used by map_intervals_to_groups.
         association_method (str): Association rule algorithm (e.g., 'apriori').
+        association_metric (str): Metric to use for association rule mining (e.g., 'confidence').
         num_fake_signatures (int): Number of fake signatures to generate.
         min_support (float): Minimum support threshold for association mining on normal data.
         min_confidence (float): Minimum confidence threshold for association mining.
@@ -204,6 +205,7 @@ def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_l
         rules_df = association_module(
             normal_mapped_df,
             association_method,
+            association_metric=association_metric,
             min_support=min_support,
             min_confidence=min_confidence
         )
@@ -494,6 +496,7 @@ def main():
         category_mapping=category_mapping, # Pass existing mapping
         data_list=data_list, # Pass existing data_list
         association_method=Association_mathod, # Use same method as main analysis
+        association_metric=association_metric, # Pass association_metric from main args
         num_fake_signatures=NUM_FAKE_FP_SIGNATURES,
         min_support=0.4, # Slightly higher support for common normal patterns
         min_confidence=0.9 # High confidence for normal patterns
