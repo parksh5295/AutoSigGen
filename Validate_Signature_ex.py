@@ -205,8 +205,7 @@ def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_l
             normal_mapped_df,
             association_method,
             min_support=min_support,
-            min_confidence=min_confidence,
-            file_type=file_type # Pass necessary args
+            min_confidence=min_confidence
         )
 
         # 6. Extract top rules as fake signatures
