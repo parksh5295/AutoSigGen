@@ -112,7 +112,8 @@ def sam(df, min_support=0.5, min_confidence=0.8):
                                         rule_dict = {}
                                         for item in antecedent:
                                             key, value = item.split('=')
-                                            rule_dict[key] = int(value)
+                                            # Convert value to float first, then to int to handle strings like '1.0'
+                                            rule_dict[key] = int(float(value))
                                         
                                         rule_tuple = tuple(sorted(rule_dict.items()))
                                         rule_set.add(rule_tuple)
