@@ -147,6 +147,23 @@ def Heterogeneous_Feature_named_featrues(file_type):
         binary_features = [
             'Flag'
         ]
+
+    elif file_type in ['CICModbus23', 'CICModbus']:
+        categorical_features = [
+            'TargetIP', 'TransactionID'
+        ]
+        time_features = [
+            'Date_scalar', 'StartTime_scalar'
+        ]
+        packet_length_features = [
+            
+        ]
+        count_features = [
+            
+        ]
+        binary_features = [
+        
+        ]
     
     return {
             'categorical_features': categorical_features,

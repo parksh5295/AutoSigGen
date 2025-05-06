@@ -74,8 +74,10 @@ def main():
         data['label'], _ = anomal_judgment_nonlabel(file_type, data)
     elif file_type == 'netML':
         data['label'] = data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
-    elif file_type == 'DARPA98':
+    elif file_type in ['DARPA', 'DARPA98']:
         data['label'] = data['Class'].apply(lambda x: 0 if x == '-' else 1)
+    elif file_type in ['CICModbus23', 'CICModbus']:
+        data['label'] = data['Attack'].apply(lambda x: 0 if x.strip() == 'Baseline Replay: In position' else 1)
     else:
         data['label'] = anomal_judgment_label(data)
 

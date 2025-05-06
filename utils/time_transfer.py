@@ -84,5 +84,22 @@ def time_scalar_transfer(data, file_type):
 
         return data
     
+    # Handle CICModbus23: split combined Timestamp into date and time scalars
+    elif file_type in ['CICModbus23', 'CICModbus']:
+        # Parse the combined Timestamp field
+        data['Timestamp'] = pd.to_datetime(
+            data['Timestamp'], format="%Y-%m-%d %H:%M:%S.%f", errors='coerce'
+        )
+        # Date_scalar: full datetime for scaling
+        data['Date_scalar'] = data['Timestamp']
+        # StartTime_scalar: seconds since midnight
+        data['StartTime_scalar'] = (
+            data['Timestamp'].dt.hour * 3600
+            + data['Timestamp'].dt.minute * 60
+            + data['Timestamp'].dt.second
+            + data['Timestamp'].dt.microsecond / 1e6
+        )
+        return data
+        
     else:
         return data
