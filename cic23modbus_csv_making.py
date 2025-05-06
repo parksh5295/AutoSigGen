@@ -15,7 +15,6 @@ def load_and_merge_cicmodbus_attacks(base_dir):
         for file in csv_files:
             try:
                 df = pd.read_csv(file)
-                df['attack_type'] = category
                 all_data.append(df)
             except Exception as e:
                 print(f"Failed to read {file}: {e}")
@@ -32,8 +31,15 @@ def load_and_merge_cicmodbus_attacks(base_dir):
     timestamps = pd.to_datetime(full_df['Timestamp'], errors='coerce')
     n_errors = timestamps.isna().sum()
     if n_errors > 0:
-        print(f"Dropping 'Timestamp' column due to {n_errors} parse errors.")
-        full_df.drop(columns=['Timestamp'], inplace=True)
+        print(f"Found {n_errors} rows with Timestamp parse errors. These rows will be dropped.")
+        # Drop rows where timestamp parsing failed (NaT values)
+        full_df = full_df[timestamps.notna()].copy() # Keep rows where timestamp is not NaT
+        # Re-assign the now valid timestamps (if any rows are left)
+        if not full_df.empty:
+            full_df['Timestamp'] = pd.to_datetime(full_df['Timestamp']) # Re-parse valid ones
+            full_df.sort_values(by='Timestamp', inplace=True)
+        elif 'Timestamp' in full_df.columns: # if df becomes empty but Timestamp col was there
+            pass # Keep the empty column if needed, or drop explicitly full_df.drop(columns=['Timestamp'], inplace=True)
     else:
         full_df['Timestamp'] = timestamps
         full_df.sort_values(by='Timestamp', inplace=True)
