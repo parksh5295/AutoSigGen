@@ -69,7 +69,7 @@ def h_mine(df, min_support=0.5, min_confidence=0.8):
                             rule_dict = {}
                             for item in itemset:
                                 key, value = item.split('=')
-                                rule_dict[key] = int(value)
+                                rule_dict[key] = int(float(value))
                             
                             rule_tuple = tuple(sorted(rule_dict.items()))
                             rule_set.add(rule_tuple)
