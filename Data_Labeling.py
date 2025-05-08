@@ -52,7 +52,7 @@ def main():
 
     file_path, file_number = file_path_line_nonnumber(file_type, file_number)
     # cut_type = str(input("Enter the data cut type: "))
-    if file_type in ['DARPA98', 'DARPA', 'NSL-KDD', 'NSL_KDD']:
+    if file_type in ['DARPA98', 'DARPA', 'NSL-KDD', 'NSL_KDD', 'CICModbus23', 'CICModbus']:
         cut_type = 'random'
     else:
         cut_type = 'all'
