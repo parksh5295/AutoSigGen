@@ -15,6 +15,14 @@ def clustering_GMM_normal(data, X, max_clusters):
     parameter_dict = after_elbow['parameter_dict']
 
     gmm, clusters = fit_gmm_with_retry(X, n_clusters, random_state=parameter_dict['random_state'])
+    
+    # Debug cluster id
+    print(f"\n[DEBUG GMM-normal main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG GMM-normal main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    print(f"[DEBUG GMM-normal main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG GMM-normal main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_GMM = data['cluster']
@@ -31,6 +39,14 @@ def clustering_GMM_full(data, X, max_clusters):
     parameter_dict = after_elbow['parameter_dict']
 
     gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='full', random_state=parameter_dict['random_state'])
+    
+    # Debug cluster id
+    print(f"\n[DEBUG GMM-full main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG GMM-full main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    print(f"[DEBUG GMM-full main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG GMM-full main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+        
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_GMM = data['cluster']
@@ -47,6 +63,14 @@ def clustering_GMM_tied(data, X, max_clusters):
     parameter_dict = after_elbow['parameter_dict']
 
     gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='tied', random_state=parameter_dict['random_state'])
+    
+    # Debug cluster id
+    print(f"\n[DEBUG GMM-tied main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG GMM-tied main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    print(f"[DEBUG GMM-tied main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG GMM-tied main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+        
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_GMM = data['cluster']
@@ -63,6 +87,15 @@ def clustering_GMM_diag(data, X, max_clusters):
     parameter_dict = after_elbow['parameter_dict']
 
     gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='diag', random_state=parameter_dict['random_state'])
+
+    # Debug cluster id
+    print(f"\n[DEBUG GMM-diag main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG GMM-diag main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    
+    print(f"[DEBUG GMM-diag main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG GMM-diag main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_GMM = data['cluster']

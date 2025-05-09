@@ -33,6 +33,15 @@ def clustering_MShift(data, X):
     parameter_dict.update(best_params)
 
     clusters, num_clusters, MShift = clustering_MShift_clustering(data, X, state=parameter_dict['random_state'], quantile=parameter_dict['quantile'], n_samples=parameter_dict['n_samples'])
+
+    # Debug cluster id
+    print(f"\n[DEBUG MeanShift main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG MeanShift main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    
+    print(f"[DEBUG MeanShift main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG MeanShift main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    
     data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
 
     predict_MShift = data['cluster']

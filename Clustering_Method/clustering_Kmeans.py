@@ -16,6 +16,15 @@ def clustering_Kmeans(data, X, max_clusters): # main clustering
 
     kmeans = KMeans(n_clusters=n_clusters, random_state=best_parameter_dict['random_state'], n_init=best_parameter_dict['n_init'])
     clusters = kmeans.fit_predict(X)
+
+    # Debug cluster id
+    print(f"\n[DEBUG KMeans main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG KMeans main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    
+    print(f"[DEBUG KMeans main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG KMeans main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_kmeans = data['cluster']

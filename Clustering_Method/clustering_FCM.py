@@ -22,6 +22,16 @@ def clustering_FCM(data, X, max_clusters):
 
     # Assign clusters based on maximum membership
     cluster_labels = np.argmax(u, axis=0)
+
+    # Debug cluster id
+    print(f"\n[DEBUG FCM main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG FCM main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    
+    # X.T is passed to cmeans, so we log X's shape for consistency with other algorithms
+    print(f"[DEBUG FCM main_clustering] Array used for clustering 'X' (X.T passed to cmeans) - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG FCM main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    
     data['cluster'] = clustering_nomal_identify(data, cluster_labels, n_clusters)
 
     predict_FCM = data['cluster']

@@ -92,6 +92,15 @@ def clustering_Gmeans(data, X):
     gmeans = GMeans(random_state=parameter_dict['random_state'], max_clusters=parameter_dict['max_clusters'], tol=parameter_dict['tol'])
     clusters = gmeans.fit_predict(X)
     n_clusters = len(np.unique(clusters))  # Counting the number of clusters
+
+    # Debug cluster id
+    print(f"\n[DEBUG GMeans main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG GMeans main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    
+    print(f"[DEBUG GMeans main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG GMeans main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_Gmeans = data['cluster']

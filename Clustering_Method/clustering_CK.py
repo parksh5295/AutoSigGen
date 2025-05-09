@@ -148,6 +148,15 @@ def clustering_CK(data, X, max_clusters):
 
     # Assign clusters based on maximum membership
     cluster_labels = np.argmax(u, axis=0)
+
+    # Debug cluster id
+    print(f"\n[DEBUG CK main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG CK main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    
+    print(f"[DEBUG CK main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG CK main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    
     data['cluster'] = clustering_nomal_identify(data, cluster_labels, n_clusters)
 
     predict_CK = data['cluster']

@@ -124,6 +124,17 @@ def main():
     else:
         X_reduced = X
 
+    print(f"\n[DEBUG Data_Labeling.py] X_reduced (data used for clustering) shape: {X_reduced.shape}")
+    if hasattr(X_reduced, 'columns'): # X_reduced is a DataFrame
+        print(f"[DEBUG Data_Labeling.py] X_reduced columns: {list(X_reduced.columns)}")
+    else: # X_reduced is a NumPy array
+        print(f"[DEBUG Data_Labeling.py] X_reduced is a NumPy array (no direct column names). First 5 cols of first row: {X_reduced[0, :5] if X_reduced.shape[0] > 0 else 'empty'}")
+    
+    # Note: Information about X (group_mapped_df, before PCA) is also good to output
+    if hasattr(X, 'columns'):
+        print(f"[DEBUG Data_Labeling.py] X (PCA 이전, group_mapped_df) shape: {X.shape}")
+        print(f"[DEBUG Data_Labeling.py] X (PCA 이전, group_mapped_df) columns: {list(X.columns)}")
+
     timing_info['4_pca'] = time.time() - start
 
 
@@ -143,6 +154,8 @@ def main():
     # Hyperparameter_optimization = str(input("\nDo you need to do Hyperparameter_optimization? (Y/n): "))
     Hyperparameter_optimization = 'Y'
     if Hyperparameter_optimization in ['Y', 'y']:
+        print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Shape: {data.shape}")
+        print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Columns: {list(data.columns)}")
         clustering, GMM_type = choose_clustering_algorithm(data, X_reduced, clustering_algorithm, max_clusters)
     elif Hyperparameter_optimization in ['N', 'n']:
         clustering, GMM_type = choose_clustering_algorithm_Non_optimization(data, X_reduced, clustering_algorithm)

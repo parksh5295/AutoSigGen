@@ -18,6 +18,15 @@ def clustering_Kmedians(data, X, max_clusters):
     kmedians = KMedoids(n_clusters=n_clusters, random_state=parameter_dict['random_state'])   # default; randomm_state=42
 
     clusters = kmedians.fit_predict(X)
+
+    # Debug cluster id - Moved before CNI call
+    print(f"\n[DEBUG KMedians main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG KMedians main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    
+    print(f"[DEBUG KMedians main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG KMedians main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_kmedians = data['cluster']

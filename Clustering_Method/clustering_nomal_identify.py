@@ -6,7 +6,10 @@ from utils.class_row import nomal_class_data
 
 
 def clustering_nomal_identify(data, clusters, num_clusters):
-    known_nomal_samples = nomal_class_data(data).to_numpy()
+    print(f"\n[DEBUG CNI] Received 'data' - Shape: {data.shape}, Columns: {list(data.columns)}")
+    temp_kns_df = nomal_class_data(data)
+    print(f"[DEBUG CNI] DataFrame for 'known_nomal_samples' (before .to_numpy()) - Shape: {temp_kns_df.shape}, Columns: {list(temp_kns_df.columns)}")
+    known_nomal_samples = temp_kns_df.to_numpy()
 
     final_labels = np.zeros(len(data))   # Create an array (list) to store cluster labels
     threshold = 0.3 # Similar to Confidence
@@ -28,6 +31,7 @@ def clustering_nomal_identify(data, clusters, num_clusters):
             # print(f"[INFO] Cluster {cluster_id} mask was not empty, but resulting cluster_data is empty. Skipping. Associated points in final_labels remain 0.")
             continue
 
+        print(f"[DEBUG CNI] DataFrame for 'cluster_array' (cluster_id {cluster_id}, before .to_numpy()) - Shape: {cluster_data.shape}, Columns: {list(cluster_data.columns)}")
         cluster_array = cluster_data.to_numpy() # Quickly convert to Numpy Array
 
         # Calculate how much of that cluster data matches known_normal_samples

@@ -18,6 +18,15 @@ def clustering_SGMM(data, X, max_clusters):
     sgmm = GaussianMixture(n_components=n_clusters, covariance_type='spherical', random_state=parameter_dict['random_state'])   # default; randomm_state=42
 
     clusters = sgmm.fit_predict(X)
+
+    # Debug cluster id
+    print(f"\n[DEBUG SGMM main_clustering] Param for CNI 'data' - Shape: {data.shape}")
+    print(f"[DEBUG SGMM main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    
+    print(f"[DEBUG SGMM main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
+    # if not hasattr(X, 'columns'):
+    #     print(f"[DEBUG SGMM main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    
     data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
 
     predict_SGMM = data['cluster']
