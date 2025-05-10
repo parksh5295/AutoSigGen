@@ -78,7 +78,7 @@ class GMeans:
         return self.fit(X).labels_
 
 
-def clustering_Gmeans(data, X):
+def clustering_Gmeans(data, X, aligned_original_labels):
     tune_parameters = Grid_search_all(X, 'Gmeans')
 
     if not tune_parameters or 'Gmeans' not in tune_parameters or not tune_parameters['Gmeans']['best_params']:
@@ -93,35 +93,35 @@ def clustering_Gmeans(data, X):
     clusters = gmeans.fit_predict(X)
     n_clusters = len(np.unique(clusters))  # Counting the number of clusters
 
-    # Debug cluster id
-    print(f"\n[DEBUG GMeans main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG GMeans main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG GMeans main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG GMeans main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
     
-    print(f"[DEBUG GMeans main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG GMeans main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
-    
-    data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, n_clusters)
 
-    predict_Gmeans = data['cluster']
+    # predict_Gmeans = data['cluster'] # Old way
     
     return {
-        'Cluster_labeling': predict_Gmeans,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
 
 def pre_clustering_Gmeans(data, X, random_state, max_clusters, tol):
-    # G-means Clustering (using GaussianMixture)
-    gmeans = GMeans(random_state, max_clusters, tol)
-    clusters = gmeans.fit_predict(X)
-    n_clusters = len(np.unique(clusters))  # Counting the number of clusters
-    clustering_data = clustering_nomal_identify(data, clusters, n_clusters)
+    # G-means Clustering
+    gmeans = GMeans(random_state=random_state, max_clusters=max_clusters, tol=tol) # Pass params to GMeans class constructor
+    cluster_labels = gmeans.fit_predict(X)
+    n_clusters_actual = len(np.unique(cluster_labels))  # Actual number of clusters found by GMeans
 
-    predict_Gmeans = clustering_data
+    # REMOVED CNI call
+    # final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, cluster_labels, n_clusters_actual)
+    # num_clusters_after_cni = len(np.unique(final_cluster_labels_from_cni))
     
     return {
-        'Cluster_labeling': predict_Gmeans,
-        'n_clusters' : n_clusters,
+        # 'Cluster_labeling': final_cluster_labels_from_cni,
+        'model_labels' : cluster_labels,
+        'n_clusters' : n_clusters_actual, # Actual n_clusters from GMeans
         'before_labeling' : gmeans
     }

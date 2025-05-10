@@ -20,7 +20,7 @@ def clustering_DBSCAN_clustering(data, X, eps, count_samples):  # Fundamental DB
     return clusters, num_clusters, dbscan
 
 
-def clustering_DBSCAN(data, X):
+def clustering_DBSCAN(data, X, aligned_original_labels):
     tune_parameters = Grid_search_all(X, 'DBSCAN')
     best_params = tune_parameters['DBSCAN']['best_params']
     parameter_dict = tune_parameters['DBSCAN']['all_params']
@@ -28,32 +28,29 @@ def clustering_DBSCAN(data, X):
 
     clusters, num_clusters, dbscan = clustering_DBSCAN_clustering(data, X, eps=parameter_dict['eps'], count_samples=parameter_dict['count_samples'])
 
-    # Debug cluster id
-    print(f"\n[DEBUG DBSCAN main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG DBSCAN main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    # Debug cluster id (data refers to original data, X is the data used for clustering)
+    print(f"\n[DEBUG DBSCAN main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG DBSCAN main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
     
-    print(f"[DEBUG DBSCAN main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG DBSCAN main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
-    
-    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    # The result from CNI is directly used.
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, num_clusters)
 
-    predict_DBSCAN = data['cluster']
+    # predict_DBSCAN = data['cluster'] # Old way
 
     return {
-        'Cluster_labeling': predict_DBSCAN,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
 
 def pre_clustering_DBSCAN(data, X, eps, count_samples):
-    clusters, num_clusters, dbscan = clustering_DBSCAN_clustering(data, X, eps, count_samples)
-    clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
-
-    predict_DBSCAN = clustering_data
-
+    # cluster_labels are model-generated labels, num_clusters_actual is the count of unique labels found by DBSCAN
+    cluster_labels, num_clusters_actual, dbscan = clustering_DBSCAN_clustering(data, X, eps, count_samples)
+    
     return {
-        'Cluster_labeling' : predict_DBSCAN,
-        'n_clusters' : num_clusters,
+        'model_labels' : cluster_labels,
+        'n_clusters' : num_clusters_actual, # Actual n_clusters from DBSCAN
         'before_labeling' : dbscan
     }

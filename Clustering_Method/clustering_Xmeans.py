@@ -34,7 +34,7 @@ def clustering_Xmeans_clustering(data, X, random_state, max_clusters):  # Fundam
     return clusters, optimal_k
 
 
-def clustering_Xmeans(data, X):
+def clustering_Xmeans(data, X, aligned_original_labels):
     tune_parameters = Grid_search_all(X, 'Xmeans')
     best_params = tune_parameters['Xmeans']['best_params']
     parameter_dict = tune_parameters['Xmeans']['all_params']
@@ -42,22 +42,18 @@ def clustering_Xmeans(data, X):
 
     clusters, num_clusters = clustering_Xmeans_clustering(data, X, random_state=parameter_dict['random_state'], max_clusters=parameter_dict['max_clusters'])
 
-    # Debug cluster id
-    print(f"\n[DEBUG XMeans main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG XMeans main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
-    
-    print(f"[DEBUG XMeans main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # If X is a NumPy array, there are no .columns, so we indirectly check the contents by looking at some of the first row, etc. if necessary.
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG XMeans main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG XMeans main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG XMeans main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
 
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, num_clusters)
 
-    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
-
-    predict_Xmeans = data['cluster']
+    # predict_Xmeans = data['cluster'] # Old way
 
     return {
-        'Cluster_labeling': predict_Xmeans,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
@@ -84,13 +80,11 @@ class XMeansWrapper(BaseEstimator, ClusterMixin):
     
 
 def pre_clustering_Xmeans(data, X, random_state, max_clusters):
-    clusters, num_clusters = clustering_Xmeans_clustering(data, X, random_state, max_clusters)
-    clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
-
-    predict_Xmeans = clustering_data
+    # clusters are model-generated labels before CNI, num_clusters_optimal is the k found by x_means_clustering
+    cluster_labels, num_clusters_optimal = clustering_Xmeans_clustering(data, X, random_state, max_clusters)
 
     return {
-        'Cluster_labeling': predict_Xmeans,
-        'n_clusters' : num_clusters,
-        'before_labeling' : clusters
+        'model_labels' : cluster_labels,
+        'n_clusters' : num_clusters_optimal, # Optimal n_clusters from XMeans
+        'before_labeling' : cluster_labels # or the model from x_means_clustering if needed, but usually labels are sufficient for pre_clustering
     }

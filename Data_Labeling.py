@@ -137,6 +137,25 @@ def main():
 
     timing_info['4_pca'] = time.time() - start
 
+    # Create original labels aligned with X_reduced
+    # Assumption: Rows in 'data' DataFrame correspond to rows in 'X' (group_mapped_df),
+    # and subsequently to rows in 'X_reduced' if X is a DataFrame OR if pca_func preserves row order from X (if X is NumPy).
+    # The logs show data.shape[0], X.shape[0], and X_reduced.shape[0] are all the same (2504267).
+    
+    if 'label' not in data.columns:
+        raise ValueError("'label' column is missing from 'data' DataFrame. Ensure labeling step (Step 2) is correct.")
+    
+    # Check if X (group_mapped_df) has an index that can be used to align with 'data'
+    # If X was derived from 'data' and row order is preserved, direct use of data['label'] is fine.
+    # If X involved row reordering or filtering inconsistent with data, a more robust alignment (e.g., using original indices) would be needed.
+    # For now, we assume direct correspondence in row order and length.
+    if len(data) != X_reduced.shape[0]:
+        # This case should ideally not happen if data processing keeps row counts consistent
+        raise ValueError(f"Row count mismatch: 'data' ({len(data)}) vs 'X_reduced' ({X_reduced.shape[0]}). Cannot reliably align labels.")
+    
+    original_labels_for_X_reduced = data['label'].to_numpy()
+    print(f"[DEBUG Data_Labeling.py] 'original_labels_for_X_reduced' created - Shape: {original_labels_for_X_reduced.shape}, Unique values: {np.unique(original_labels_for_X_reduced, return_counts=True)}")
+
 
     # 5. Clustering and Mapping
     start = time.time()
@@ -154,11 +173,17 @@ def main():
     # Hyperparameter_optimization = str(input("\nDo you need to do Hyperparameter_optimization? (Y/n): "))
     Hyperparameter_optimization = 'Y'
     if Hyperparameter_optimization in ['Y', 'y']:
-        print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Shape: {data.shape}")
-        print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Columns: {list(data.columns)}")
-        clustering, GMM_type = choose_clustering_algorithm(data, X_reduced, clustering_algorithm, max_clusters)
+        # print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Shape: {data.shape}") # 이제 CNI에 직접 안 감
+        # print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Columns: {list(data.columns)}")
+        
+        # Pass X_reduced, original_labels_for_X_reduced, and other necessary params.
+        # 'data' (original 117-col df) might still be needed by choose_clustering_algorithm for other purposes (e.g., Elbow method if it uses original data).
+        clustering, GMM_type = choose_clustering_algorithm(data, X_reduced, original_labels_for_X_reduced, clustering_algorithm, max_clusters)
+
     elif Hyperparameter_optimization in ['N', 'n']:
-        clustering, GMM_type = choose_clustering_algorithm_Non_optimization(data, X_reduced, clustering_algorithm)
+        # --- BEGIN MODIFICATION 3 ---
+        clustering, GMM_type = choose_clustering_algorithm_Non_optimization(data, X_reduced, original_labels_for_X_reduced, clustering_algorithm)
+        # --- END MODIFICATION 3 ---
     else:
         raise Exception("You can only express your intent to proceed with hyperparameter tuning with Y/N.")
     data['cluster'] = clustering['Cluster_labeling']

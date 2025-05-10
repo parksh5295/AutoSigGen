@@ -9,112 +9,107 @@ from Tuning_hyperparameter.Elbow_method import Elbow_method
 from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
 
-def clustering_GMM_normal(data, X, max_clusters):
+def clustering_GMM_normal(data, X, max_clusters, aligned_original_labels):
     after_elbow = Elbow_method(data, X, 'GMM', max_clusters)
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
 
     gmm, clusters = fit_gmm_with_retry(X, n_clusters, random_state=parameter_dict['random_state'])
     
-    # Debug cluster id
-    print(f"\n[DEBUG GMM-normal main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG GMM-normal main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
-    print(f"[DEBUG GMM-normal main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG GMM-normal main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG GMM-normal main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG GMM-normal main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
 
-    data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, n_clusters)
 
-    predict_GMM = data['cluster']
+    # predict_GMM = data['cluster'] # Old way
 
     return {
-        'Cluster_labeling': predict_GMM,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
 
-def clustering_GMM_full(data, X, max_clusters):
+def clustering_GMM_full(data, X, max_clusters, aligned_original_labels):
     after_elbow = Elbow_method(data, X, 'GMM', max_clusters)
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
 
     gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='full', random_state=parameter_dict['random_state'])
     
-    # Debug cluster id
-    print(f"\n[DEBUG GMM-full main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG GMM-full main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
-    print(f"[DEBUG GMM-full main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG GMM-full main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG GMM-full main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG GMM-full main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
         
-    data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, n_clusters)
 
-    predict_GMM = data['cluster']
+    # predict_GMM = data['cluster'] # Old way
 
     return {
-        'Cluster_labeling': predict_GMM,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
 
-def clustering_GMM_tied(data, X, max_clusters):
+def clustering_GMM_tied(data, X, max_clusters, aligned_original_labels):
     after_elbow = Elbow_method(data, X, 'GMM', max_clusters)
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
 
     gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='tied', random_state=parameter_dict['random_state'])
     
-    # Debug cluster id
-    print(f"\n[DEBUG GMM-tied main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG GMM-tied main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
-    print(f"[DEBUG GMM-tied main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG GMM-tied main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG GMM-tied main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG GMM-tied main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
         
-    data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, n_clusters)
 
-    predict_GMM = data['cluster']
+    # predict_GMM = data['cluster'] # Old way
 
     return {
-        'Cluster_labeling': predict_GMM,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
 
-def clustering_GMM_diag(data, X, max_clusters):
+def clustering_GMM_diag(data, X, max_clusters, aligned_original_labels):
     after_elbow = Elbow_method(data, X, 'GMM', max_clusters)
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
 
     gmm, clusters = fit_gmm_with_retry(X, n_clusters, covariance_type='diag', random_state=parameter_dict['random_state'])
 
-    # Debug cluster id
-    print(f"\n[DEBUG GMM-diag main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG GMM-diag main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG GMM-diag main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG GMM-diag main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
     
-    print(f"[DEBUG GMM-diag main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG GMM-diag main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
-    
-    data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, n_clusters)
 
-    predict_GMM = data['cluster']
+    # predict_GMM = data['cluster'] # Old way
 
     return {
-        'Cluster_labeling': predict_GMM,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
 
-def clustering_GMM(data, X, max_clusters, GMM_type):
+def clustering_GMM(data, X, max_clusters, GMM_type, aligned_original_labels):
     if GMM_type == 'normal':
-        predict_GMM_dict = clustering_GMM_normal(data, X, max_clusters)
+        predict_GMM_dict = clustering_GMM_normal(data, X, max_clusters, aligned_original_labels)
     elif GMM_type == 'full':
-        predict_GMM_dict = clustering_GMM_full(data, X, max_clusters)
+        predict_GMM_dict = clustering_GMM_full(data, X, max_clusters, aligned_original_labels)
     elif GMM_type == 'tied':
-        predict_GMM_dict = clustering_GMM_tied(data, X, max_clusters)
+        predict_GMM_dict = clustering_GMM_tied(data, X, max_clusters, aligned_original_labels)
     elif GMM_type == 'diag':
-        predict_GMM_dict = clustering_GMM_diag(data, X, max_clusters)
+        predict_GMM_dict = clustering_GMM_diag(data, X, max_clusters, aligned_original_labels)
     else:
         print("GMM type Error!! -In Clustering")
 
@@ -129,69 +124,70 @@ def clustering_GMM(data, X, max_clusters, GMM_type):
 
 # Precept Function for Clustering Count Tuning Loop
 
-def pre_clustering_GMM_normal(data, X, random_state, n_clusters):
-    gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, random_state=random_state)
+def pre_clustering_GMM_normal(data, X, n_clusters, random_state):
+    gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, random_state=random_state) # GMM_normal is usually spherical
 
-    predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
-    num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
+    # predict_GMM_normal = clustering_nomal_identify(data, cluster_labels, n_clusters)
+    # num_clusters = len(np.unique(predict_GMM_normal))  # Counting the number of clusters
 
     return {
-        'Cluster_labeling' : predict_GMM,
-        'n_clusters' : num_clusters,
+        'model_labels' : cluster_labels,
+        'n_clusters' : n_clusters, # n_clusters requested
         'before_labeling' : gmm
     }
 
 
-def pre_clustering_GMM_full(data, X, random_state, n_clusters):
+def pre_clustering_GMM_full(data, X, n_clusters, random_state):
     gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, covariance_type='full', random_state=random_state)
 
-    predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
-    num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
+    # predict_GMM_full = clustering_nomal_identify(data, cluster_labels, n_clusters)
+    # num_clusters = len(np.unique(predict_GMM_full))  # Counting the number of clusters
 
     return {
-        'Cluster_labeling' : predict_GMM,
-        'n_clusters' : num_clusters,
+        'model_labels' : cluster_labels,
+        'n_clusters' : n_clusters,
         'before_labeling' : gmm
     }
 
 
-def pre_clustering_GMM_tied(data, X, random_state, n_clusters):
+def pre_clustering_GMM_tied(data, X, n_clusters, random_state):
     gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, covariance_type='tied', random_state=random_state)
 
-    predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
-    num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
+    # predict_GMM_tied = clustering_nomal_identify(data, cluster_labels, n_clusters)
+    # num_clusters = len(np.unique(predict_GMM_tied))  # Counting the number of clusters
 
     return {
-        'Cluster_labeling' : predict_GMM,
-        'n_clusters' : num_clusters,
+        'model_labels' : cluster_labels,
+        'n_clusters' : n_clusters,
         'before_labeling' : gmm
     }
 
 
-def pre_clustering_GMM_diag(data, X, random_state, n_clusters):
+def pre_clustering_GMM_diag(data, X, n_clusters, random_state):
     gmm, cluster_labels = fit_gmm_with_retry(X, n_clusters, covariance_type='diag', random_state=random_state)
 
-    predict_GMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
-    num_clusters = len(np.unique(predict_GMM))  # Counting the number of clusters
+    # predict_GMM_diag = clustering_nomal_identify(data, cluster_labels, n_clusters)
+    # num_clusters = len(np.unique(predict_GMM_diag))  # Counting the number of clusters
 
     return {
-        'Cluster_labeling' : predict_GMM,
-        'n_clusters' : num_clusters,
+        'model_labels' : cluster_labels,
+        'n_clusters' : n_clusters,
         'before_labeling' : gmm
     }
 
 
 def pre_clustering_GMM(data, X, n_clusters, random_state, GMM_type):
     if GMM_type == 'normal':
-        clustering_gmm = pre_clustering_GMM_normal(data, X, random_state, n_clusters)
+        clustering_gmm = pre_clustering_GMM_normal(data, X, n_clusters, random_state)
     elif GMM_type == 'full':
-        clustering_gmm = pre_clustering_GMM_full(data, X, random_state, n_clusters)
+        clustering_gmm = pre_clustering_GMM_full(data, X, n_clusters, random_state)
     elif GMM_type == 'tied':
-        clustering_gmm = pre_clustering_GMM_tied(data, X, random_state, n_clusters)
+        clustering_gmm = pre_clustering_GMM_tied(data, X, n_clusters, random_state)
     elif GMM_type == 'diag':
-        clustering_gmm = pre_clustering_GMM_diag(data, X, random_state, n_clusters)
+        clustering_gmm = pre_clustering_GMM_diag(data, X, n_clusters, random_state)
     else:
         print("GMM type Error!! -In Clustering")
+        return None # Or raise an error
     
     return clustering_gmm
 

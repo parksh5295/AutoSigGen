@@ -26,7 +26,7 @@ def clustering_MShift_clustering(data, X, state, quantile, n_samples):  # Fundam
     return clusters, num_clusters, MShift
 
 
-def clustering_MShift(data, X):
+def clustering_MShift(data, X, aligned_original_labels):
     tune_parameters = Grid_search_all(X, 'MShift')
     best_params = tune_parameters['MShift']['best_params']
     parameter_dict = tune_parameters['MShift']['all_params']
@@ -34,20 +34,18 @@ def clustering_MShift(data, X):
 
     clusters, num_clusters, MShift = clustering_MShift_clustering(data, X, state=parameter_dict['random_state'], quantile=parameter_dict['quantile'], n_samples=parameter_dict['n_samples'])
 
-    # Debug cluster id
-    print(f"\n[DEBUG MeanShift main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG MeanShift main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
-    
-    print(f"[DEBUG MeanShift main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG MeanShift main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
-    
-    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG MeanShift main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG MeanShift main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
 
-    predict_MShift = data['cluster']
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, num_clusters)
+
+    # predict_MShift = data['cluster'] # Old way
 
     return {
-        'Cluster_labeling': predict_MShift,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
@@ -82,13 +80,11 @@ class MeanShiftWithDynamicBandwidth(BaseEstimator, ClusterMixin):
     
 
 def pre_clustering_MShift(data, X, random_state, quantile, n_samples):
-    clusters, num_clusters, MShift = clustering_MShift_clustering(data, X, random_state, quantile, n_samples)
-    clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
-
-    predict_MShift = clustering_data
+    # cluster_labels are model-generated labels, num_clusters_actual is the count of unique labels found by MeanShift
+    cluster_labels, num_clusters_actual, MShift = clustering_MShift_clustering(data, X, random_state, quantile, n_samples)
 
     return {
-        'Cluster_labeling' : predict_MShift,
-        'n_clusters' : num_clusters,
+        'model_labels' : cluster_labels,
+        'n_clusters' : num_clusters_actual, # Actual n_clusters from MeanShift
         'before_labeling' : MShift
     }

@@ -10,7 +10,7 @@ from Tuning_hyperparameter.Elbow_method import Elbow_method
 from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
 
-def clustering_Kmedians(data, X, max_clusters):
+def clustering_Kmedians(data, X, max_clusters, aligned_original_labels):
     after_elbow = Elbow_method(data, X, 'Kmedians', max_clusters)
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
@@ -19,34 +19,32 @@ def clustering_Kmedians(data, X, max_clusters):
 
     clusters = kmedians.fit_predict(X)
 
-    # Debug cluster id - Moved before CNI call
-    print(f"\n[DEBUG KMedians main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG KMedians main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
-    
-    print(f"[DEBUG KMedians main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG KMedians main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG KMedians main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG KMedians main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
 
-    data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, n_clusters)
 
-    predict_kmedians = data['cluster']
+    # predict_kmedians = data['cluster'] # Old way
 
     return {
-        'Cluster_labeling': predict_kmedians,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
 
-def pre_clustering_Kmedians(data, X, n_clusters, random_state=42):
-    kmedians = KMedoids(n_clusters=n_clusters, random_state=random_state)   # default; randomm_state=42
+def pre_clustering_Kmedians(data, X, n_clusters, random_state):
+    kmedians = KMedoids(n_clusters=n_clusters, random_state=random_state)   # default; random_state=42 in original, now passed
 
     cluster_labels = kmedians.fit_predict(X)
 
-    predict_kmedians = clustering_nomal_identify(data, cluster_labels, n_clusters)
-    num_clusters = len(np.unique(predict_kmedians))  # Counting the number of clusters
+    # predict_kmedians = clustering_nomal_identify(data, cluster_labels, n_clusters)
+    # num_clusters = len(np.unique(predict_kmedians))  # Counting the number of clusters
 
     return {
-        'Cluster_labeling' : predict_kmedians,
-        'n_clusters' : num_clusters,
-        'before_labeling' : kmedians
+        'model_labels' : cluster_labels, # Model-generated labels (before CNI)
+        'n_clusters' : n_clusters, # Number of clusters requested
+        'before_labeling' : kmedians # Model object
     }

@@ -23,7 +23,7 @@ def clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max
     return clusters, num_clusters
 
 
-def clustering_NeuralGas(data, X):
+def clustering_NeuralGas(data, X, aligned_original_labels):
     tune_parameters = Grid_search_all(X, 'NeuralGas')
     print('tune_params: ', tune_parameters)
 
@@ -39,18 +39,16 @@ def clustering_NeuralGas(data, X):
         max_edge_age=parameter_dict['max_edge_age']
     )
 
-    # Debug cluster id
-    print(f"\n[DEBUG NeuralGas main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG NeuralGas main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
-    
-    print(f"[DEBUG NeuralGas main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG NeuralGas main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG NeuralGas main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG NeuralGas main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
 
-    data['cluster'] = clustering_nomal_identify(data, clusters, num_clusters)
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, num_clusters)
 
     return {
-        'Cluster_labeling': data['cluster'],
+        'Cluster_labeling': final_cluster_labels_from_cni,
         'Best_parameter_dict': parameter_dict
     }
 
@@ -84,11 +82,19 @@ class NeuralGasWithParams(BaseEstimator, ClusterMixin):
 
 
 def pre_clustering_NeuralGas(data, X, n_start_nodes, max_nodes, step, max_edge_age):
-    clusters, num_clusters = clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max_edge_age)
-    clustering_data = clustering_nomal_identify(data, clusters, num_clusters)
+    # cluster_labels are model-generated labels, num_clusters_actual is the count of unique labels found by NeuralGas
+    cluster_labels, num_clusters_actual = clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max_edge_age)
+    
+    # predict_NeuralGas = clustering_nomal_identify(data, cluster_labels, num_clusters_actual)
+    # num_clusters = len(np.unique(predict_NeuralGas))  # Counting the number of clusters
+
+    # For NeuralGas, the 'before_labeling' might be the model itself if its state is useful, or just cluster_labels.
+    # Here, returning cluster_labels for consistency with other pre_clustering functions that return labels or simple model objects.
+    # If the NeuralGasWithParamsSimple model object is needed by tuning methods, this might need adjustment.
+    neural_gas_model_placeholder = cluster_labels # Or potentially the model from clustering_NeuralGas_clustering if it's serializable and useful
 
     return {
-        'Cluster_labeling': clustering_data,
-        'n_clusters': num_clusters,
-        'before_labeling': clusters
+        'model_labels' : cluster_labels,
+        'n_clusters': num_clusters_actual, # Actual n_clusters from NeuralGas
+        'before_labeling': neural_gas_model_placeholder 
     }

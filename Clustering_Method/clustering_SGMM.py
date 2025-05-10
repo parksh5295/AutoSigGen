@@ -10,7 +10,7 @@ from Tuning_hyperparameter.Elbow_method import Elbow_method
 from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 
 
-def clustering_SGMM(data, X, max_clusters):
+def clustering_SGMM(data, X, max_clusters, aligned_original_labels):
     after_elbow = Elbow_method(data, X, 'SGMM', max_clusters)
     n_clusters = after_elbow['optimul_cluster_n']
     parameter_dict = after_elbow['parameter_dict']
@@ -19,34 +19,32 @@ def clustering_SGMM(data, X, max_clusters):
 
     clusters = sgmm.fit_predict(X)
 
-    # Debug cluster id
-    print(f"\n[DEBUG SGMM main_clustering] Param for CNI 'data' - Shape: {data.shape}")
-    print(f"[DEBUG SGMM main_clustering] Param for CNI 'data' - Columns: {list(data.columns)}")
+    # Debug cluster id (X is the data used for clustering)
+    print(f"\n[DEBUG SGMM main_clustering] Param for CNI 'data_features_for_clustering' (X) - Shape: {X.shape}")
+    # aligned_original_labels shape will be printed inside CNI
+    # print(f"[DEBUG SGMM main_clustering] Param for CNI 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
     
-    print(f"[DEBUG SGMM main_clustering] Array used for clustering 'X' - Shape: {X.shape}")
-    # if not hasattr(X, 'columns'):
-    #     print(f"[DEBUG SGMM main_clustering] Array used for clustering 'X' (NumPy array) - First 5 cols of first row: {X[0, :5] if X.shape[0] > 0 and X.shape[1] >= 5 else 'N/A or too small'}")
-    
-    data['cluster'] = clustering_nomal_identify(data, clusters, n_clusters)
+    # Pass X (features used for clustering) and aligned_original_labels to CNI
+    final_cluster_labels_from_cni = clustering_nomal_identify(X, aligned_original_labels, clusters, n_clusters)
 
-    predict_SGMM = data['cluster']
+    # predict_SGMM = data['cluster'] # Old way
 
     return {
-        'Cluster_labeling': predict_SGMM,
+        'Cluster_labeling': final_cluster_labels_from_cni, # Use labels from CNI
         'Best_parameter_dict': parameter_dict
     }
 
 
 def pre_clustering_SGMM(data, X, n_clusters, random_state):
-    sgmm = GaussianMixture(n_components=n_clusters, covariance_type='spherical', random_state=random_state)   # default; randomm_state=42
+    sgmm = GaussianMixture(n_components=n_clusters, covariance_type='spherical', random_state=random_state)   # default; random_state=42
 
     cluster_labels = sgmm.fit_predict(X)
 
-    predict_SGMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
-    num_clusters = len(np.unique(predict_SGMM))  # Counting the number of clusters
+    # predict_SGMM = clustering_nomal_identify(data, cluster_labels, n_clusters)
+    # num_clusters = len(np.unique(predict_SGMM))  # Counting the number of clusters
 
     return {
-        'Cluster_labeling' : predict_SGMM,
-        'n_clusters' : num_clusters,
+        'model_labels' : cluster_labels,
+        'n_clusters' : n_clusters, # n_clusters requested
         'before_labeling' : sgmm
     }

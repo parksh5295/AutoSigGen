@@ -23,11 +23,24 @@ def dynamic_import(module_name, class_name):
 
 
 def Grid_search_Kmeans(X, n_clusters, parameter_dict=None):
+    # Maintain complete parameter_dict for compatibility
     if parameter_dict is None:
         parameter_dict = {
-            'random_state': 42, 'n_init': 30, 'max_clusters': 1000, 'tol': 1e-4, 'eps': 0.5, 'count_samples': 5, 'quantile': 0.2, 
-            'n_samples': 500,'n_start_nodes': 2, 'max_nodes': 50, 'step': 0.2, 'max_edge_age': 50, 'epochs': 300,
-            'batch_size': 256, 'n_neighbors': 5
+            'random_state': 42,
+            'n_init': 30,
+            'max_clusters': 1000,
+            'tol': 1e-4,
+            'eps': 0.5,
+            'count_samples': 5,
+            'quantile': 0.2,
+            'n_samples': 500,
+            'n_start_nodes': 2,
+            'max_nodes': 50,
+            'step': 0.2,
+            'max_edge_age': 50,
+            'epochs': 300,
+            'batch_size': 256,
+            'n_neighbors': 5
         }
 
     n_init_values = list(range(2, 102, 3))
@@ -35,7 +48,12 @@ def Grid_search_Kmeans(X, n_clusters, parameter_dict=None):
     best_params = None
 
     for n_init in n_init_values:
-        kmeans = KMeans(n_clusters=n_clusters, random_state=parameter_dict['random_state'], n_init=n_init)
+        # Use only necessary parameters for KMeans
+        kmeans = KMeans(
+            n_clusters=n_clusters,
+            random_state=parameter_dict['random_state'],
+            n_init=n_init
+        )
         labels = kmeans.fit_predict(X)
 
         # Make sure Silhouette score is calculable
@@ -45,7 +63,7 @@ def Grid_search_Kmeans(X, n_clusters, parameter_dict=None):
                 best_score = score
                 best_params = {'n_init': n_init}
 
-    # Merge with default parameters
+    # Merge with complete parameter_dict
     best_param_full = parameter_dict.copy()
     if best_params:
         best_param_full.update(best_params)
@@ -68,14 +86,14 @@ def evaluate_clustering(X, labels):
 
 
 # Discriminate Functions for CANNwKNN
-def evaluate_clustering_with_known_benign(data, clusters, num_clusters):
+def evaluate_clustering_with_known_benign(data, X, clusters, num_clusters, aligned_original_labels):
     # 0: benign, 1: attack (criteria: same as clustering_nomal_identify)
     benign_data = nomal_class_data(data).to_numpy() # Assuming that we only know benign data
 
-    inferred_labels = clustering_nomal_identify(data.copy(), clusters, num_clusters)
+    inferred_labels = clustering_nomal_identify(X, aligned_original_labels, clusters, num_clusters)
 
-    # 실제 benign이 어디 있는지 ground truth 만들기
-    ground_truth = np.ones(len(data))  # 기본은 attack(1)
+    # 실Create ground truth about where my benigns are
+    ground_truth = np.ones(len(data))  # The default is attack(1)
     benign_idx = data.index.isin(benign_data.index)
     ground_truth[benign_idx] = 0
 
@@ -85,11 +103,24 @@ def evaluate_clustering_with_known_benign(data, clusters, num_clusters):
 
 
 def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
+    # Maintain complete parameter_dict for compatibility
     if parameter_dict is None:
         parameter_dict = {
-            'random_state': 42, 'n_init': 30, 'max_clusters': 1000, 'tol': 1e-4, 'eps': 0.5, 'count_samples': 5, 'quantile': 0.2, 
-            'n_samples': 500, 'n_start_nodes': 2, 'max_nodes': 50, 'step': 0.2, 'max_edge_age': 50, 'epochs': 300,
-            'batch_size': 256, 'n_neighbors': 5
+            'random_state': 42,
+            'n_init': 30,
+            'max_clusters': 1000,
+            'tol': 1e-4,
+            'eps': 0.5,
+            'count_samples': 5,
+            'quantile': 0.2,
+            'n_samples': 500,
+            'n_start_nodes': 2,
+            'max_nodes': 50,
+            'step': 0.2,
+            'max_edge_age': 50,
+            'epochs': 300,
+            'batch_size': 256,
+            'n_neighbors': 5
         }
 
     best_results = {}  # Dictionary for storing the best result of each algorithm
@@ -100,7 +131,12 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
         XMeansWrapper = dynamic_import("Clustering_Method.clustering_Xmeans", "XMeansWrapper")
         param_grid = {'max_clusters': list(range(2, 31, 3))}
         def create_model(params):
-            return XMeansWrapper(random_state=parameter_dict['random_state'], **params)
+            # Use only necessary parameters for XMeans
+            model_params = {
+                'random_state': parameter_dict['random_state'],
+                **params
+            }
+            return XMeansWrapper(**model_params)
 
     elif clustering_algorithm in ['Gmeans', 'gmeans']:
         GMeans = dynamic_import("Clustering_Method.clustering_Gmeans", "GMeans")
@@ -110,7 +146,12 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
 
         param_grid = {'max_clusters': list(range(2, 31, 3)), 'tol': combined_range}
         def create_model(params):
-            return GMeans(random_state=parameter_dict['random_state'], **params)
+            # Use only necessary parameters for GMeans
+            model_params = {
+                'random_state': parameter_dict['random_state'],
+                **params
+            }
+            return GMeans(**model_params)
 
     elif clustering_algorithm == 'DBSCAN':
         param_grid = {'eps': np.arange(0.1, 1, 0.02), 'min_samples': list(range(3, 20, 2))}
@@ -163,7 +204,12 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
                         'n_neighbors': list(range(3, 51, 5))}
         input_shape = X.shape[1]
         def create_model(params):
-            return CANNWithKNN(input_shape=input_shape, **params)
+            # Use only necessary parameters for CANNwKNN
+            model_params = {
+                'input_shape': input_shape,
+                **params
+            }
+            return CANNWithKNN(**model_params)
 
     else:
         print(f"Unsupported algorithm: {clustering_algorithm}")
@@ -191,12 +237,14 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
 
         print("[DEBUG] Grid_search_all() - X for training:", X.shape)
         if clustering_algorithm in ['CANNwKNN', 'CANN']:
+            # Debugging
             X_first_row_list = X.iloc[0].tolist()
             data_first_row_list = X.iloc[0].tolist()
             print(X_first_row_list)
             print(data_first_row_list)
             data_only = [item for item in data_first_row_list if item not in X_first_row_list]
             print("in data only: ", data_only)
+            # End of Debugging
             labels = model.fit_predict(X, data)
         else:
             labels = model.fit_predict(X)
@@ -212,7 +260,7 @@ def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
 
     best_results[clustering_algorithm] = {
         'best_params': best_params,
-        'all_params' : parameter_dict,
+        'all_params': parameter_dict,  # Return complete parameter_dict for compatibility
         'silhouette_score': best_score,
         'davies_bouldin_score': best_db_score
     }

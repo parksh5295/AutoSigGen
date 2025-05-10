@@ -12,24 +12,50 @@ from Clustering_Method.common_clustering import get_clustering_function
 def Elbow_choose_clustering_algorithm(data, X, clustering_algorithm, n_clusters, parameter_dict, GMM_type="normal"):   # X: Encoding and embedding, post-PCA, post-delivery
     pre_clustering_func = get_clustering_function(clustering_algorithm)
 
+    # Extract only necessary parameters for each algorithm
     if clustering_algorithm == 'Kmeans':
-        clustering = pre_clustering_func(data, X, n_clusters, random_state=parameter_dict['random_state'], n_init=parameter_dict['n_init'])
+        algorithm_params = {
+            'random_state': parameter_dict['random_state'],
+            'n_init': parameter_dict['n_init']
+        }
+        clustering = pre_clustering_func(data, X, n_clusters, **algorithm_params)
     elif clustering_algorithm == 'GMM':
-        clustering = pre_clustering_func(data, X, n_clusters, random_state=parameter_dict['random_state'], GMM_type=GMM_type)
+        algorithm_params = {
+            'random_state': parameter_dict['random_state'],
+            'GMM_type': GMM_type
+        }
+        clustering = pre_clustering_func(data, X, n_clusters, **algorithm_params)
     elif clustering_algorithm in ['FCM', 'CK']:
         clustering = pre_clustering_func(data, X, n_clusters)
     else:
-        clustering = pre_clustering_func(data, X, n_clusters, random_state=parameter_dict['random_state'])
+        algorithm_params = {
+            'random_state': parameter_dict['random_state']
+        }
+        clustering = pre_clustering_func(data, X, n_clusters, **algorithm_params)
 
     return clustering
 
 
 def Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict=None):
+    # Maintain complete parameter_dict for compatibility
     if parameter_dict is None:
-        parameter_dict = {'random_state' : 42, 'n_init' : 30, 'max_clusters' : 1000, 'tol' : 1e-4, 'eps' : 0.5, 'count_samples' : 5,
-                            'quantile' : 0.2, 'n_samples' : 500, 'n_start_nodes' : 2, 'max_nodes' : 50, 'step' : 0.2,
-                            'max_edge_age' : 50, 'epochs' : 300, 'batch_size' : 256, 'n_neighbors' : 5
-                            }
+        parameter_dict = {
+            'random_state': 42,
+            'n_init': 30,
+            'max_clusters': 1000,
+            'tol': 1e-4,
+            'eps': 0.5,
+            'count_samples': 5,
+            'quantile': 0.2,
+            'n_samples': 500,
+            'n_start_nodes': 2,
+            'max_nodes': 50,
+            'step': 0.2,
+            'max_edge_age': 50,
+            'epochs': 300,
+            'batch_size': 256,
+            'n_neighbors': 5
+        }
 
     wcss = []  # Store WCSS by number of clusters
     
@@ -60,5 +86,5 @@ def Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict=Non
 
     return {
         'optimul_cluster_n': optimal_k,    # Appropriate number of clusters
-        'parameter_dict': parameter_dict
+        'parameter_dict': parameter_dict   # Return complete parameter_dict for compatibility
     }

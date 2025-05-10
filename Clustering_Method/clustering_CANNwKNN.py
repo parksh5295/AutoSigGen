@@ -29,9 +29,14 @@ class CANN(tf.keras.Model):
         return self.dense3(x)
     
 
-def clustering_CANNwKNN(data, X):   # data, X is pansdas DataFrame
+def clustering_CANNwKNN(data, X, aligned_original_labels):   # data, X is pansdas DataFrame, add aligned_original_labels
     # Define model input shapes
     input_shape = (X.shape[1])
+
+    # Debug print for X shape (data used for feature extraction by CANN)
+    print(f"\n[DEBUG CANNwKNN main_clustering] Data for CANN feature extraction (X) - Shape: {X.shape}")
+    # aligned_original_labels is not directly used by CNI in this algorithm but included for consistency
+    # print(f"[DEBUG CANNwKNN main_clustering] Param 'aligned_original_labels' - Shape: {aligned_original_labels.shape}")
 
     benign_data = nomal_class_data(data) # Assuming that we only know benign data
 
@@ -93,12 +98,17 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
         self.knn = None
 
     def fit(self, X, y):
-        self.input_shape = X.shape[1]
-        print(f"[DEBUG] Creating new model with input_shape={X.shape[1]}")
+        # Ensure X is numpy before getting shape[1]
+        if not isinstance(X, np.ndarray):
+            X_np = X.to_numpy() if hasattr(X, 'to_numpy') else np.array(X)
+        else:
+            X_np = X
+        self.input_shape = X_np.shape[1]
+        print(f"[DEBUG] Creating new model with input_shape={self.input_shape}")
         self.model = create_cann_model(self.input_shape)
-        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size)
+        self.model.fit(X_np, y, epochs=self.epochs, batch_size=self.batch_size)
 
-        features = self.model.predict(X)
+        features = self.model.predict(X_np)
         self.knn = KNeighborsClassifier(n_neighbors=self.n_neighbors)
         self.knn.fit(features, y)
 
@@ -107,23 +117,38 @@ class CANNWithKNN(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         print(f"[DEBUG] Predict input shape={X.shape[1]}, expected={self.input_shape}")
         # Use trained KNN to predict clusters
-        current_shape = X.shape[1]
+        # Ensure X is numpy
+        if not isinstance(X, np.ndarray):
+            X_np = X.to_numpy() if hasattr(X, 'to_numpy') else np.array(X)
+        else:
+            X_np = X
+            
+        current_shape = X_np.shape[1]
         if self.input_shape != current_shape:
             raise ValueError(f"Shape mismatch! Model was built with input_shape={self.input_shape}, "
                              f"but got input with shape={current_shape}. You should re-train the model.")
-        return self.model.predict(X)
+        # Predict features with CANN, then predict clusters with KNN
+        features_pred = self.model.predict(X_np) 
+        return self.knn.predict(features_pred) # Use KNN for final prediction
     
     def fit_predict(self, X, data):
         # Step 1: Get benign data from full dataframe
         benign_data = nomal_class_data(data)
-        X_benign = benign_data.drop(columns=['label']).to_numpy()
+        # Ensure X_benign is numpy
+        X_benign_df = benign_data.drop(columns=['label'], errors='ignore')
+        X_benign = X_benign_df.to_numpy() if hasattr(X_benign_df, 'to_numpy') else np.array(X_benign_df)
         y_benign = np.zeros(len(X_benign))  # All benign = 0
 
         # Step 2: Fit using benign only
         self.fit(X_benign, y_benign)
 
-        # Step 3: Predict for all data
-        return self.predict(X)
+        # Step 3: Predict for all data (X should be the full dataset features for prediction)
+        # Ensure X is numpy for prediction
+        if not isinstance(X, np.ndarray):
+            X_np = X.to_numpy() if hasattr(X, 'to_numpy') else np.array(X)
+        else:
+            X_np = X
+        return self.predict(X_np)
     
 
 def pre_clustering_CANNwKNN(data, X, epochs, batch_size, n_neighbors):
