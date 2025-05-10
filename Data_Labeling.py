@@ -52,7 +52,7 @@ def main():
 
     file_path, file_number = file_path_line_nonnumber(file_type, file_number)
     # cut_type = str(input("Enter the data cut type: "))
-    if file_type in ['DARPA98', 'DARPA', 'NSL-KDD', 'NSL_KDD', 'CICModbus23', 'CICModbus']:
+    if file_type in ['DARPA98', 'DARPA', 'NSL-KDD', 'NSL_KDD', 'CICModbus23', 'CICModbus', 'MitM', 'Kitsune']:
         cut_type = 'random'
     else:
         cut_type = 'all'
@@ -132,8 +132,8 @@ def main():
     
     # Note: Information about X (group_mapped_df, before PCA) is also good to output
     if hasattr(X, 'columns'):
-        print(f"[DEBUG Data_Labeling.py] X (PCA 이전, group_mapped_df) shape: {X.shape}")
-        print(f"[DEBUG Data_Labeling.py] X (PCA 이전, group_mapped_df) columns: {list(X.columns)}")
+        print(f"[DEBUG Data_Labeling.py] X (pre PCA, group_mapped_df) shape: {X.shape}")
+        print(f"[DEBUG Data_Labeling.py] X (pre PCA, group_mapped_df) columns: {list(X.columns)}")
 
     timing_info['4_pca'] = time.time() - start
 
