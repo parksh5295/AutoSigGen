@@ -8,6 +8,13 @@ import pandas as pd
 
 
 def Heterogeneous_Feature_named_featrues(file_type):
+    # Initialize feature lists to empty lists to prevent UnboundLocalError
+    categorical_features = []
+    time_features = []
+    packet_length_features = []
+    count_features = []
+    binary_features = []
+
     if file_type == 'MiraiBotnet':
         categorical_features = [
             'flow_protocol'
