@@ -33,15 +33,50 @@ def Heterogeneous_Feature_named_featrues(file_type):
     elif file_type in ['MitM', 'Kitsune']:
         categorical_features = []
         time_features = [
+            # 100ms window
             'SrcMAC_IP_w_100ms', 'SrcMAC_IP_mu_100ms', 'SrcMAC_IP_sigma_100ms', 'SrcMAC_IP_max_100ms', 'SrcMAC_IP_min_100ms',
             'SrcIP_w_100ms', 'SrcIP_mu_100ms', 'SrcIP_sigma_100ms', 'SrcIP_max_100ms', 'SrcIP_min_100ms',
-            'Channel_w_100ms', 'Channel_mu_100ms', 'Channel_sigma_100ms', 'Channel_max_100ms', 'Channel_min_100ms'
+            'Channel_w_100ms', 'Channel_mu_100ms', 'Channel_sigma_100ms', 'Channel_max_100ms', 'Channel_min_100ms',
+            # 500ms window
+            'SrcMAC_IP_w_500ms', 'SrcMAC_IP_mu_500ms', 'SrcMAC_IP_sigma_500ms', 'SrcMAC_IP_max_500ms', 'SrcMAC_IP_min_500ms',
+            'SrcIP_w_500ms', 'SrcIP_mu_500ms', 'SrcIP_sigma_500ms', 'SrcIP_max_500ms', 'SrcIP_min_500ms',
+            'Channel_w_500ms', 'Channel_mu_500ms', 'Channel_sigma_500ms', 'Channel_max_500ms', 'Channel_min_500ms',
+            # 1.5s window
+            'SrcMAC_IP_w_1.5s', 'SrcMAC_IP_mu_1.5s', 'SrcMAC_IP_sigma_1.5s', 'SrcMAC_IP_max_1.5s', 'SrcMAC_IP_min_1.5s',
+            'SrcIP_w_1.5s', 'SrcIP_mu_1.5s', 'SrcIP_sigma_1.5s', 'SrcIP_max_1.5s', 'SrcIP_min_1.5s',
+            'Channel_w_1.5s', 'Channel_mu_1.5s', 'Channel_sigma_1.5s', 'Channel_max_1.5s', 'Channel_min_1.5s',
+            # 10s window
+            'SrcMAC_IP_w_10s', 'SrcMAC_IP_mu_10s', 'SrcMAC_IP_sigma_10s', 'SrcMAC_IP_max_10s', 'SrcMAC_IP_min_10s',
+            'SrcIP_w_10s', 'SrcIP_mu_10s', 'SrcIP_sigma_10s', 'SrcIP_max_10s', 'SrcIP_min_10s',
+            'Channel_w_10s', 'Channel_mu_10s', 'Channel_sigma_10s', 'Channel_max_10s', 'Channel_min_10s',
+            # 1min window
+            'SrcMAC_IP_w_1min', 'SrcMAC_IP_mu_1min', 'SrcMAC_IP_sigma_1min', 'SrcMAC_IP_max_1min', 'SrcMAC_IP_min_1min',
+            'SrcIP_w_1min', 'SrcIP_mu_1min', 'SrcIP_sigma_1min', 'SrcIP_max_1min', 'SrcIP_min_1min',
+            'Channel_w_1min', 'Channel_mu_1min', 'Channel_sigma_1min', 'Channel_max_1min', 'Channel_min_1min'
         ]
         packet_length_features = [
-            'Socket_w_100ms', 'Socket_mu_100ms', 'Socket_sigma_100ms', 'Socket_max_100ms', 'Socket_min_100ms'
+            # 100ms window
+            'Socket_w_100ms', 'Socket_mu_100ms', 'Socket_sigma_100ms', 'Socket_max_100ms', 'Socket_min_100ms',
+            # 500ms window
+            'Socket_w_500ms', 'Socket_mu_500ms', 'Socket_sigma_500ms', 'Socket_max_500ms', 'Socket_min_500ms',
+            # 1.5s window
+            'Socket_w_1.5s', 'Socket_mu_1.5s', 'Socket_sigma_1.5s', 'Socket_max_1.5s', 'Socket_min_1.5s',
+            # 10s window
+            'Socket_w_10s', 'Socket_mu_10s', 'Socket_sigma_10s', 'Socket_max_10s', 'Socket_min_10s',
+            # 1min window
+            'Socket_w_1min', 'Socket_mu_1min', 'Socket_sigma_1min', 'Socket_max_1min', 'Socket_min_1min'
         ]
         count_features = [
-            'Jitter_mu_100ms', 'Jitter_sigma_100ms', 'Jitter_max_100ms'
+            # 100ms window
+            'Jitter_mu_100ms', 'Jitter_sigma_100ms', 'Jitter_max_100ms',
+            # 500ms window
+            'Jitter_mu_500ms', 'Jitter_sigma_500ms', 'Jitter_max_500ms',
+            # 1.5s window
+            'Jitter_mu_1.5s', 'Jitter_sigma_1.5s', 'Jitter_max_1.5s',
+            # 10s window
+            'Jitter_mu_10s', 'Jitter_sigma_10s', 'Jitter_max_10s',
+            # 1min window
+            'Jitter_mu_1min', 'Jitter_sigma_1min', 'Jitter_max_1min'
         ]
         binary_features = []
 
