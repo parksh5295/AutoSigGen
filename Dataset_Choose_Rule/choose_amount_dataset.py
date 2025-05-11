@@ -4,7 +4,7 @@
 import pandas as pd
 import random
 from Dataset_Choose_Rule.CICIDS2017_csv_selector import select_csv_file
-from Dataset_Choose_Rule.dtype_optimize import infer_dtypes_safely
+from Dataset_Choose_Rule.dtype_optimize import infer_dtypes_safely, _post_process_specific_datasets
 
 
 def file_path_line_nonnumber(file_type, file_number=1): # file_number is not used, but insert to prevent errors from occurring
@@ -54,6 +54,7 @@ def file_cut(file_type, file_path, cut_type='random'):
             dtype=inferred_dtypes,
             skiprows=lambda x: x > 0 and x not in sampled_rows
         )
+        df = _post_process_specific_datasets(df, file_type)
 
     elif cut_type in ['in order', 'In order', 'In Order']:    # from n~m row
         n = int(input("Enter the row number to start with: "))  # Row number to start with (1-based index, i.e., first data is 1)
@@ -65,8 +66,10 @@ def file_cut(file_type, file_path, cut_type='random'):
             skiprows=lambda x: x > 0 and x < n,
             nrows=m - n + 1
         )
+        df = _post_process_specific_datasets(df, file_type)
 
     elif cut_type in ['all', 'All']:
         df = pd.read_csv(file_path, dtype=inferred_dtypes)
+        df = _post_process_specific_datasets(df, file_type)
 
     return df   # return data
