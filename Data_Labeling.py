@@ -75,6 +75,8 @@ def main():
         data['label'] = data['Class'].apply(lambda x: 0 if x == '-' else 1)
     elif file_type in ['CICModbus23', 'CICModbus']:
         data['label'] = data['Attack'].apply(lambda x: 0 if x.strip() == 'Baseline Replay: In position' else 1)
+    elif file_type in ['IoTID20', 'IoTID']:
+        data['label'] = data['Label'].apply(lambda x: 0 if x.strip() == 'Normal' else 1)
     else:
         data['label'] = anomal_judgment_label(data)
 

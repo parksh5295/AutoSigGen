@@ -18,6 +18,8 @@ def file_path_line_association(file_type, file_number=1): # file_number is not u
         file_path = "../Dataset/load_dataset/DARPA98/train/DARPA98.csv"
     elif file_type in ['CICModbus23', 'CICModbus']:
         file_path = "../Dataset/load_dataset/CICModbus23/CICModbus23_total.csv"
+    elif file_type in ['IoTID20', 'IoTID']:
+        file_path = "../Dataset/load_dataset/IoTID20/IoTID20.csv"
     else:
         print("No file information yet, please double-check the file type or provide new data!")
         file_path_line_association(file_type)
@@ -40,6 +42,8 @@ def file_path_line_signatures(file_type, file_number=1): # file_number is not us
         file_path = "../Dataset/load_dataset/DARPA98/test/DARPA98.csv"
     elif file_type in ['CICModbus23', 'CICModbus']:
         file_path = "../Dataset/load_dataset/CICModbus23/CICModbus23_total.csv"
+    elif file_type in ['IoTID20', 'IoTID']:
+        file_path = "../Dataset/load_dataset/IoTID20/IoTID20.csv"
     else:
         print("No file information yet, please double-check the file type or provide new data!")
         file_path_line_association(file_type)

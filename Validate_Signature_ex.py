@@ -332,12 +332,16 @@ def main():
     # 2. Handling judgments of Anomal or Nomal
     start = time.time()
 
-    if file_type in ['MiraiBotnet']:
+    if file_type in ['MiraiBotnet', 'NSL-KDD']:
         data['label'], _ = anomal_judgment_nonlabel(file_type, data)
     elif file_type == 'netML':
         data['label'] = data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
     elif file_type == 'DARPA98':
         data['label'] = data['Class'].apply(lambda x: 0 if x == '-' else 1)
+    elif file_type in ['CICModbus23', 'CICModbus']:
+        data['label'] = data['Attack'].apply(lambda x: 0 if x.strip() == 'Baseline Replay: In position' else 1)
+    elif file_type in ['IoTID20', 'IoTID']:
+        data['label'] = data['Label'].apply(lambda x: 0 if x.strip() == 'Normal' else 1)
     else:
         data['label'] = anomal_judgment_label(data)
 

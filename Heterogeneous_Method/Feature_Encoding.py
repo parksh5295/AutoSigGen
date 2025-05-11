@@ -80,6 +80,48 @@ def Heterogeneous_Feature_named_featrues(file_type):
         ]
         binary_features = []
 
+    elif file_type in ['IoTID2018', 'IoTID']:
+        categorical_features = [
+            'Src_IP', 'Dst_IP', 'Src_Port', 'Dst_Port', 'Protocol'
+        ]
+        time_features = [
+            'Timestamp', # Note: This feature likely requires preprocessing to be numerical (e.g., Unix timestamp or scalar components like hour, day) for scaling.
+            'Flow_Duration',
+            'Flow_IAT_Mean', 'Flow_IAT_Std', 'Flow_IAT_Max', 'Flow_IAT_Min',
+            'Fwd_IAT_Tot', 'Fwd_IAT_Mean', 'Fwd_IAT_Std', 'Fwd_IAT_Max', 'Fwd_IAT_Min',
+            'Bwd_IAT_Tot', 'Bwd_IAT_Mean', 'Bwd_IAT_Std', 'Bwd_IAT_Max', 'Bwd_IAT_Min',
+            'Active_Mean', 'Active_Std', 'Active_Max', 'Active_Min',
+            'Idle_Mean', 'Idle_Std', 'Idle_Max', 'Idle_Min'
+        ]
+        packet_length_features = [
+            'TotLen_Fwd_Pkts', 'TotLen_Bwd_Pkts',
+            'Fwd_Pkt_Len_Max', 'Fwd_Pkt_Len_Min', 'Fwd_Pkt_Len_Mean', 'Fwd_Pkt_Len_Std',
+            'Bwd_Pkt_Len_Max', 'Bwd_Pkt_Len_Min', 'Bwd_Pkt_Len_Mean', 'Bwd_Pkt_Len_Std',
+            'Pkt_Len_Min', 'Pkt_Len_Max', 'Pkt_Len_Mean', 'Pkt_Len_Std', 'Pkt_Len_Var',
+            'Pkt_Size_Avg',
+            'Fwd_Seg_Size_Avg', 'Bwd_Seg_Size_Avg',
+            'Subflow_Fwd_Byts', 'Subflow_Bwd_Byts',
+            'Init_Fwd_Win_Byts', 'Init_Bwd_Win_Byts',
+            'Fwd_Seg_Size_Min'
+        ]
+        count_features = [
+            'Tot_Fwd_Pkts', 'Tot_Bwd_Pkts',
+            'Flow_Byts/s', 'Flow_Pkts/s',
+            'Fwd_Header_Len', 'Bwd_Header_Len', # Consistent with CICIDS2017 categorization in this file
+            'Fwd_Pkts/s', 'Bwd_Pkts/s',
+            'Down/Up_Ratio',
+            'Fwd_Byts/b_Avg', 'Fwd_Pkts/b_Avg', 'Fwd_Blk_Rate_Avg',
+            'Bwd_Byts/b_Avg', 'Bwd_Pkts/b_Avg', 'Bwd_Blk_Rate_Avg',
+            'Subflow_Fwd_Pkts', 'Subflow_Bwd_Pkts',
+            'Fwd_Act_Data_Pkts'
+        ]
+        binary_features = [
+            'Fwd_PSH_Flags', 'Bwd_PSH_Flags',
+            'Fwd_URG_Flags', 'Bwd_URG_Flags',
+            'FIN_Flag_Cnt', 'SYN_Flag_Cnt', 'RST_Flag_Cnt', 'PSH_Flag_Cnt',
+            'ACK_Flag_Cnt', 'URG_Flag_Cnt', 'CWE_Flag_Count', 'ECE_Flag_Cnt'
+        ]
+
     elif file_type in ['CICIDS2017', 'CICIDS']:
         categorical_features = ['Destination Port']
         time_features = [
