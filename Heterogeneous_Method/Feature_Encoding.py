@@ -87,7 +87,7 @@ def Heterogeneous_Feature_named_featrues(file_type):
         ]
         binary_features = []
 
-    elif file_type in ['IoTID2018', 'IoTID']:
+    elif file_type in ['IoTID20', 'IoTID']:
         categorical_features = [
             'Src_IP', 'Dst_IP', 'Src_Port', 'Dst_Port', 'Protocol'
         ]
