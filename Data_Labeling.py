@@ -206,9 +206,35 @@ def main():
     else:
         print(f"[WARNING Data_Labeling.py] X_reduced is of type {type(X_reduced)}, not DataFrame or NumPy array. Skipping numeric conversion check.")
 
+    # Additional Debugging: Inspect X_reduced content and dtypes AFTER conversion attempt
+    print("[DEBUG Data_Labeling.py] Inspecting X_reduced AFTER numeric conversion attempt:")
+    if hasattr(X_reduced, 'columns'): # Pandas DataFrame
+        print(f"  X_reduced is a DataFrame. Shape: {X_reduced.shape}")
+        for col in X_reduced.columns:
+            print(f"    Column '{col}': dtype = {X_reduced[col].dtype}")
+            try:
+                print(f"      Sample values: {X_reduced[col].head(3).tolist()}")
+            except Exception as e:
+                print(f"      Could not get sample values for column '{col}': {e}")
+        # Check for any object dtypes remaining
+        object_cols = X_reduced.select_dtypes(include=['object']).columns.tolist()
+        if object_cols:
+            print(f"[WARNING Data_Labeling.py] X_reduced still has object dtype columns after conversion: {object_cols}")
+            for obj_col in object_cols:
+                 print(f"      Unique values in object column '{obj_col}' (first 10): {X_reduced[obj_col].unique()[:10]}")
+
+    elif isinstance(X_reduced, np.ndarray):
+        print(f"  X_reduced is a NumPy array. Shape: {X_reduced.shape}, dtype: {X_reduced.dtype}")
+        try:
+            print(f"    Sample values (first 2 rows, first 5 cols):\n{X_reduced[:2, :5]}")
+        except Exception as e:
+            print(f"      Could not get sample values from NumPy array: {e}")
+    else:
+        print(f"  X_reduced is of type {type(X_reduced)}.")
+
 
     if Hyperparameter_optimization in ['Y', 'y']:
-        # print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Shape: {data.shape}") # 이제 CNI에 직접 안 감
+        # print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Shape: {data.shape}")
         # print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Columns: {list(data.columns)}")
         
         # Pass X_reduced, original_labels_for_X_reduced, and other necessary params.
