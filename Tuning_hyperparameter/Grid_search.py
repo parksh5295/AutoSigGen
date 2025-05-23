@@ -14,6 +14,7 @@ from sklearn.metrics import make_scorer, silhouette_score, davies_bouldin_score,
 from sklearn.cluster import KMeans, DBSCAN
 from Clustering_Method.clustering_nomal_identify import clustering_nomal_identify
 from utils.class_row import nomal_class_data
+from Clustering_Method.common_clustering import get_clustering_function
 
 
 # Dynamic import functions (using importlib)
@@ -103,6 +104,16 @@ def evaluate_clustering_with_known_benign(data, X, clusters, num_clusters, align
 
 
 def Grid_search_all(X, clustering_algorithm, parameter_dict=None, data=None):
+    print("[DEBUG Grid_search_all] Received X for grid search. Shape:", X.shape)
+    if hasattr(X, 'dtypes'):
+        print("[DEBUG Grid_search_all] Dtypes of X:\n", X.dtypes)
+    elif hasattr(X, 'dtype'):
+        print("[DEBUG Grid_search_all] Dtype of X (NumPy array):", X.dtype)
+    if hasattr(X, 'head'):
+        print("[DEBUG Grid_search_all] Head of X (DataFrame):\n", X.head(3))
+    elif isinstance(X, np.ndarray):
+        print("[DEBUG Grid_search_all] First 2 rows of X (NumPy array):\n", X[:2])
+
     # Maintain complete parameter_dict for compatibility
     if parameter_dict is None:
         parameter_dict = {

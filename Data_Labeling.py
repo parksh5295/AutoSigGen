@@ -171,7 +171,11 @@ def main():
         print("\nThe number of max_clusters is set to the default value of 1000.")
         max_clusters = 1000
     '''
-    max_clusters = 300
+
+    if clustering_algorithm in ['SGMM', 'GMM']:
+        max_clusters = 100
+    else:
+        max_clusters = 300
     
     # Hyperparameter_optimization = str(input("\nDo you need to do Hyperparameter_optimization? (Y/n): "))
     Hyperparameter_optimization = 'Y'

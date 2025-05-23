@@ -24,6 +24,16 @@ def clustering_NeuralGas_clustering(data, X, n_start_nodes, max_nodes, step, max
 
 
 def clustering_NeuralGas(data, X, aligned_original_labels):
+    print("[DEBUG clustering_NeuralGas] Received X for clustering. Shape:", X.shape)
+    if hasattr(X, 'dtypes'):
+        print("[DEBUG clustering_NeuralGas] Dtypes of X:\n", X.dtypes)
+    elif hasattr(X, 'dtype'):
+        print("[DEBUG clustering_NeuralGas] Dtype of X (NumPy array):", X.dtype)
+    if hasattr(X, 'head'):
+        print("[DEBUG clustering_NeuralGas] Head of X (DataFrame):\n", X.head(3))
+    elif isinstance(X, np.ndarray):
+        print("[DEBUG clustering_NeuralGas] First 2 rows of X (NumPy array):\n", X[:2])
+
     tune_parameters = Grid_search_all(X, 'NeuralGas')
     print('tune_params: ', tune_parameters)
 
