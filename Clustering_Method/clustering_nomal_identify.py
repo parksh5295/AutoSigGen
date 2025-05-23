@@ -55,14 +55,18 @@ def clustering_nomal_identify(data_features_for_clustering, original_labels_alig
             num_normal_in_cluster = 0
         else:
             try:
-                comparison_matrix = (current_cluster_features[:, None, :] == known_normal_samples_features[None, :, :])
+                # Ensure we are working with NumPy arrays for broadcasting comparison
+                current_features_np = current_cluster_features.to_numpy() if hasattr(current_cluster_features, 'to_numpy') else current_cluster_features
+                known_normal_np = known_normal_samples_features.to_numpy() if hasattr(known_normal_samples_features, 'to_numpy') else known_normal_samples_features
+
+                comparison_matrix = (current_features_np[:, None, :] == known_normal_np[None, :, :])
                 all_features_match = np.all(comparison_matrix, axis=2)
                 any_known_normal_matches = np.any(all_features_match, axis=1)
                 num_normal_in_cluster = np.sum(any_known_normal_matches)
                 
             except ValueError as e:
                 print(f"[Error CNI comparing cluster {cluster_id}] shape mismatch or other ValueError: {e}")
-                print(f"  Cluster features shape: {current_cluster_features.shape}, Known normal features shape: {known_normal_samples_features.shape}")
+                print(f"  Cluster features shape: {current_features_np.shape}, Known normal features shape: {known_normal_np.shape}")
                 num_normal_in_cluster = 0
             except MemoryError as me: 
                 print(f"[Error CNI comparing cluster {cluster_id}] MemoryError: {me}")
