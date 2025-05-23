@@ -13,19 +13,31 @@ def clustering_nomal_identify(data_features_for_clustering, original_labels_alig
     
     print(f"\n[DEBUG CNI] Received 'data_features_for_clustering' - Shape: {data_features_for_clustering.shape}")
     if data_features_for_clustering.ndim == 2 and data_features_for_clustering.shape[0] > 0:
-        print(f"[DEBUG CNI]   NumPy array - First 5 cols of first row: {data_features_for_clustering[0, :min(5, data_features_for_clustering.shape[1])] if data_features_for_clustering.shape[1] > 0 else '0 cols'}")
+        # Check if it's a pandas DataFrame
+        if hasattr(data_features_for_clustering, 'iloc'):
+            print(f"[DEBUG CNI]   Pandas DataFrame - First 5 cols of first row: {data_features_for_clustering.iloc[0, :min(5, data_features_for_clustering.shape[1])] if data_features_for_clustering.shape[1] > 0 else '0 cols'}")
+        else: # Assuming NumPy array
+            print(f"[DEBUG CNI]   NumPy array - First 5 cols of first row: {data_features_for_clustering[0, :min(5, data_features_for_clustering.shape[1])] if data_features_for_clustering.shape[1] > 0 else '0 cols'}")
     print(f"[DEBUG CNI] Received 'original_labels_aligned' - Shape: {original_labels_aligned.shape}, Unique values: {np.unique(original_labels_aligned, return_counts=True)}")
     print(f"[DEBUG CNI] Received 'clusters_assigned' - Shape: {clusters_assigned.shape}, Unique values: {np.unique(clusters_assigned, return_counts=True)}")
     print(f"[DEBUG CNI] Received 'num_total_clusters': {num_total_clusters}")
 
     # Extract normal samples (Label == 0) from the feature space used for clustering
-    known_normal_samples_features = data_features_for_clustering[original_labels_aligned == 0]
+    # Ensure consistent indexing for both NumPy arrays and Pandas DataFrames
+    if hasattr(data_features_for_clustering, 'iloc'): # Pandas DataFrame
+        known_normal_samples_features = data_features_for_clustering[original_labels_aligned == 0]
+    else: # NumPy array
+        known_normal_samples_features = data_features_for_clustering[original_labels_aligned == 0]
+
     print(f"[DEBUG CNI] 'known_normal_samples_features' (from X_reduced space) - Shape: {known_normal_samples_features.shape}")
     if known_normal_samples_features.ndim == 2 and known_normal_samples_features.shape[0] > 0:
-         print(f"[DEBUG CNI]   NumPy array - First 5 cols of first row: {known_normal_samples_features[0, :min(5, known_normal_samples_features.shape[1])] if known_normal_samples_features.shape[1] > 0 else '0 cols'}")
+        if hasattr(known_normal_samples_features, 'iloc'): # Pandas DataFrame
+            print(f"[DEBUG CNI]   Pandas DataFrame - First 5 cols of first row: {known_normal_samples_features.iloc[0, :min(5, known_normal_samples_features.shape[1])] if known_normal_samples_features.shape[1] > 0 else '0 cols'}")
+        else: # Assuming NumPy array
+            print(f"[DEBUG CNI]   NumPy array - First 5 cols of first row: {known_normal_samples_features[0, :min(5, known_normal_samples_features.shape[1])] if known_normal_samples_features.shape[1] > 0 else '0 cols'}")
 
     # final_labels will have the same length as data_features_for_clustering and clusters_assigned
-    final_labels = np.zeros(len(data_features_for_clustering), dtype=int) 
+    final_labels = np.zeros(len(data_features_for_clustering), dtype=int)
     threshold = 0.3
 
     for cluster_id in range(num_total_clusters):
