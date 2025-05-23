@@ -28,7 +28,7 @@ def loop_tuning(data, X, clustering_algorithm, max_clusters=10000):
         'epochs': 300,
         'batch_size': 256,
         'n_neighbors': 5
-    }
+                        }
     # First_parameter_dictionary
 
     elbow_result = Elbow_method(data, X, clustering_algorithm, max_clusters, parameter_dict)

@@ -58,7 +58,7 @@ class GMeans:
                 # sub_data_1d = sub_data.mean(axis=1)
                 # _, p_value = normaltest(sub_data)  # Normality test (calculate p-value)
                 # _, p_value = normaltest(sub_data_1d)    # Because normaltest() is sensitive, it's safe to only run it on 1D vectors
-                _, p_value = normaltest(sub_data[:, 0])  # Use only the first PCA principal component
+                _, p_value = normaltest(sub_data.iloc[:, 0])  # Use only the first PCA principal component
 
                 if np.any(p_value < 0.01):  # More granularity when regularity is not followed
                     new_indices = indices[new_labels == new_cluster_id]
