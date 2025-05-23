@@ -3,6 +3,7 @@
 import argparse
 import numpy as np
 import time
+import pandas as pd
 from Dataset_Choose_Rule.choose_amount_dataset import file_path_line_nonnumber, file_cut
 from definition.Anomal_Judgment import anomal_judgment_nonlabel, anomal_judgment_label
 from utils.time_transfer import time_scalar_transfer
@@ -174,6 +175,38 @@ def main():
     
     # Hyperparameter_optimization = str(input("\nDo you need to do Hyperparameter_optimization? (Y/n): "))
     Hyperparameter_optimization = 'Y'
+
+    # Ensure X_reduced is purely numeric before passing to clustering algorithms
+    if hasattr(X_reduced, 'columns'): # Pandas DataFrame
+        print("[DEBUG Data_Labeling.py] Converting X_reduced (DataFrame) to numeric...")
+        for col in X_reduced.columns:
+            try:
+                X_reduced[col] = pd.to_numeric(X_reduced[col])
+            except ValueError as e:
+                print(f"[ERROR Data_Labeling.py] Could not convert column '{col}' to numeric. Error: {e}")
+                # Option: raise an error, or try to handle/log specific problematic values
+                # For now, let's see which column causes issues.
+                # Attempt to find problematic values:
+                non_numeric_values = X_reduced[~X_reduced[col].astype(str).str.match(r'^[+-]?([0-9]*[.])?[0-9]+$')][col].unique()
+                print(f"[DEBUG Data_Labeling.py] Non-numeric unique values in column '{col}': {list(non_numeric_values)[:20]}") # Print first 20 unique non-numeric
+                raise # Re-raise the error to stop execution
+        print("[DEBUG Data_Labeling.py] X_reduced dtypes after to_numeric:")
+        print(X_reduced.dtypes)
+    elif isinstance(X_reduced, np.ndarray):
+        print("[DEBUG Data_Labeling.py] Attempting to convert X_reduced (NumPy array) to float...")
+        try:
+            X_reduced = X_reduced.astype(float)
+            print("[DEBUG Data_Labeling.py] X_reduced (NumPy array) converted to float.")
+        except ValueError as e:
+            print(f"[ERROR Data_Labeling.py] Could not convert NumPy array X_reduced to float. Error: {e}")
+            # Identify which part of the array is causing issues might be more complex for NumPy
+            # This often happens if the array was created with dtype=object due to mixed types initially.
+            # Or if it contains strings that cannot be cast to float.
+            raise # Re-raise the error to stop execution
+    else:
+        print(f"[WARNING Data_Labeling.py] X_reduced is of type {type(X_reduced)}, not DataFrame or NumPy array. Skipping numeric conversion check.")
+
+
     if Hyperparameter_optimization in ['Y', 'y']:
         # print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Shape: {data.shape}") # 이제 CNI에 직접 안 감
         # print(f"[DEBUG Data_Labeling.py] 'data' to be passed to choose_clustering_algorithm - Columns: {list(data.columns)}")
