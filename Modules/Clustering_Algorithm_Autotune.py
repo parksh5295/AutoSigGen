@@ -8,7 +8,7 @@ from Clustering_Method.clustering_SGMM import clustering_SGMM
 from Clustering_Method.clustering_Gmeans import clustering_Gmeans
 from Clustering_Method.clustering_Xmeans import clustering_Xmeans
 from Clustering_Method.clustering_DBSCAN import clustering_DBSCAN
-from Clustering_Method.clustering_Mshift import clustering_MShift
+from Clustering_Method.clustering_Mshift import clustering_Mshift
 from Clustering_Method.clustering_FCM import clustering_FCM
 from Clustering_Method.clustering_CK import clustering_CK
 from Clustering_Method.clustering_NeuralGas import clustering_NeuralGas
