@@ -3,6 +3,7 @@
 import argparse
 import numpy as np
 import time
+import multiprocessing # Ensure multiprocessing is imported
 from Dataset_Choose_Rule.association_data_choose import file_path_line_signatures
 from Dataset_Choose_Rule.choose_amount_dataset import file_cut
 from definition.Anomal_Judgment import anomal_judgment_label, anomal_judgment_nonlabel
@@ -35,10 +36,34 @@ KNOWN_FP_FILE = "known_high_fp_signatures.json" # Known FP signature save file
 RECALL_CONTRIBUTION_THRESHOLD = 0.1 # Threshold for whitelisting signatures
 NUM_FAKE_FP_SIGNATURES = 3 # Number of fake FP signatures to inject
 
+# Helper function for parallel calculation of single signature contribution
+def _calculate_single_signature_contribution(sig_id, alerts_df_subset_cols, anomalous_indices_set, total_anomalous_alerts_count):
+    """Calculates recall contribution for a single signature ID."""
+    # Recreate alerts_df from the necessary columns passed
+    # This is to avoid passing large DataFrames if only a subset is needed and pickling issues.
+    # However, alerts_df is filtered by sig_id, so passing the relevant part or whole might be fine.
+    # For simplicity here, assuming alerts_df_subset_cols is already filtered for the current sig_id OR we filter it here.
+    # The original code did: sig_alerts = alerts_df[alerts_df['signature_id'] == sig_id]
+    # This implies that alerts_df should be passed fully, or tasks should pre-filter.
+    # For starmap, it's better if the worker function gets exactly what it needs.
+    # Option 1: Pass full alerts_df and filter inside (less ideal for many tasks if alerts_df is huge)
+    # Option 2: Pre-filter alerts_df for each sig_id before making tasks (more setup but cleaner worker)
+
+    # Assuming alerts_df_subset_cols IS alerts_df (the full one, or a view with 'signature_id' and 'alert_index')
+    # This will be re-evaluated based on how tasks are prepared.
+    # For now, let's stick to the logic from the original loop:
+    sig_alerts = alerts_df_subset_cols[alerts_df_subset_cols['signature_id'] == sig_id]
+    
+    detected_by_sig = anomalous_indices_set.intersection(set(sig_alerts['alert_index']))
+    contribution = 0.0
+    if total_anomalous_alerts_count > 0:
+        contribution = len(detected_by_sig) / total_anomalous_alerts_count
+    return sig_id, contribution
+
 # ===== Helper Function: Calculate Recall Contribution Per Signature =====
 def calculate_recall_contribution(group_mapped_df, alerts_df, signature_map):
     """
-    Calculates the recall contribution for each signature.
+    Calculates the recall contribution for each signature using parallel processing.
 
     Args:
         group_mapped_df (pd.DataFrame): DataFrame with original data and 'label' column.
@@ -64,14 +89,45 @@ def calculate_recall_contribution(group_mapped_df, alerts_df, signature_map):
         print("Warning: No anomalous alerts found in group_mapped_df for recall contribution.")
         return {sig_id: 0.0 for sig_id in signature_map.keys()} # All contribute 0
 
-    print(f"\nCalculating recall contribution for {len(signature_map)} signatures...")
-    for sig_id in signature_map.keys():
-        sig_alerts = alerts_df[alerts_df['signature_id'] == sig_id]
-        detected_by_sig = anomalous_indices.intersection(set(sig_alerts['alert_index']))
-        contribution = len(detected_by_sig) / total_anomalous_alerts
+    print(f"\nCalculating recall contribution for {len(signature_map)} signatures using parallel processing...")
+
+    # Prepare tasks for parallel execution
+    # Each task will be (sig_id, alerts_df, anomalous_indices, total_anomalous_alerts)
+    # Pass alerts_df directly. Pandas DataFrames are picklable.
+    tasks = [
+        (sig_id, alerts_df[['signature_id', 'alert_index']], anomalous_indices, total_anomalous_alerts)
+        for sig_id in signature_map.keys()
+    ]
+
+    num_processes = multiprocessing.cpu_count()
+    print(f"Using {num_processes} processes for recall contribution calculation.")
+    
+    results = []
+    if tasks: # Proceed only if there are signatures to process
+        try:
+            with multiprocessing.Pool(processes=num_processes) as pool:
+                # Results will be a list of (sig_id, contribution) tuples
+                results = pool.starmap(_calculate_single_signature_contribution, tasks)
+        except Exception as e:
+            print(f"An error occurred during parallel recall contribution calculation: {e}")
+            # Fallback to sequential calculation or return empty/partial
+            print("Falling back to sequential calculation for recall contribution...")
+            for sig_id in signature_map.keys():
+                sig_alerts = alerts_df[alerts_df['signature_id'] == sig_id]
+                detected_by_sig = anomalous_indices.intersection(set(sig_alerts['alert_index']))
+                contribution = 0.0
+                if total_anomalous_alerts > 0:
+                    contribution = len(detected_by_sig) / total_anomalous_alerts
+                recall_contributions[sig_id] = contribution
+                # Optional: print contribution per signature
+                # print(f"  - {sig_id}: {contribution:.4f} (sequential)")
+            return recall_contributions # Return sequentially computed results
+
+    # Populate recall_contributions from parallel results
+    for sig_id, contribution in results:
         recall_contributions[sig_id] = contribution
         # Optional: print contribution per signature
-        # print(f"  - {sig_id}: {contribution:.4f}")
+        # print(f"  - {sig_id}: {contribution:.4f} (parallel)")
 
     return recall_contributions
 # ====================================================================
@@ -135,8 +191,6 @@ def calculate_overall_recall(group_mapped_df, alerts_df, signature_map, relevant
 
 def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_list, association_method, association_metric, num_fake_signatures=3, min_support=0.3, min_confidence=0.8):
     """
-    Generates fake FP signatures by running association rule mining on normal data.
-
     Args:
         file_type (str): Type of the dataset (e.g., 'DARPA98').
         file_number (int): Number of the dataset file.
@@ -145,14 +199,15 @@ def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_l
         association_method (str): Association rule algorithm (e.g., 'apriori').
         association_metric (str): Metric to use for association rule mining (e.g., 'confidence').
         num_fake_signatures (int): Number of fake signatures to generate.
-        min_support (float): Minimum support threshold for association mining on normal data.
-        min_confidence (float): Minimum confidence threshold for association mining.
+        min_support (float): Minimum support threshold for association mining on ANOMALOUS data.
+        min_confidence (float): Original minimum confidence threshold from function signature (this function
+                              will internally override and use 0.7 for the association_module call).
 
     Returns:
         list: A list of dictionaries, where each dictionary represents a fake signature rule.
               Returns empty list if generation fails.
     """
-    print(f"\n--- Generating {num_fake_signatures} Fake FP Signatures from Normal Data ---")
+    print(f"\n--- Generating {num_fake_signatures} Fake FP Signatures from ANOMALOUS Data (using min_confidence=0.7) ---")
     fake_signatures = []
     try:
         # 1. Load data
@@ -176,73 +231,62 @@ def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_l
         else:
             full_data['label'] = anomal_judgment_label(full_data)
 
-        # 3. Filter for normal data
-        normal_data_df = full_data[full_data['label'] == 0].copy()
+        # 3. Filter for ANOMALOUS data.
+        #    The variable name `normal_data_df` is INTENTIONALLY PRESERVED from the original code
+        #    to minimize diffs, but it will now hold anomalous data.
+        normal_data_df = full_data[full_data['label'] == 1].copy() # << CORE LOGIC CHANGE: Filter for label == 1 (anomalous)
         if normal_data_df.empty:
-            print("Warning: No normal data found to generate fake signatures.")
+            print("Warning: No ANOMALOUS data found after filtering. Cannot generate fake signatures.")
             return []
-        print(f"Filtered normal data: {normal_data_df.shape[0]} rows")
+        print(f"Filtered for ANOMALOUS data. Rows obtained: {normal_data_df.shape[0]}")
 
-        # 4. Map normal data (using existing mapping info)
-        print("Mapping normal data...")
-        # Drop label before mapping if it exists, as association_module might not expect it
-        normal_data_to_map = normal_data_df.drop(columns=['label'], errors='ignore')
+        # 4. Map the ANOMALOUS data (using existing mapping info).
+        #    Variable names `normal_data_to_map` and `normal_mapped_df` are INTENTIONALLY PRESERVED.
+        print("Mapping the ANOMALOUS data (variable names kept as original)...")
+        normal_data_to_map = normal_data_df.drop(columns=['label'], errors='ignore') # `normal_data_df` now holds anomalous data
         normal_mapped_df, _ = map_intervals_to_groups(normal_data_to_map, category_mapping, data_list, regul='N')
-        print(f"Mapped normal data shape: {normal_mapped_df.shape}")
+        print(f"Shape of mapped ANOMALOUS data: {normal_mapped_df.shape}")
 
-        # --- Handle NaN values before association mining ---
+        # --- Handle NaN values from the (now anomalous) mapped data --- 
         rows_before_dropna = normal_mapped_df.shape[0]
         normal_mapped_df = normal_mapped_df.dropna()
         rows_after_dropna = normal_mapped_df.shape[0]
         if rows_before_dropna > rows_after_dropna:
-            print(f"Dropped {rows_before_dropna - rows_after_dropna} rows containing NaN values from mapped normal data.")
+            print(f"Dropped {rows_before_dropna - rows_after_dropna} rows containing NaN values from mapped ANOMALOUS data.")
         if normal_mapped_df.empty:
-            print("Warning: No data left after dropping NaN rows. Cannot generate fake signatures.")
+            print("Warning: No data left after dropping NaN rows from mapped ANOMALOUS data. Cannot generate fake signatures.")
             return []
         # -------------------------------------------------
 
-        # 5. Run association rule mining on normal mapped data
-        print(f"Running {association_method} on normal data (min_support={min_support}, min_confidence={min_confidence})...")
-        # Note: association_module might expect specific parameters or return formats. Adjust as needed.
-        # We might need to tweak parameters like 'association_ea' if association_module requires it.
-        # We only care about the generated rules (itemsets).
-        # Assuming association_module returns a structure where rules can be extracted.
-        # This part might need refinement based on association_module's exact behavior.
-
-        # Simplified call - assuming association_module can run on the dataframe
-        # and return rules. We might need more parameters.
-        # TODO: Verify parameters and return value of association_module
-        # Let's assume it returns a DataFrame or similar with 'rule' column containing dicts
+        # 5. Run association rule mining on the (now anomalous) mapped data.
+        #    A fixed min_confidence of 0.7 will be used for this specific generation process.
+        _internal_fixed_confidence = 0.7 # Temporary internal variable for clarity
+        print(f"Running {association_method} on ANOMALOUS data (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
+        
         rules_df = association_module(
-            normal_mapped_df,
+            normal_mapped_df, # This DataFrame, despite its name, now contains ANOMALOUS data
             association_method,
             association_metric=association_metric,
             min_support=min_support,
-            min_confidence=min_confidence
+            min_confidence=_internal_fixed_confidence # << CORE LOGIC CHANGE: Using the fixed 0.7 confidence
         )
 
         # 6. Extract top rules as fake signatures
         if rules_df is not None and not rules_df.empty and 'rule' in rules_df.columns:
-            # Assuming 'rule' column contains the signature dictionaries
-            # Sort by confidence or support if available, or just take the first few
             potential_rules = rules_df['rule'].tolist()
-            # Basic validation: ensure they are dicts
             valid_rules = [rule for rule in potential_rules if isinstance(rule, dict)]
 
             fake_signatures = valid_rules[:num_fake_signatures]
-            print(f"Generated {len(fake_signatures)} fake signature rules.")
-            # Optional: Print the generated fake rules
-            # for i, rule in enumerate(fake_signatures):
-            #     print(f"  Fake Rule {i+1}: {rule}")
+            print(f"Generated {len(fake_signatures)} fake signature rules from ANOMALOUS data.")
         else:
-            print("Warning: Association rule mining on normal data did not produce usable rules.")
+            print("Warning: Association rule mining on ANOMALOUS data did not produce usable rules.")
 
     except Exception as e:
-        print(f"Error during fake signature generation: {e}")
+        print(f"Error during fake signature generation (intended from ANOMALOUS data): {e}")
         import traceback
         traceback.print_exc() # Print detailed traceback
 
-    print("--- Fake FP Signature Generation Complete ---")
+    print("--- Fake FP Signature Generation (from ANOMALOUS data with 0.7 confidence) Complete ---")
     return fake_signatures
 
 def main():
@@ -353,8 +397,12 @@ def main():
     start = time.time()
 
 
-    mapped_info_path = f"../Dataset/signature/{file_type}/{file_type}_{file_number}_mapped_info.csv"
-    association_result_path = f"../Dataset/signature/{file_type}/{file_type}_{Association_mathod}_{file_number}_{association_metric}_signature_train_ea{signature_ea}.csv"
+    # Corrected paths to load from Dataset_Paral
+    base_path = f"../Dataset/signature/{file_type}/"
+    # ensure_directory_exists(base_path) # Not strictly needed for loading, but good if any temp writes happen
+
+    mapped_info_path = f"{base_path}{file_type}_{file_number}_mapped_info.csv"
+    association_result_path = f"{base_path}{file_type}_{Association_mathod}_{file_number}_{association_metric}_signature_train_ea{signature_ea}.csv"
     
     # Load data in an optimized way
     mapped_info_df = load_csv_safely(file_type, mapped_info_path)
@@ -579,26 +627,26 @@ def main():
 
     # --- Add Signature Rule and Experimental Info to Enhanced FP Summary ---
     if 'signature_rule' not in fp_summary_enhanced.columns:
-         fp_summary_enhanced['signature_rule'] = None
+        fp_summary_enhanced['signature_rule'] = None
     if 'is_injected_fake' not in fp_summary_enhanced.columns: # Add column for tracking fake signatures
-        fp_summary_enhanced['is_injected_fake'] = False 
-    if 'is_removed_final' not in fp_summary_enhanced.columns: # Add column for tracking final removal decision
-        fp_summary_enhanced['is_removed_final'] = False
+        fp_summary_enhanced['is_injected_fake'] = False
+    # if 'is_removed_final' not in fp_summary_enhanced.columns: # This will be added later
+    #    fp_summary_enhanced['is_removed_final'] = False
 
     if not fp_summary_enhanced.empty:
         # Map signature rules (including potential fake ones)
-        fp_summary_enhanced['signature_rule'] = fp_summary_enhanced['signature_id'].map(current_signatures_map) 
-        
-        # --- Mark injected fake signatures --- 
+        fp_summary_enhanced['signature_rule'] = fp_summary_enhanced['signature_id'].map(current_signatures_map)
+
+        # --- Mark injected fake signatures ---
         fp_summary_enhanced['is_injected_fake'] = fp_summary_enhanced['signature_id'].str.startswith('FAKE_FP_SIG_')
-        
+
         # --- Mark which signatures were finally removed (after whitelist) ---
-        # Ensure actually_removed_ids is calculated before this point
-        if 'actually_removed_ids' in locals(): # Check if the variable exists
-             fp_summary_enhanced['is_removed_final'] = fp_summary_enhanced['signature_id'].isin(actually_removed_ids)
-        else:
-             print("Warning: 'actually_removed_ids' not found when trying to mark final removal status.")
-             fp_summary_enhanced['is_removed_final'] = None # Indicate status unknown
+        # This section will be moved and updated after 'actually_removed_ids' is calculated.
+        # if 'actually_removed_ids' in locals(): # Check if the variable exists
+        #      fp_summary_enhanced['is_removed_final'] = fp_summary_enhanced['signature_id'].isin(actually_removed_ids)
+        # else:
+        #      print("Warning: 'actually_removed_ids' not found when trying to mark final removal status.")
+        #      fp_summary_enhanced['is_removed_final'] = None # Indicate status unknown
 
     print("Enhanced FP analysis results (summary with experimental flags):")
     if not fp_summary_enhanced.empty:
@@ -627,10 +675,10 @@ def main():
     else:
         print("Enhanced FP summary results not found.")
 
-    # --- Identify and report high FP signatures --- 
+    # --- Identify and report high FP signatures ---
     # Initialize the variable before the if/else block to ensure it's always defined
     initially_flagged_fp_ids = set()
-    
+
     # Now, try to populate it based on FP summary results
     if not fp_summary_enhanced.empty and 'final_likely_fp' in fp_summary_enhanced.columns:
         # Identify ALL signatures initially flagged as high FP by the logic
@@ -645,29 +693,92 @@ def main():
 
     print(f"\nInitially flagged as High FP by logic: {len(initially_flagged_fp_ids)}")
 
-    # --- Apply Whitelist --- 
+    # --- Apply Whitelist ---
     # Ensure whitelist_ids is defined (should be from recall contribution step)
     if 'whitelist_ids' not in locals():
          print("Error: whitelist_ids is not defined before applying whitelist! Initializing to empty set.")
          whitelist_ids = set()
-         
+
     # Ensure initially_flagged_fp_ids is defined *right before* use
     if 'initially_flagged_fp_ids' not in locals():
         print("Warning: initially_flagged_fp_ids was not defined before Apply Whitelist. Initializing to empty set.")
         initially_flagged_fp_ids = set()
-        
-    # Now perform the set operation
-    ids_to_remove = initially_flagged_fp_ids - whitelist_ids
+
+    # Now perform the set operation using original variable naming conventions
     removed_due_to_whitelist = initially_flagged_fp_ids.intersection(whitelist_ids)
-    actually_removed_ids = initially_flagged_fp_ids - removed_due_to_whitelist # IDs that are flagged AND not whitelisted
+    # 'actually_removed_ids' is used consistently downstream for the set of removed IDs.
+    # Its original calculation used 'removed_due_to_whitelist'.
+    actually_removed_ids = initially_flagged_fp_ids - removed_due_to_whitelist
+    # The variable 'ids_to_remove = initially_flagged_fp_ids - whitelist_ids' also existed originally.
+    # As 'actually_removed_ids' (calculated as above) is equivalent and used in subsequent print statements
+    # and filtering logic, we will proceed with this definition of 'actually_removed_ids'.
 
     print(f"Applying whitelist ({len(whitelist_ids)} IDs)...")
-    if removed_due_to_whitelist:
+    if removed_due_to_whitelist: # Using the restored variable name
         print(f"Prevented removal of {len(removed_due_to_whitelist)} whitelisted IDs: {', '.join(sorted(list(removed_due_to_whitelist)))}")
+    # The following print statements already use 'actually_removed_ids' in the current file version,
+    # which is consistent with its role as the definitive set of removed IDs.
     print(f"Final IDs identified for removal (High FP & not whitelisted): {len(actually_removed_ids)}")
     if actually_removed_ids:
         print(f"IDs to remove: {', '.join(sorted(list(actually_removed_ids)))}")
 
+    # --- Update fp_summary_enhanced with the final removal status --- 
+    if not fp_summary_enhanced.empty:
+        fp_summary_enhanced['is_removed_final'] = fp_summary_enhanced['signature_id'].isin(actually_removed_ids)
+    else:
+        if 'is_removed_final' not in fp_summary_enhanced.columns: # Ensure column exists even if empty
+             fp_summary_enhanced['is_removed_final'] = False
+
+
+    # --- Log NRA, HAF, UFP for caught FAKE signatures ---
+    print("\n--- FP Metrics for Caught Fake Signatures (Loop 1) ---")
+    _caught_fake_signature_metrics_log = [] # Use underscore for temp internal list
+    # Ensure fp_results_detailed (output from evaluate_false_positives) is available and valid
+    if 'fp_results_detailed' in locals() and isinstance(fp_results_detailed, pd.DataFrame) and not fp_results_detailed.empty and 'signature_id' in fp_results_detailed.columns:
+        for _sig_id_to_check in actually_removed_ids: # Use temp var for loop iteration
+            if _sig_id_to_check.startswith("FAKE_FP_SIG_"):
+                # Filter fp_results_detailed for alerts triggered by this specific fake signature on normal data
+                _alerts_for_this_fake_sig = fp_results_detailed[fp_results_detailed['signature_id'] == _sig_id_to_check]
+                if not _alerts_for_this_fake_sig.empty:
+                    _mean_nra = _alerts_for_this_fake_sig['nra_score'].mean() if 'nra_score' in _alerts_for_this_fake_sig else np.nan
+                    _mean_haf = _alerts_for_this_fake_sig['haf_score'].mean() if 'haf_score' in _alerts_for_this_fake_sig else np.nan
+                    _mean_ufp = _alerts_for_this_fake_sig['ufp_score'].mean() if 'ufp_score' in _alerts_for_this_fake_sig else np.nan
+                    
+                    _metric_detail = {
+                        "fake_signature_id": _sig_id_to_check,
+                        "loop_caught": 1, # Hardcoded to 1 for this run
+                        "mean_nra_on_normal_data": _mean_nra,
+                        "mean_haf_on_normal_data": _mean_haf,
+                        "mean_ufp_on_normal_data": _mean_ufp,
+                        "alerts_on_normal_data_count": len(_alerts_for_this_fake_sig)
+                    }
+                    _caught_fake_signature_metrics_log.append(_metric_detail)
+                    print(f"  Caught Fake Sig: {_sig_id_to_check}, Loop: 1, Mean NRA: {_mean_nra:.4f}, Mean HAF: {_mean_haf:.4f}, Mean UFP: {_mean_ufp:.4f}, Alerts on Normal: {len(_alerts_for_this_fake_sig)}")
+                else:
+                    # This might happen if a fake signature is flagged due to other reasons (e.g., superset) 
+                    # without having specific alert entries in fp_results_detailed from normal data.
+                    print(f"  Caught Fake Sig: {_sig_id_to_check}, Loop: 1, but no detailed alert data found for it in fp_results_detailed (may be caught by other logic like superset, or no alerts on normal data).")
+    else:
+        print("Warning: `fp_results_detailed` DataFrame not available/valid. Cannot analyze caught fake signatures metrics.")
+    
+    if not _caught_fake_signature_metrics_log: # Check the temp list
+        print("No FAKE signatures were caught and had detailed FP metrics to report in this run.")
+    else:
+        # Save the caught fake signature metrics to a CSV file
+        _caught_fake_fp_metrics_df = pd.DataFrame(_caught_fake_signature_metrics_log)
+        _output_dir = f"../Dataset/validation/{file_type}/" # Define output directory
+        # Using Association_mathod as it is in the existing codebase, preserving original variable names
+        _csv_filename = f"{file_type}_{file_number}_{Association_mathod}_caught_fake_fp_metrics.csv"
+        _csv_full_path = os.path.join(_output_dir, _csv_filename)
+        
+        ensure_directory_exists(_output_dir) # Ensure the directory itself exists
+        
+        try:
+            _caught_fake_fp_metrics_df.to_csv(_csv_full_path, index=False)
+            print(f"Successfully saved caught fake FP metrics to: {_csv_full_path}")
+        except Exception as e:
+            print(f"Error saving caught fake FP metrics to CSV {_csv_full_path}: {e}")
+    # ------------------------------------------------------
 
     # --- Update and save known FP list ---
     # ... (logic to update/save known FP list remains the same, using initially_flagged_fp_ids) ...
@@ -757,15 +868,11 @@ def main():
 
     # --- Save all results to CSV ---
     print("\n--- Saving Validation Results ---")
-    ensure_directory_exists(f"../Dataset/validation/{file_type}/") # Ensure save directory exists
-    
-    # Append '_experiment' to the association rule name for unique filenames
-    experimental_association_rule_name = f"{Association_mathod}_experiment"
-    
+    ensure_directory_exists(f"../Dataset/validation/{file_type}/") # Corrected path
     save_validation_results(
         file_type=file_type,
         file_number=file_number,
-        association_rule=experimental_association_rule_name, # Use modified name
+        association_rule=Association_mathod,
         basic_eval=signature_result, # Original evaluation results
         fp_results=fp_summary_enhanced, # FP summary (includes fake ones if generated)
         overfit_results=overfit_results,
@@ -777,10 +884,9 @@ def main():
     # --- Save Timing Information ---
     # Also modify timing filename to distinguish experiment runs
     timing_info['total_execution_time'] = time.time() - total_start_time
-    ensure_directory_exists(f"../Dataset/Time_Record/validation/{file_type}/") # Ensure save directory exists
-    time_save_csv_VS(file_type, file_number, experimental_association_rule_name, timing_info) # Use modified name for timing file too
+    ensure_directory_exists(f"../Dataset/time_log/validation_signature/{file_type}/") # Corrected path
+    time_save_csv_VS(file_type, file_number, Association_mathod, timing_info)
 
 
 if __name__ == "__main__":
     main()
-
