@@ -190,103 +190,82 @@ def calculate_overall_recall(group_mapped_df, alerts_df, signature_map, relevant
     return recall
 
 def generate_fake_fp_signatures(
-    file_type,
-    file_number,
-    category_mapping, # From validation data processing
-    data_list,        # From validation data processing
+    source_data_for_fake_sigs: pd.DataFrame, # Changed: Accept DataFrame directly
+    category_mapping, 
+    data_list,        
     association_method,
     association_metric,
+    file_type, # Kept for logging and internal confidence logic
     num_fake_signatures=3,
-    min_support=0.3, # This min_support will be for ANOMALOUS training data
-    min_confidence=0.8 # This is the min_confidence passed to this function
+    min_support=0.3 # Kept as parameter, will be called with 0.4 from main
 ):
     """
-    Generates fake FP signatures from the ANOMALOUS part of the TRAINING dataset.
+    Generates fake FP signatures from the ANOMALOUS part of the provided source_data_for_fake_sigs.
     Uses mapping information (category_mapping, data_list) passed from the main
-    function, which is typically derived from the VALIDATION dataset.
-    Compatibility of this mapping with TRAINING data should be verified.
-    Internally, association_module is called with a fixed min_confidence of 0.7.
-    The file_number parameter is used to specify which training data file to load.
+    function.
+    The source_data_for_fake_sigs is expected to be already processed (time scalar transferred, labeled).
+    Internally, association_module is called with a fixed min_confidence based on file_type.
     """
-    # print(f"\n--- Generating {num_fake_signatures} Fake FP Signatures from ANOMALOUS TRAINING Data (file_type: {file_type}, file_number: {file_number}, using min_confidence=0.7 internally for association) ---")
-    print(f"\n--- Generating {num_fake_signatures} Fake FP Signatures from NORMAL TRAINING Data (file_type: {file_type}, file_number: {file_number}, using min_confidence=0.7 internally for association) ---")
+    # print(f"\\n--- Generating {num_fake_signatures} Fake FP Signatures from ANOMALOUS TRAINING Data (file_type: {file_type}, file_number: {file_number}, using min_confidence=0.7 internally for association) ---")
+    # print(f"\\n--- Generating {num_fake_signatures} Fake FP Signatures from NORMAL part of provided source data (file_type: {file_type}, using internal min_confidence) ---")
+    print(f"\\n--- Generating {num_fake_signatures} Fake FP Signatures from ANOMALOUS part of provided source data (file_type: {file_type}, using internal min_confidence) ---")
     fake_signatures = []
     try:
-        # 1. Load TRAINING data
-        print(f"Loading TRAINING data for fake signature generation (file_type: {file_type}, file_number: {file_number})...")
-        train_file_path, loaded_train_file_number = file_path_line_association(file_type, file_number) 
-        
-        full_train_data = file_cut(file_type, train_file_path, 'all')
+        # 1. Use the provided source data directly
+        # No need to load file_type, file_number or apply time_scalar_transfer/labeling here.
+        # It's assumed source_data_for_fake_sigs is already processed.
+        full_data_for_rules = source_data_for_fake_sigs 
 
-        if full_train_data.empty:
-            print("Warning: Training data is empty. Cannot generate fake signatures.")
+        if full_data_for_rules.empty:
+            print("Warning: Provided source_data_for_fake_sigs is empty. Cannot generate fake signatures.")
+            return []
+        
+        if 'label' not in full_data_for_rules.columns:
+            print("Error: 'label' column missing in provided source_data_for_fake_sigs. Cannot filter for normal data.")
             return []
 
-        # 2. Apply time scalar transfer to training data
-        print("Applying time scalar transfer to training data...")
-        full_train_data = time_scalar_transfer(full_train_data, file_type)
-
-        # 3. Assign labels to TRAINING data
-        print("Assigning labels to training data...")
-        if 'label' not in full_train_data.columns:
-            if file_type in ['MiraiBotnet', 'NSL-KDD', 'NSL_KDD']: # NSL-KDD types added here
-                full_train_data['label'], _ = anomal_judgment_nonlabel(file_type, full_train_data)
-            elif file_type == 'netML':
-                if 'Label' in full_train_data.columns:
-                    full_train_data['label'] = full_train_data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
-                else:
-                    raise ValueError(f"'Label' column missing in netML training data for file_type: {file_type}")
-            elif file_type == 'DARPA98':
-                if 'Class' in full_train_data.columns:
-                    full_train_data['label'] = full_train_data['Class'].apply(lambda x: 0 if x == '-' else 1)
-                else:
-                    raise ValueError(f"'Class' column missing in DARPA98 training data for file_type: {file_type}")
-            elif file_type in ['CICModbus23', 'CICModbus']:
-                if 'Attack' in full_train_data.columns:
-                    full_train_data['label'] = full_train_data['Attack'].apply(lambda x: 0 if x.strip() == 'Baseline Replay: In position' else 1)
-                else:
-                    raise ValueError(f"'Attack' column missing in CICModbus training data for file_type: {file_type}")
-            elif file_type in ['IoTID20', 'IoTID']:
-                if 'Label' in full_train_data.columns:
-                     full_train_data['label'] = full_train_data['Label'].apply(lambda x: 0 if x.strip() == 'Normal' else 1)
-                else:
-                    raise ValueError(f"'Label' column missing in IoTID20 training data for file_type: {file_type}")
-            else: # Default case for types expected to have 'Label' or 'label'
-                full_train_data['label'] = anomal_judgment_label(full_train_data)
-                if full_train_data['label'] is None:
-                    raise ValueError(f"Failed to assign labels to training data for file_type: {file_type} using anomal_judgment_label. Check for 'Label' or 'label' columns.")
 
         '''
         # 4. Filter for ANOMALOUS data (label == 1) from TRAINING dataset.
-        anomalous_train_data_df = full_train_data[full_train_data['label'] == 1].copy()
+        # anomalous_train_data_df = full_train_data[full_train_data['label'] == 1].copy()
         '''
-        # 4. Filter for NORMAL data (label == 0) from TRAINING dataset for fake FP generation.
-        normal_train_data_df = full_train_data[full_train_data['label'] == 0].copy()
+        # 4. Filter for ANOMALOUS data (label == 1) from the provided source data for fake FP generation.
+        # normal_data_for_rules_df = full_data_for_rules[full_data_for_rules['label'] == 0].copy() # Previous: Filter for NORMAL
+        anomalous_data_for_rules_df = full_data_for_rules[full_data_for_rules['label'] == 1].copy() # New: Filter for ANOMALOUS
         
         '''
-        if anomalous_train_data_df.empty:
-            print("Warning: No ANOMALOUS data found in training dataset after filtering. Cannot generate fake signatures.")
+        # if anomalous_train_data_df.empty:
+        #     print("Warning: No ANOMALOUS data found in training dataset after filtering. Cannot generate fake signatures.")
         '''
-        if normal_train_data_df.empty:
-            print("Warning: No NORMAL data found in training dataset after filtering. Cannot generate fake signatures.")
+        # if normal_data_for_rules_df.empty:
+        #     print("Warning: No NORMAL data found in the provided source data after filtering. Cannot generate fake signatures.
+        #     return []
+        if anomalous_data_for_rules_df.empty:
+            print("Warning: No ANOMALOUS data found in the provided source data after filtering. Cannot generate fake signatures.")
             return []
+            
         # print(f"Filtered for ANOMALOUS training data. Rows obtained: {anomalous_train_data_df.shape[0]}")
-        print(f"Filtered for NORMAL training data. Rows obtained: {normal_train_data_df.shape[0]}")
+        # print(f"Filtered for NORMAL data from source. Rows obtained: {normal_data_for_rules_df.shape[0]}")
+        print(f"Filtered for ANOMALOUS data from source. Rows obtained: {anomalous_data_for_rules_df.shape[0]}")
 
         '''
         # 5. Map the ANOMALOUS training data.
         # Using category_mapping and data_list derived from VALIDATION data.
-        print(f"Shape of ANOMALOUS training data BEFORE mapping: {anomalous_train_data_df.shape}")
-        print("Sample of ANOMALOUS training data BEFORE mapping (first 5 rows):")
-        print(anomalous_train_data_df.head().to_string())
+        # print(f"Shape of ANOMALOUS training data BEFORE mapping: {anomalous_train_data_df.shape}")
+        # print("Sample of ANOMALOUS training data BEFORE mapping (first 5 rows):")
+        # print(anomalous_train_data_df.head().to_string())
         '''
-        # 5. Map the NORMAL training data.
-        print(f"Shape of NORMAL training data BEFORE mapping: {normal_train_data_df.shape}")
-        print("Sample of NORMAL training data BEFORE mapping (first 5 rows):")
-        print(normal_train_data_df.head().to_string())
+        # 5. Map the ANOMALOUS data from the provided source.
+        # print(f"Shape of NORMAL data (from source) BEFORE mapping: {normal_data_for_rules_df.shape}")
+        # print("Sample of NORMAL data (from source) BEFORE mapping (first 5 rows):")
+        # print(normal_data_for_rules_df.head().to_string())
+        print(f"Shape of ANOMALOUS data (from source) BEFORE mapping: {anomalous_data_for_rules_df.shape}")
+        print("Sample of ANOMALOUS data (from source) BEFORE mapping (first 5 rows):")
+        print(anomalous_data_for_rules_df.head().to_string())
         
         # anomalous_train_data_to_map = anomalous_train_data_df.drop(columns=['label'], errors='ignore')
-        normal_train_data_to_map = normal_train_data_df.drop(columns=['label'], errors='ignore')
+        # normal_data_to_map = normal_data_for_rules_df.drop(columns=['label'], errors='ignore')
+        anomalous_data_to_map = anomalous_data_for_rules_df.drop(columns=['label'], errors='ignore')
         
         # Check some of the category_mapping content
         print("Debug: category_mapping['interval'] sample (first 5 rows, first 3 columns):")
@@ -296,22 +275,27 @@ def generate_fake_fp_signatures(
             print("category_mapping['interval'] is empty.")
 
         '''
-        print("Mapping the ANOMALOUS training data (using mapping info potentially derived from validation set - VERIFY COMPATIBILITY)...")
-        anomalous_mapped_train_df, _ = map_intervals_to_groups(anomalous_train_data_to_map, category_mapping, data_list, regul='N')
+        # print("Mapping the ANOMALOUS training data (using mapping info potentially derived from validation set - VERIFY COMPATIBILITY)...")
+        # anomalous_mapped_train_df, _ = map_intervals_to_groups(anomalous_train_data_to_map, category_mapping, data_list, regul='N')
         '''
-        print("Mapping the NORMAL training data (using mapping info potentially derived from validation set - VERIFY COMPATIBILITY)...")
-        normal_mapped_train_df, _ = map_intervals_to_groups(normal_train_data_to_map, category_mapping, data_list, regul='N')
+        # print("Mapping the NORMAL data (from source, using mapping info passed from main - VERIFY COMPATIBILITY)...")
+        print("Mapping the ANOMALOUS data (from source, using mapping info passed from main - VERIFY COMPATIBILITY)...")
+        # mapped_normal_data, _ = map_intervals_to_groups(normal_data_to_map, category_mapping, data_list, regul='N')
+        mapped_anomalous_data, _ = map_intervals_to_groups(anomalous_data_to_map, category_mapping, data_list, regul='N')
         
         # print(f"Shape of mapped ANOMALOUS training data AFTER mapping (BEFORE dropna): {anomalous_mapped_train_df.shape}")
-        print(f"Shape of mapped NORMAL training data AFTER mapping (BEFORE dropna): {normal_mapped_train_df.shape}")
+        # print(f"Shape of mapped NORMAL data (from source) AFTER mapping (BEFORE dropna): {mapped_normal_data.shape}")
+        print(f"Shape of mapped ANOMALOUS data (from source) AFTER mapping (BEFORE dropna): {mapped_anomalous_data.shape}")
         print("NaN count per column (AFTER map_intervals_to_groups, BEFORE dropna):")
         # print(anomalous_mapped_train_df.isna().sum().sort_values(ascending=False)) # Sort by most NaNs
-        print(normal_mapped_train_df.isna().sum().sort_values(ascending=False))
+        # print(mapped_normal_data.isna().sum().sort_values(ascending=False))
+        print(mapped_anomalous_data.isna().sum().sort_values(ascending=False))
 
         # --- Exclude problematic scalar columns for fake signature generation ---
         # Identify columns where all values are NaN
         # all_nan_columns = anomalous_mapped_train_df.columns[anomalous_mapped_train_df.isna().all()].tolist()
-        all_nan_columns = normal_mapped_train_df.columns[normal_mapped_train_df.isna().all()].tolist()
+        # all_nan_columns = mapped_normal_data.columns[mapped_normal_data.isna().all()].tolist()
+        all_nan_columns = mapped_anomalous_data.columns[mapped_anomalous_data.isna().all()].tolist()
 
         if all_nan_columns:
             print(f"Warning: For FAKE signature generation, columns with ALL NaN values identified: {all_nan_columns}")
@@ -324,21 +308,24 @@ def generate_fake_fp_signatures(
         anomalous_mapped_train_df_for_rules = anomalous_mapped_train_df.dropna()
         rows_after_dropna_stage1 = anomalous_mapped_train_df_for_rules.shape[0]
         '''
-        rows_before_dropna_stage1 = normal_mapped_train_df.shape[0]
-        normal_mapped_train_df_for_rules = normal_mapped_train_df.dropna()
-        rows_after_dropna_stage1 = normal_mapped_train_df_for_rules.shape[0]
+        rows_before_dropna_stage1 = mapped_anomalous_data.shape[0]
+        mapped_anomalous_data_for_rules = mapped_anomalous_data.dropna()
+        rows_after_dropna_stage1 = mapped_anomalous_data_for_rules.shape[0]
 
         if rows_before_dropna_stage1 > rows_after_dropna_stage1:
             # print(f"[Stage 1 dropna] Dropped {rows_before_dropna_stage1 - rows_after_dropna_stage1} rows containing NaN values from mapped ANOMALOUS training data.")
-            print(f"[Stage 1 dropna] Dropped {rows_before_dropna_stage1 - rows_after_dropna_stage1} rows containing NaN values from mapped NORMAL training data.")
+            # print(f"[Stage 1 dropna] Dropped {rows_before_dropna_stage1 - rows_after_dropna_stage1} rows containing NaN values from mapped NORMAL data (from source).")
+            print(f"[Stage 1 dropna] Dropped {rows_before_dropna_stage1 - rows_after_dropna_stage1} rows containing NaN values from mapped ANOMALOUS data (from source).")
         
         # if anomalous_mapped_train_df_for_rules.empty:
-        if normal_mapped_train_df_for_rules.empty:
+        # if mapped_normal_data_for_rules.empty:
+        if mapped_anomalous_data_for_rules.empty:
             print("[Stage 1 dropna] Resulted in an empty DataFrame. Attempting Stage 2: using non-all-NaN columns.")
             
             # Stage 2: Use only columns that are NOT entirely NaN
             # non_all_nan_columns = anomalous_mapped_train_df.columns[anomalous_mapped_train_df.notna().any()].tolist()
-            non_all_nan_columns = normal_mapped_train_df.columns[normal_mapped_train_df.notna().any()].tolist()
+            # non_all_nan_columns = mapped_normal_data.columns[mapped_normal_data.notna().any()].tolist()
+            non_all_nan_columns = mapped_anomalous_data.columns[mapped_anomalous_data.notna().any()].tolist()
 
             if not non_all_nan_columns:
                 print("Critical Error: [Stage 2] After mapping, no columns have any non-NaN data. Cannot generate any fake signatures.")
@@ -347,42 +334,51 @@ def generate_fake_fp_signatures(
             print(f"[Stage 2] Re-attempting with columns that are not entirely NaN: {non_all_nan_columns}")
             # Use the original df but select only these columns
             # anomalous_mapped_train_df_for_rules = anomalous_mapped_train_df[non_all_nan_columns]
-            normal_mapped_train_df_for_rules = normal_mapped_train_df[non_all_nan_columns]
+            # mapped_normal_data_for_rules = mapped_normal_data[non_all_nan_columns]
+            mapped_anomalous_data_for_rules = mapped_anomalous_data[non_all_nan_columns]
             
             '''
-            rows_before_dropna_stage2 = anomalous_mapped_train_df_for_rules.shape[0]
-            anomalous_mapped_train_df_for_rules = anomalous_mapped_train_df_for_rules.dropna()
-            rows_after_dropna_stage2 = anomalous_mapped_train_df_for_rules.shape[0]
+            # rows_before_dropna_stage2 = anomalous_mapped_train_df_for_rules.shape[0]
+            # anomalous_mapped_train_df_for_rules = anomalous_mapped_train_df_for_rules.dropna()
+            # rows_after_dropna_stage2 = anomalous_mapped_train_df_for_rules.shape[0]
             '''
-            rows_before_dropna_stage2 = normal_mapped_train_df_for_rules.shape[0]
-            normal_mapped_train_df_for_rules = normal_mapped_train_df_for_rules.dropna()
-            rows_after_dropna_stage2 = normal_mapped_train_df_for_rules.shape[0]
+            # rows_before_dropna_stage2 = mapped_normal_data_for_rules.shape[0]
+            # mapped_normal_data_for_rules = mapped_normal_data_for_rules.dropna()
+            # rows_after_dropna_stage2 = mapped_normal_data_for_rules.shape[0]
+            rows_before_dropna_stage2 = mapped_anomalous_data_for_rules.shape[0]
+            mapped_anomalous_data_for_rules = mapped_anomalous_data_for_rules.dropna()
+            rows_after_dropna_stage2 = mapped_anomalous_data_for_rules.shape[0]
             
             if rows_before_dropna_stage2 > rows_after_dropna_stage2:
                  print(f"[Stage 2 dropna] Dropped {rows_before_dropna_stage2 - rows_after_dropna_stage2} rows from the subset of columns.")
 
             # print(f"[Stage 1 dropna] Succeeded. Proceeding with {anomalous_mapped_train_df_for_rules.shape[0]} rows.")
-            if normal_mapped_train_df_for_rules.empty:
+            # if mapped_normal_data_for_rules.empty:
+            if mapped_anomalous_data_for_rules.empty:
                 print("Warning: [Stage 2] Still no data left after selecting non-all-NaN columns and applying dropna. Cannot generate fake signatures.")
                 return []
-            print(f"[Stage 2] Proceeding with {anomalous_mapped_train_df_for_rules.shape[0]} rows and columns: {anomalous_mapped_train_df_for_rules.columns.tolist()}")
-            # print(f"[Stage 2] Proceeding with {normal_mapped_train_df_for_rules.shape[0]} rows and columns: {normal_mapped_train_df_for_rules.columns.tolist()}")
+            # print(f"[Stage 2] Proceeding with {anomalous_mapped_train_df_for_rules.shape[0]} rows and columns: {anomalous_mapped_train_df_for_rules.columns.tolist()}")
+            # print(f"[Stage 2] Proceeding with {mapped_normal_data_for_rules.shape[0]} rows and columns: {mapped_normal_data_for_rules.columns.tolist()}")
+            print(f"[Stage 2] Proceeding with {mapped_anomalous_data_for_rules.shape[0]} rows and columns: {mapped_anomalous_data_for_rules.columns.tolist()}")
         else:
             # print(f"[Stage 1 dropna] Succeeded. Proceeding with {anomalous_mapped_train_df_for_rules.shape[0]} rows.")
-            print(f"[Stage 1 dropna] Succeeded. Proceeding with {normal_mapped_train_df_for_rules.shape[0]} rows.")
+            # print(f"[Stage 1 dropna] Succeeded. Proceeding with {mapped_normal_data_for_rules.shape[0]} rows.")
+            print(f"[Stage 1 dropna] Succeeded. Proceeding with {mapped_anomalous_data_for_rules.shape[0]} rows.")
 
 
         if file_type == 'CICModbus23':
-            _internal_fixed_confidence = 0.01
+            _internal_fixed_confidence = 0.5
         else:
             _internal_fixed_confidence = 0.7 
         
         # print(f"Running {association_method} on ANOMALOUS training data (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
-        print(f"Running {association_method} on NORMAL training data (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
+        # print(f"Running {association_method} on NORMAL data (from source) (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
+        print(f"Running {association_method} on ANOMALOUS data (from source) (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
         
         rules_df = association_module(
             # anomalous_mapped_train_df_for_rules, 
-            normal_mapped_train_df_for_rules, 
+            # mapped_normal_data_for_rules,
+            mapped_anomalous_data_for_rules,
             association_method,
             association_metric=association_metric,
             min_support=min_support, 
@@ -435,18 +431,21 @@ def generate_fake_fp_signatures(
 
         if fake_signatures:
             # print(f"Generated {len(fake_signatures)} fake signature rules from ANOMALOUS training data.")
-            print(f"Generated {len(fake_signatures)} fake signature rules from NORMAL training data.")
+            # print(f"Generated {len(fake_signatures)} fake signature rules from NORMAL data (from source).")
+            print(f"Generated {len(fake_signatures)} fake signature rules from ANOMALOUS data (from source).")
         else:
             print("Warning: No fake signatures were extracted after association rule mining (rules_df might be None, empty, or of unexpected type).")
 
     except Exception as e:
         # print(f"Error during fake signature generation from ANOMALOUS training data: {e}")
-        print(f"Error during fake signature generation from NORMAL training data: {e}")
+        # print(f"Error during fake signature generation from NORMAL data (from source): {e}")
+        print(f"Error during fake signature generation from ANOMALOUS data (from source): {e}")
         import traceback
         traceback.print_exc()
 
     # print("--- Fake FP Signature Generation (from ANOMALOUS TRAINING data with 0.7 confidence) Complete ---")
-    print("--- Fake FP Signature Generation (from NORMAL TRAINING data) Complete ---")
+    # print("--- Fake FP Signature Generation (from NORMAL data - from source) Complete ---")
+    print("--- Fake FP Signature Generation (from ANOMALOUS data - from source) Complete ---")
     return fake_signatures
 
 def main():
@@ -714,15 +713,14 @@ def main():
     # --- Generate and Inject Fake FP Signatures ---
     print("=== Generating and Injecting Fake FP Signatures ===")
     fake_fp_rules = generate_fake_fp_signatures(
-        file_type=file_type,
-        file_number=file_number,
-        category_mapping=category_mapping, # Pass existing mapping
-        data_list=data_list, # Pass existing data_list
-        association_method=Association_mathod, # Use same method as main analysis
-        association_metric=association_metric, # Pass association_metric from main args
+        source_data_for_fake_sigs=data.copy(), # Pass the processed validation data (loaded as 'data')
+        category_mapping=category_mapping, 
+        data_list=data_list, 
+        association_method=Association_mathod, 
+        association_metric=association_metric, 
+        file_type=file_type, # Pass file_type for internal logic (e.g. confidence) & logging
         num_fake_signatures=NUM_FAKE_FP_SIGNATURES,
-        min_support=0.4, # Slightly higher support for common normal patterns
-        min_confidence=0.9 # High confidence for normal patterns
+        min_support=0.4 # Using 0.4 as used in previous successful normal data test
     )
 
     injected_fake_count = 0
