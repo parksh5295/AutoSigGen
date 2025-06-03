@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 import time
 import multiprocessing # Ensure multiprocessing is imported
-from Dataset_Choose_Rule.association_data_choose import file_path_line_signatures
+from Dataset_Choose_Rule.association_data_choose import file_path_line_signatures, file_path_line_association
 from Dataset_Choose_Rule.choose_amount_dataset import file_cut
 from definition.Anomal_Judgment import anomal_judgment_label, anomal_judgment_nonlabel
 from utils.time_transfer import time_scalar_transfer
@@ -189,104 +189,125 @@ def calculate_overall_recall(group_mapped_df, alerts_df, signature_map, relevant
 
     return recall
 
-def generate_fake_fp_signatures(file_type, file_number, category_mapping, data_list, association_method, association_metric, num_fake_signatures=3, min_support=0.3, min_confidence=0.8):
+def generate_fake_fp_signatures(
+    file_type,
+    file_number,
+    category_mapping, # From validation data processing
+    data_list,        # From validation data processing
+    association_method,
+    association_metric,
+    num_fake_signatures=3,
+    min_support=0.3, # This min_support will be for ANOMALOUS training data
+    min_confidence=0.8 # This is the min_confidence passed to this function
+):
     """
-    Args:
-        file_type (str): Type of the dataset (e.g., 'DARPA98').
-        file_number (int): Number of the dataset file.
-        category_mapping (dict): Mapping information loaded from mapped_info.csv.
-        data_list (list): List used by map_intervals_to_groups.
-        association_method (str): Association rule algorithm (e.g., 'apriori').
-        association_metric (str): Metric to use for association rule mining (e.g., 'confidence').
-        num_fake_signatures (int): Number of fake signatures to generate.
-        min_support (float): Minimum support threshold for association mining on ANOMALOUS data.
-        min_confidence (float): Original minimum confidence threshold from function signature (this function
-                              will internally override and use 0.7 for the association_module call).
-
-    Returns:
-        list: A list of dictionaries, where each dictionary represents a fake signature rule.
-              Returns empty list if generation fails.
+    Generates fake FP signatures from the ANOMALOUS part of the TRAINING dataset.
+    Uses mapping information (category_mapping, data_list) passed from the main
+    function, which is typically derived from the VALIDATION dataset.
+    Compatibility of this mapping with TRAINING data should be verified.
+    Internally, association_module is called with a fixed min_confidence of 0.7.
+    The file_number parameter is used to specify which training data file to load.
     """
-    print(f"\n--- Generating {num_fake_signatures} Fake FP Signatures from ANOMALOUS Data (using min_confidence=0.7) ---")
+    print(f"\\n--- Generating {num_fake_signatures} Fake FP Signatures from ANOMALOUS TRAINING Data (file_type: {file_type}, file_number: {file_number}, using min_confidence=0.7 internally for association) ---")
     fake_signatures = []
     try:
-        # 1. Load data
-        print("Loading data for fake signature generation...")
-        file_path, _ = file_path_line_signatures(file_type, file_number)
-        full_data = file_cut(file_type, file_path, 'all') # Load all data
+        # 1. Load TRAINING data
+        print(f"Loading TRAINING data for fake signature generation (file_type: {file_type}, file_number: {file_number})...")
+        train_file_path, loaded_train_file_number = file_path_line_association(file_type, file_number) 
+        
+        full_train_data = file_cut(file_type, train_file_path, 'all')
 
-        # --- Add time scalar transfer step --- 
-        print("Applying time scalar transfer...")
-        full_data = time_scalar_transfer(full_data, file_type)
-        # -------------------------------------
-
-        # 2. Assign labels
-        print("Assigning labels...")
-        if file_type in ['MiraiBotnet']:
-            full_data['label'], _ = anomal_judgment_nonlabel(file_type, full_data)
-        elif file_type == 'netML':
-            full_data['label'] = full_data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
-        elif file_type == 'DARPA98':
-            full_data['label'] = full_data['Class'].apply(lambda x: 0 if x == '-' else 1)
-        else:
-            full_data['label'] = anomal_judgment_label(full_data)
-
-        # 3. Filter for ANOMALOUS data.
-        #    The variable name `normal_data_df` is INTENTIONALLY PRESERVED from the original code
-        #    to minimize diffs, but it will now hold anomalous data.
-        normal_data_df = full_data[full_data['label'] == 1].copy() # << CORE LOGIC CHANGE: Filter for label == 1 (anomalous)
-        if normal_data_df.empty:
-            print("Warning: No ANOMALOUS data found after filtering. Cannot generate fake signatures.")
+        if full_train_data.empty:
+            print("Warning: Training data is empty. Cannot generate fake signatures.")
             return []
-        print(f"Filtered for ANOMALOUS data. Rows obtained: {normal_data_df.shape[0]}")
 
-        # 4. Map the ANOMALOUS data (using existing mapping info).
-        #    Variable names `normal_data_to_map` and `normal_mapped_df` are INTENTIONALLY PRESERVED.
-        print("Mapping the ANOMALOUS data (variable names kept as original)...")
-        normal_data_to_map = normal_data_df.drop(columns=['label'], errors='ignore') # `normal_data_df` now holds anomalous data
-        normal_mapped_df, _ = map_intervals_to_groups(normal_data_to_map, category_mapping, data_list, regul='N')
-        print(f"Shape of mapped ANOMALOUS data: {normal_mapped_df.shape}")
+        # 2. Apply time scalar transfer to training data
+        print("Applying time scalar transfer to training data...")
+        full_train_data = time_scalar_transfer(full_train_data, file_type)
 
-        # --- Handle NaN values from the (now anomalous) mapped data --- 
-        rows_before_dropna = normal_mapped_df.shape[0]
-        normal_mapped_df = normal_mapped_df.dropna()
-        rows_after_dropna = normal_mapped_df.shape[0]
+        # 3. Assign labels to TRAINING data
+        print("Assigning labels to training data...")
+        if 'label' not in full_train_data.columns:
+            if file_type in ['MiraiBotnet', 'NSL-KDD', 'NSL_KDD']: # NSL-KDD types added here
+                full_train_data['label'], _ = anomal_judgment_nonlabel(file_type, full_train_data)
+            elif file_type == 'netML':
+                if 'Label' in full_train_data.columns:
+                    full_train_data['label'] = full_train_data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
+                else:
+                    raise ValueError(f"'Label' column missing in netML training data for file_type: {file_type}")
+            elif file_type == 'DARPA98':
+                if 'Class' in full_train_data.columns:
+                    full_train_data['label'] = full_train_data['Class'].apply(lambda x: 0 if x == '-' else 1)
+                else:
+                    raise ValueError(f"'Class' column missing in DARPA98 training data for file_type: {file_type}")
+            elif file_type in ['CICModbus23', 'CICModbus']:
+                if 'Attack' in full_train_data.columns:
+                    full_train_data['label'] = full_train_data['Attack'].apply(lambda x: 0 if x.strip() == 'Baseline Replay: In position' else 1)
+                else:
+                    raise ValueError(f"'Attack' column missing in CICModbus training data for file_type: {file_type}")
+            elif file_type in ['IoTID20', 'IoTID']:
+                if 'Label' in full_train_data.columns:
+                     full_train_data['label'] = full_train_data['Label'].apply(lambda x: 0 if x.strip() == 'Normal' else 1)
+                else:
+                    raise ValueError(f"'Label' column missing in IoTID20 training data for file_type: {file_type}")
+            else: # Default case for types expected to have 'Label' or 'label'
+                full_train_data['label'] = anomal_judgment_label(full_train_data)
+                if full_train_data['label'] is None:
+                    raise ValueError(f"Failed to assign labels to training data for file_type: {file_type} using anomal_judgment_label. Check for 'Label' or 'label' columns.")
+
+        # 4. Filter for ANOMALOUS data (label == 1) from TRAINING dataset.
+        anomalous_train_data_df = full_train_data[full_train_data['label'] == 1].copy()
+        
+        if anomalous_train_data_df.empty:
+            print("Warning: No ANOMALOUS data found in training dataset after filtering. Cannot generate fake signatures.")
+            return []
+        print(f"Filtered for ANOMALOUS training data. Rows obtained: {anomalous_train_data_df.shape[0]}")
+
+        # 5. Map the ANOMALOUS training data.
+        # !!! WARNING: Using category_mapping and data_list derived from VALIDATION data. !!!
+        print("Mapping the ANOMALOUS training data (using mapping info potentially derived from validation set - VERIFY COMPATIBILITY)...")
+        anomalous_train_data_to_map = anomalous_train_data_df.drop(columns=['label'], errors='ignore')
+        anomalous_mapped_train_df, _ = map_intervals_to_groups(anomalous_train_data_to_map, category_mapping, data_list, regul='N')
+        print(f"Shape of mapped ANOMALOUS training data: {anomalous_mapped_train_df.shape}")
+
+        # --- Handle NaN values --- 
+        rows_before_dropna = anomalous_mapped_train_df.shape[0]
+        anomalous_mapped_train_df = anomalous_mapped_train_df.dropna()
+        rows_after_dropna = anomalous_mapped_train_df.shape[0]
+
         if rows_before_dropna > rows_after_dropna:
-            print(f"Dropped {rows_before_dropna - rows_after_dropna} rows containing NaN values from mapped ANOMALOUS data.")
-        if normal_mapped_df.empty:
-            print("Warning: No data left after dropping NaN rows from mapped ANOMALOUS data. Cannot generate fake signatures.")
+            print(f"Dropped {rows_before_dropna - rows_after_dropna} rows containing NaN values from mapped ANOMALOUS training data.")
+        if anomalous_mapped_train_df.empty:
+            print("Warning: No data left after dropping NaN rows from mapped ANOMALOUS training data. Cannot generate fake signatures.")
             return []
-        # -------------------------------------------------
-
-        # 5. Run association rule mining on the (now anomalous) mapped data.
-        #    A fixed min_confidence of 0.7 will be used for this specific generation process.
-        _internal_fixed_confidence = 0.7 # Temporary internal variable for clarity
-        print(f"Running {association_method} on ANOMALOUS data (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
+        
+        # 6. Run association rule mining on the mapped ANOMALOUS training data.
+        _internal_fixed_confidence = 0.7 
+        print(f"Running {association_method} on ANOMALOUS training data (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
         
         rules_df = association_module(
-            normal_mapped_df, # This DataFrame, despite its name, now contains ANOMALOUS data
+            anomalous_mapped_train_df, 
             association_method,
             association_metric=association_metric,
-            min_support=min_support,
-            min_confidence=_internal_fixed_confidence # << CORE LOGIC CHANGE: Using the fixed 0.7 confidence
+            min_support=min_support, 
+            min_confidence=_internal_fixed_confidence
         )
 
-        # 6. Extract top rules as fake signatures
+        # 7. Extract top rules as fake signatures
         if rules_df is not None and not rules_df.empty and 'rule' in rules_df.columns:
             potential_rules = rules_df['rule'].tolist()
             valid_rules = [rule for rule in potential_rules if isinstance(rule, dict)]
-
             fake_signatures = valid_rules[:num_fake_signatures]
-            print(f"Generated {len(fake_signatures)} fake signature rules from ANOMALOUS data.")
+            print(f"Generated {len(fake_signatures)} fake signature rules from ANOMALOUS training data.")
         else:
-            print("Warning: Association rule mining on ANOMALOUS data did not produce usable rules.")
+            print("Warning: Association rule mining on ANOMALOUS training data did not produce usable rules.")
 
     except Exception as e:
-        print(f"Error during fake signature generation (intended from ANOMALOUS data): {e}")
+        print(f"Error during fake signature generation from ANOMALOUS training data: {e}")
         import traceback
-        traceback.print_exc() # Print detailed traceback
+        traceback.print_exc()
 
-    print("--- Fake FP Signature Generation (from ANOMALOUS data with 0.7 confidence) Complete ---")
+    print("--- Fake FP Signature Generation (from ANOMALOUS TRAINING data with 0.7 confidence) Complete ---")
     return fake_signatures
 
 def main():
@@ -376,7 +397,7 @@ def main():
     # 2. Handling judgments of Anomal or Nomal
     start = time.time()
 
-    if file_type in ['MiraiBotnet', 'NSL-KDD']:
+    if file_type in ['MiraiBotnet', 'NSL-KDD', 'NSL_KDD']:
         data['label'], _ = anomal_judgment_nonlabel(file_type, data)
     elif file_type == 'netML':
         data['label'] = data['Label'].apply(lambda x: 0 if x == 'BENIGN' else 1)
@@ -627,7 +648,7 @@ def main():
 
     # --- Add Signature Rule and Experimental Info to Enhanced FP Summary ---
     if 'signature_rule' not in fp_summary_enhanced.columns:
-        fp_summary_enhanced['signature_rule'] = None
+         fp_summary_enhanced['signature_rule'] = None
     if 'is_injected_fake' not in fp_summary_enhanced.columns: # Add column for tracking fake signatures
         fp_summary_enhanced['is_injected_fake'] = False
     # if 'is_removed_final' not in fp_summary_enhanced.columns: # This will be added later
@@ -758,7 +779,7 @@ def main():
                     # This might happen if a fake signature is flagged due to other reasons (e.g., superset) 
                     # without having specific alert entries in fp_results_detailed from normal data.
                     print(f"  Caught Fake Sig: {_sig_id_to_check}, Loop: 1, but no detailed alert data found for it in fp_results_detailed (may be caught by other logic like superset, or no alerts on normal data).")
-    else:
+            else:
         print("Warning: `fp_results_detailed` DataFrame not available/valid. Cannot analyze caught fake signatures metrics.")
     
     if not _caught_fake_signature_metrics_log: # Check the temp list
@@ -845,13 +866,13 @@ def main():
                  print(f"Recall (After FP Removal & Whitelisting): {recall_after_fp:.4f}")
              else:
                   print("Could not calculate recall for final filtered signatures.")
-         else:
-             print("No signatures left after filtering, Recall (After FP Removal): 0.0000")
-             recall_after_fp = 0.0
+        else:
+            print("No signatures left after filtering, Recall (After FP Removal): 0.0000")
+            recall_after_fp = 0.0
     else:
          print("Warning: Cannot calculate overall recall because 'label' is missing in group_mapped_df.")
-         recall_before_fp = None
-         recall_after_fp = None
+        recall_before_fp = None
+        recall_after_fp = None
     # =======================================
 
     # --- Evaluate performance with filtered signatures ---
@@ -880,6 +901,38 @@ def main():
         recall_before=recall_before_fp, # Recall based on original signatures
         recall_after=recall_after_fp # Recall based on final filtered signatures
     )
+
+    # START: FAKE_FP_SIG_ Enrich Trending History
+    print("\n--- Tracking All Injected Fake FP Signatures ---")
+    if 'fp_summary_enhanced' in locals() and isinstance(fp_summary_enhanced, pd.DataFrame) and not fp_summary_enhanced.empty:
+        injected_fake_sigs_summary = fp_summary_enhanced[fp_summary_enhanced['is_injected_fake'] == True].copy()
+
+        if not injected_fake_sigs_summary.empty:
+            print(f"Found {len(injected_fake_sigs_summary)} injected FAKE_FP_SIG_ instances in fp_summary_enhanced.")
+            
+            cols_to_report = ['signature_id', 'signature_rule', 'final_likely_fp', 'is_removed_final', 'likely_fp_rate', 'avg_belief', 'alerts_count']
+            # Select only columns that exist in fp_summary_enhanced
+            cols_to_report = [col for col in cols_to_report if col in injected_fake_sigs_summary.columns]
+
+            print("Summary of all injected FAKE_FP_SIG_ (regardless of removal status):")
+            print(injected_fake_sigs_summary[cols_to_report].to_string(index=False))
+
+            # Save to file
+            _fake_fp_tracking_output_dir = f"../Dataset/validation/{file_type}/"
+            ensure_directory_exists(_fake_fp_tracking_output_dir)
+            _fake_fp_tracking_csv_filename = f"{file_type}_{file_number}_{Association_mathod}_all_injected_fake_fp_sig_status.csv"
+            _fake_fp_tracking_csv_full_path = os.path.join(_fake_fp_tracking_output_dir, _fake_fp_tracking_csv_filename)
+            
+            try:
+                injected_fake_sigs_summary[cols_to_report].to_csv(_fake_fp_tracking_csv_full_path, index=False)
+                print(f"Successfully saved status of all injected FAKE_FP_SIG_ to: {_fake_fp_tracking_csv_full_path}")
+            except Exception as e:
+                print(f"Error saving status of all injected FAKE_FP_SIG_ to CSV {_fake_fp_tracking_csv_full_path}: {e}")
+        else:
+            print("No injected FAKE_FP_SIG_ found in fp_summary_enhanced to report.")
+    else:
+        print("Warning: fp_summary_enhanced DataFrame not available. Cannot track injected FAKE_FP_SIG_ status.")
+    # END: FAKE_FP_SIG_ Enrich Trending History
 
     # --- Save Timing Information ---
     # Also modify timing filename to distinguish experiment runs

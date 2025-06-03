@@ -419,18 +419,18 @@ def check_superset_signatures(new_signatures, known_fp_signatures):
         
         for fp_sig in known_fp_signatures:
              # Check FP signature structure too
-             if 'signature_name' not in fp_sig or not isinstance(fp_sig['signature_name'], dict) or 'Signature_dict' not in fp_sig['signature_name']:
+            if 'signature_name' not in fp_sig or not isinstance(fp_sig['signature_name'], dict) or 'Signature_dict' not in fp_sig['signature_name']:
                  print(f"Warning: Skipping known FP signature in superset check due to unexpected structure.")
                  continue
-             fp_sig_dict = fp_sig['signature_name']['Signature_dict']
+            fp_sig_dict = fp_sig['signature_name']['Signature_dict']
             
-             # Check if all conditions of fp_sig are included in new_sig
-             if isinstance(new_sig_dict, dict) and isinstance(fp_sig_dict, dict): # Ensure they are dicts
-                 if all(k in new_sig_dict and new_sig_dict[k] == v for k, v in fp_sig_dict.items()):
-                     is_superset = True
-                     break
-             else:
-                  print(f"Warning: Invalid dictionary types for superset check. New: {type(new_sig_dict)}, FP: {type(fp_sig_dict)}")
+            # Check if all conditions of fp_sig are included in new_sig
+            if isinstance(new_sig_dict, dict) and isinstance(fp_sig_dict, dict):
+                if all(k in new_sig_dict and new_sig_dict[k] == v for k, v in fp_sig_dict.items()):
+                    is_superset = True
+                    break
+            else:
+                print(f"Warning: Invalid dictionary types for superset check. New: {type(new_sig_dict)}, FP: {type(fp_sig_dict)}")
 
         
         # Use signature ID if name is complex/missing
