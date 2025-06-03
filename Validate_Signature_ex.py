@@ -345,6 +345,30 @@ def generate_fake_fp_signatures(
             min_support=min_support, 
             min_confidence=_internal_fixed_confidence
         )
+        
+        # ===== DEBUG CODE START =====
+        print(f"DEBUG_ASSOCIATION_MODULE: Type of rules_df (for {association_method}) is: {type(rules_df)}")
+        if rules_df is not None:
+            if isinstance(rules_df, pd.DataFrame):
+                print("DEBUG_ASSOCIATION_MODULE: rules_df is a DataFrame. Shape:", rules_df.shape)
+                print("DEBUG_ASSOCIATION_MODULE: rules_df.head():")
+                print(rules_df.head().to_string())
+                if 'rule' in rules_df.columns:
+                    print("DEBUG_ASSOCIATION_MODULE: First 'rule' entry sample:", rules_df['rule'].iloc[0] if not rules_df.empty else "N/A (empty df)")
+            elif isinstance(rules_df, list):
+                print("DEBUG_ASSOCIATION_MODULE: rules_df is a list. Length:", len(rules_df))
+                if rules_df: # 리스트가 비어있지 않다면
+                    print("DEBUG_ASSOCIATION_MODULE: First element of rules_df (list):")
+                    print(rules_df[0])
+                    if len(rules_df) > 1:
+                        print("DEBUG_ASSOCIATION_MODULE: Second element of rules_df (list):")
+                        print(rules_df[1])
+            else:
+                print("DEBUG_ASSOCIATION_MODULE: rules_df is neither DataFrame nor list. Value:")
+                print(rules_df)
+        else:
+            print("DEBUG_ASSOCIATION_MODULE: rules_df is None.")
+        # ===== DEBUG CODE END =====
 
         # 7. Extract top rules as fake signatures
         if rules_df is not None and not rules_df.empty and 'rule' in rules_df.columns:
