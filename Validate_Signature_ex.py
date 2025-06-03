@@ -264,11 +264,28 @@ def generate_fake_fp_signatures(
         print(f"Filtered for ANOMALOUS training data. Rows obtained: {anomalous_train_data_df.shape[0]}")
 
         # 5. Map the ANOMALOUS training data.
-        # !!! WARNING: Using category_mapping and data_list derived from VALIDATION data. !!!
-        print("Mapping the ANOMALOUS training data (using mapping info potentially derived from validation set - VERIFY COMPATIBILITY)...")
+        # Using category_mapping and data_list derived from VALIDATION data.
+        print(f"Shape of ANOMALOUS training data BEFORE mapping: {anomalous_train_data_df.shape}")
+        print("Sample of ANOMALOUS training data BEFORE mapping (first 5 rows):")
+        print(anomalous_train_data_df.head().to_string())
+        
         anomalous_train_data_to_map = anomalous_train_data_df.drop(columns=['label'], errors='ignore')
+        
+        # Check some of the category_mapping content
+        print("Debug: category_mapping['interval'] sample (first 5 rows, first 3 columns):")
+        if not category_mapping['interval'].empty:
+            print(category_mapping['interval'].iloc[:5, :3].to_string())
+        else:
+            print("category_mapping['interval'] is empty.")
+
+        print("Mapping the ANOMALOUS training data (using mapping info potentially derived from validation set - VERIFY COMPATIBILITY)...")
         anomalous_mapped_train_df, _ = map_intervals_to_groups(anomalous_train_data_to_map, category_mapping, data_list, regul='N')
-        print(f"Shape of mapped ANOMALOUS training data: {anomalous_mapped_train_df.shape}")
+        
+        print(f"Shape of mapped ANOMALOUS training data AFTER mapping (BEFORE dropna): {anomalous_mapped_train_df.shape}")
+        print("NaN count per column in mapped ANOMALOUS training data (BEFORE dropna):")
+        print(anomalous_mapped_train_df.isna().sum().sort_values(ascending=False)) # Sort by most NaNs
+        print("Sample of mapped ANOMALOUS training data AFTER mapping (BEFORE dropna, first 5 rows):")
+        print(anomalous_mapped_train_df.head().to_string())
 
         # --- Handle NaN values --- 
         rows_before_dropna = anomalous_mapped_train_df.shape[0]
