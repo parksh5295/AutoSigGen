@@ -282,7 +282,12 @@ def generate_fake_fp_signatures(
             return []
         
         # 6. Run association rule mining on the mapped ANOMALOUS training data.
-        _internal_fixed_confidence = 0.7 
+        # Adjust internal confidence based on file_type
+        if file_type == 'CICModbus23':
+            _internal_fixed_confidence = 0.01
+        else:
+            _internal_fixed_confidence = 0.7 
+        
         print(f"Running {association_method} on ANOMALOUS training data (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
         
         rules_df = association_module(
@@ -784,9 +789,20 @@ def main():
     
     if not _caught_fake_signature_metrics_log: # Check the temp list
         print("No FAKE signatures were caught and had detailed FP metrics to report in this run.")
+        print("Debug: _caught_fake_signature_metrics_log is empty (checked before deciding to save).") # Added Debug
     else:
+        print(f"Debug: _caught_fake_signature_metrics_log contains {len(_caught_fake_signature_metrics_log)} items.") # Added Debug
+        print("Debug: Content of _caught_fake_signature_metrics_log (first 3 items):") # Added Debug
+        for i, item in enumerate(_caught_fake_signature_metrics_log[:3]): # Added Debug
+            print(f"  Item {i}: {item}") # Added Debug
+
         # Save the caught fake signature metrics to a CSV file
         _caught_fake_fp_metrics_df = pd.DataFrame(_caught_fake_signature_metrics_log)
+        
+        print("Debug: _caught_fake_fp_metrics_df created. Shape:", _caught_fake_fp_metrics_df.shape) # Added Debug
+        print("Debug: Content of _caught_fake_fp_metrics_df (first 5 rows):") # Added Debug
+        print(_caught_fake_fp_metrics_df.head().to_string()) # Added Debug
+        
         _output_dir = f"../Dataset/validation/{file_type}/" # Define output directory
         # Using Association_mathod as it is in the existing codebase, preserving original variable names
         _csv_filename = f"{file_type}_{file_number}_{Association_mathod}_caught_fake_fp_metrics.csv"
@@ -905,10 +921,20 @@ def main():
     # START: FAKE_FP_SIG_ Enrich Trending History
     print("\n--- Tracking All Injected Fake FP Signatures ---")
     if 'fp_summary_enhanced' in locals() and isinstance(fp_summary_enhanced, pd.DataFrame) and not fp_summary_enhanced.empty:
+        print("Debug: fp_summary_enhanced found and is not empty. Shape:", fp_summary_enhanced.shape)
+        # Add print for relevant columns if they exist
+        if 'is_injected_fake' in fp_summary_enhanced.columns:
+            print("Debug: fp_summary_enhanced['is_injected_fake'].value_counts():")
+            print(fp_summary_enhanced['is_injected_fake'].value_counts(dropna=False))
+        else:
+            print("Debug: 'is_injected_fake' column NOT FOUND in fp_summary_enhanced.")
+
         injected_fake_sigs_summary = fp_summary_enhanced[fp_summary_enhanced['is_injected_fake'] == True].copy()
 
         if not injected_fake_sigs_summary.empty:
-            print(f"Found {len(injected_fake_sigs_summary)} injected FAKE_FP_SIG_ instances in fp_summary_enhanced.")
+            print(f"Debug: Found {len(injected_fake_sigs_summary)} injected FAKE_FP_SIG_ instances in fp_summary_enhanced to save.")
+            print("Debug: Content of injected_fake_sigs_summary (first 5 rows):")
+            print(injected_fake_sigs_summary.head().to_string())
             
             cols_to_report = ['signature_id', 'signature_rule', 'final_likely_fp', 'is_removed_final', 'likely_fp_rate', 'avg_belief', 'alerts_count']
             # Select only columns that exist in fp_summary_enhanced
@@ -929,9 +955,9 @@ def main():
             except Exception as e:
                 print(f"Error saving status of all injected FAKE_FP_SIG_ to CSV {_fake_fp_tracking_csv_full_path}: {e}")
         else:
-            print("No injected FAKE_FP_SIG_ found in fp_summary_enhanced to report.")
+            print("Debug: No injected FAKE_FP_SIG_ found in fp_summary_enhanced to report or save.")
     else:
-        print("Warning: fp_summary_enhanced DataFrame not available. Cannot track injected FAKE_FP_SIG_ status.")
+        print("Debug: fp_summary_enhanced DataFrame not available or empty. Cannot track injected FAKE_FP_SIG_ status.")
     # END: FAKE_FP_SIG_ Enrich Trending History
 
     # --- Save Timing Information ---
