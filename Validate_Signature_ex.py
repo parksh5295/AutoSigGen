@@ -332,7 +332,7 @@ def generate_fake_fp_signatures(
 
 
         if file_type == 'CICModbus23':
-            _internal_fixed_confidence = 0.01
+            _internal_fixed_confidence = 0.001
         else:
             _internal_fixed_confidence = 0.7 
         
@@ -1008,28 +1008,65 @@ def main():
 
     # START: FAKE_FP_SIG_ Enrich Trending History
     print("\n--- Tracking All Injected Fake FP Signatures ---")
-    if 'fp_summary_enhanced' in locals() and isinstance(fp_summary_enhanced, pd.DataFrame) and not fp_summary_enhanced.empty:
-        print("Debug: fp_summary_enhanced found and is not empty. Shape:", fp_summary_enhanced.shape)
-        # Add print for relevant columns if they exist
-        if 'is_injected_fake' in fp_summary_enhanced.columns:
-            print("Debug: fp_summary_enhanced['is_injected_fake'].value_counts():")
-            print(fp_summary_enhanced['is_injected_fake'].value_counts(dropna=False))
+    
+    expected_fake_sig_ids = []
+    if 'injected_fake_count' in locals() and injected_fake_count > 0:
+        expected_fake_sig_ids = [f"FAKE_FP_SIG_{i}" for i in range(injected_fake_count)]
+        print(f"Debug: Expecting {injected_fake_count} injected fake signatures with IDs: {expected_fake_sig_ids}")
+    else:
+        print("Debug: No fake signatures were recorded as injected ('injected_fake_count' is 0 or not found).")
+
+    all_injected_fake_sigs_data = []
+
+    if expected_fake_sig_ids and 'current_signatures_map' in locals(): # Ensure current_signatures_map is available
+        # Check fp_summary_enhanced existence and validity, but proceed even if it's problematic for some entries
+        fp_summary_available = 'fp_summary_enhanced' in locals() and \
+                               isinstance(fp_summary_enhanced, pd.DataFrame) and \
+                               not fp_summary_enhanced.empty and \
+                               'signature_id' in fp_summary_enhanced.columns
+        
+        if fp_summary_available:
+            print(f"Debug: fp_summary_enhanced found. Shape: {fp_summary_enhanced.shape}. Columns: {fp_summary_enhanced.columns.tolist()}")
         else:
-            print("Debug: 'is_injected_fake' column NOT FOUND in fp_summary_enhanced.")
+            print("Debug: fp_summary_enhanced is not available, empty, or missing 'signature_id'. Will report 'N/A' for summary-dependent fields.")
 
-        injected_fake_sigs_summary = fp_summary_enhanced[fp_summary_enhanced['is_injected_fake'] == True].copy()
+        for fake_id in expected_fake_sig_ids:
+            fake_sig_data = {'signature_id': fake_id}
+            summary_entry = pd.DataFrame() # Default to empty
 
-        if not injected_fake_sigs_summary.empty:
-            print(f"Debug: Found {len(injected_fake_sigs_summary)} injected FAKE_FP_SIG_ instances in fp_summary_enhanced to save.")
-            print("Debug: Content of injected_fake_sigs_summary (first 5 rows):")
-            print(injected_fake_sigs_summary.head().to_string())
+            if fp_summary_available:
+                summary_entry = fp_summary_enhanced[fp_summary_enhanced['signature_id'] == fake_id]
             
-            cols_to_report = ['signature_id', 'signature_rule', 'final_likely_fp', 'is_removed_final', 'likely_fp_rate', 'avg_belief', 'alerts_count']
-            # Select only columns that exist in fp_summary_enhanced
-            cols_to_report = [col for col in cols_to_report if col in injected_fake_sigs_summary.columns]
+            if not summary_entry.empty:
+                fake_sig_data['final_likely_fp'] = summary_entry['final_likely_fp'].iloc[0] if 'final_likely_fp' in summary_entry.columns else 'N/A'
+                fake_sig_data['is_removed_final'] = summary_entry['is_removed_final'].iloc[0] if 'is_removed_final' in summary_entry.columns else 'N/A'
+                fake_sig_data['likely_fp_rate'] = summary_entry['likely_fp_rate'].iloc[0] if 'likely_fp_rate' in summary_entry.columns else 'N/A'
+                fake_sig_data['avg_belief'] = summary_entry['avg_belief'].iloc[0] if 'avg_belief' in summary_entry.columns else 'N/A'
+                fake_sig_data['alerts_count'] = summary_entry['alerts_count'].iloc[0] if 'alerts_count' in summary_entry.columns else 'N/A'
+                fake_sig_data['status_in_fp_summary'] = 'Found'
+            else:
+                fake_sig_data['final_likely_fp'] = 'N/A (not in summary)'
+                fake_sig_data['is_removed_final'] = 'N/A (not in summary)'
+                fake_sig_data['likely_fp_rate'] = 'N/A (not in summary)'
+                fake_sig_data['avg_belief'] = 'N/A (not in summary)'
+                fake_sig_data['alerts_count'] = 0 # Assume 0 alerts if not in summary
+                fake_sig_data['status_in_fp_summary'] = 'Not found (likely 0 alerts or not processed in FP summary)'
+            
+            fake_sig_data['signature_rule'] = current_signatures_map.get(fake_id, 'Rule not found in current_signatures_map')
+            all_injected_fake_sigs_data.append(fake_sig_data)
 
-            print("Summary of all injected FAKE_FP_SIG_ (regardless of removal status):")
-            print(injected_fake_sigs_summary[cols_to_report].to_string(index=False))
+    if all_injected_fake_sigs_data:
+        injected_fake_sigs_report_df = pd.DataFrame(all_injected_fake_sigs_data)
+        print(f"Debug: Generated report for {len(injected_fake_sigs_report_df)} injected FAKE_FP_SIG_ instances.")
+        
+        cols_to_report = ['signature_id', 'signature_rule', 'status_in_fp_summary', 'final_likely_fp', 'is_removed_final', 'likely_fp_rate', 'avg_belief', 'alerts_count']
+        # Ensure all selected columns exist before printing and reorder
+        existing_cols_in_report_df = injected_fake_sigs_report_df.columns.tolist()
+        cols_to_print_report = [col for col in cols_to_report if col in existing_cols_in_report_df]
+
+        print("Summary of all injected FAKE_FP_SIG_ (status based on fp_summary_enhanced and direct check):")
+        if not injected_fake_sigs_report_df.empty:
+            print(injected_fake_sigs_report_df[cols_to_print_report].to_string(index=False))
 
             # Save to file
             _fake_fp_tracking_output_dir = f"../Dataset/validation/{file_type}/"
@@ -1038,14 +1075,17 @@ def main():
             _fake_fp_tracking_csv_full_path = os.path.join(_fake_fp_tracking_output_dir, _fake_fp_tracking_csv_filename)
             
             try:
-                injected_fake_sigs_summary[cols_to_report].to_csv(_fake_fp_tracking_csv_full_path, index=False)
+                injected_fake_sigs_report_df[cols_to_print_report].to_csv(_fake_fp_tracking_csv_full_path, index=False)
                 print(f"Successfully saved status of all injected FAKE_FP_SIG_ to: {_fake_fp_tracking_csv_full_path}")
             except Exception as e:
                 print(f"Error saving status of all injected FAKE_FP_SIG_ to CSV {_fake_fp_tracking_csv_full_path}: {e}")
         else:
-            print("Debug: No injected FAKE_FP_SIG_ found in fp_summary_enhanced to report or save.")
+            print("Debug: injected_fake_sigs_report_df is empty, nothing to print or save.")
+
+    elif expected_fake_sig_ids:
+        print("Warning: Expected injected fake signatures, but could not generate a detailed report (e.g., current_signatures_map missing or other issues).")
     else:
-        print("Debug: fp_summary_enhanced DataFrame not available or empty. Cannot track injected FAKE_FP_SIG_ status.")
+        print("No injected FAKE_FP_SIG_ were expected or processed for tracking.")
     # END: FAKE_FP_SIG_ Enrich Trending History
 
     # --- Save Timing Information ---
