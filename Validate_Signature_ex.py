@@ -838,39 +838,39 @@ def main():
     print("=== Overall Recall Calculation ===")
     # Use the original signatures and alerts from before injection/filtering for 'before' recall
     if 'label' in group_mapped_df.columns: # Check if label exists
-         print("--- Recall BEFORE FP Removal (Original Signatures) ---")
-         # We need alerts generated ONLY by original signatures
-         original_alerts_df = apply_signatures_to_dataset(group_mapped_df, original_formatted_signatures_for_recall)
-         recall_before_fp = calculate_overall_recall(
-             group_mapped_df, 
-             original_alerts_df, 
-             original_current_signatures_map_for_recall, 
-             set(original_current_signatures_map_for_recall.keys())
-         )
-         if recall_before_fp is not None:
-             print(f"Recall (Original Signatures): {recall_before_fp:.4f}")
-         else:
-             print("Could not calculate recall for original signatures.")
+        print("--- Recall BEFORE FP Removal (Original Signatures) ---")
+        # We need alerts generated ONLY by original signatures
+        original_alerts_df = apply_signatures_to_dataset(group_mapped_df, original_formatted_signatures_for_recall)
+        recall_before_fp = calculate_overall_recall(
+            group_mapped_df, 
+            original_alerts_df, 
+            original_current_signatures_map_for_recall, 
+            set(original_current_signatures_map_for_recall.keys())
+        )
+        if recall_before_fp is not None:
+            print(f"Recall (Original Signatures): {recall_before_fp:.4f}")
+        else:
+            print("Could not calculate recall for original signatures.")
 
-         print("--- Recall AFTER FP Removal (Final Filtered Signatures) ---")
-         if final_signature_ids:
-             # Use the alerts_df that includes *all* signatures (original + fake)
-             # But filter based on the final_signature_ids (whitelisted OK, removed FPs excluded)
-             recall_after_fp = calculate_overall_recall(
-                 group_mapped_df, 
-                 alerts_df, # Use alerts_df containing triggers from all sigs (incl. whitelisted)
-                 current_signatures_map, # Map containing all sigs
-                 final_signature_ids # Only consider alerts from the final set
-             )
-             if recall_after_fp is not None:
-                 print(f"Recall (After FP Removal & Whitelisting): {recall_after_fp:.4f}")
-             else:
-                  print("Could not calculate recall for final filtered signatures.")
+        print("--- Recall AFTER FP Removal (Final Filtered Signatures) ---")
+        if final_signature_ids:
+            # Use the alerts_df that includes *all* signatures (original + fake)
+            # But filter based on the final_signature_ids (whitelisted OK, removed FPs excluded)
+            recall_after_fp = calculate_overall_recall(
+                group_mapped_df, 
+                alerts_df, # Use alerts_df containing triggers from all sigs (incl. whitelisted)
+                current_signatures_map, # Map containing all sigs
+                final_signature_ids # Only consider alerts from the final set
+            )
+            if recall_after_fp is not None:
+                print(f"Recall (After FP Removal & Whitelisting): {recall_after_fp:.4f}")
+            else:
+                print("Could not calculate recall for final filtered signatures.")
         else:
             print("No signatures left after filtering, Recall (After FP Removal): 0.0000")
             recall_after_fp = 0.0
     else:
-         print("Warning: Cannot calculate overall recall because 'label' is missing in group_mapped_df.")
+        print("Warning: Cannot calculate overall recall because 'label' is missing in group_mapped_df.")
         recall_before_fp = None
         recall_after_fp = None
     # =======================================
