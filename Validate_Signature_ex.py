@@ -282,24 +282,55 @@ def generate_fake_fp_signatures(
         anomalous_mapped_train_df, _ = map_intervals_to_groups(anomalous_train_data_to_map, category_mapping, data_list, regul='N')
         
         print(f"Shape of mapped ANOMALOUS training data AFTER mapping (BEFORE dropna): {anomalous_mapped_train_df.shape}")
-        print("NaN count per column in mapped ANOMALOUS training data (BEFORE dropna):")
+        print("NaN count per column (AFTER map_intervals_to_groups, BEFORE dropna):")
         print(anomalous_mapped_train_df.isna().sum().sort_values(ascending=False)) # Sort by most NaNs
-        print("Sample of mapped ANOMALOUS training data AFTER mapping (BEFORE dropna, first 5 rows):")
-        print(anomalous_mapped_train_df.head().to_string())
 
-        # --- Handle NaN values --- 
-        rows_before_dropna = anomalous_mapped_train_df.shape[0]
-        anomalous_mapped_train_df = anomalous_mapped_train_df.dropna()
-        rows_after_dropna = anomalous_mapped_train_df.shape[0]
+        # --- Exclude problematic scalar columns for fake signature generation ---
+        # Identify columns where all values are NaN
+        all_nan_columns = anomalous_mapped_train_df.columns[anomalous_mapped_train_df.isna().all()].tolist()
 
-        if rows_before_dropna > rows_after_dropna:
-            print(f"Dropped {rows_before_dropna - rows_after_dropna} rows containing NaN values from mapped ANOMALOUS training data.")
-        if anomalous_mapped_train_df.empty:
-            print("Warning: No data left after dropping NaN rows from mapped ANOMALOUS training data. Cannot generate fake signatures.")
-            return []
+        if all_nan_columns:
+            print(f"Warning: For FAKE signature generation, columns with ALL NaN values identified: {all_nan_columns}")
+            # These columns will likely cause all rows to be dropped if dropna() is used directly without intervention.
         
-        # 6. Run association rule mining on the mapped ANOMALOUS training data.
-        # Adjust internal confidence based on file_type
+        # --- Handle NaN values ---
+        # Stage 1: Try dropna on the full mapped dataframe
+        rows_before_dropna_stage1 = anomalous_mapped_train_df.shape[0]
+        anomalous_mapped_train_df_for_rules = anomalous_mapped_train_df.dropna()
+        rows_after_dropna_stage1 = anomalous_mapped_train_df_for_rules.shape[0]
+
+        if rows_before_dropna_stage1 > rows_after_dropna_stage1:
+            print(f"[Stage 1 dropna] Dropped {rows_before_dropna_stage1 - rows_after_dropna_stage1} rows containing NaN values from mapped ANOMALOUS training data.")
+        
+        if anomalous_mapped_train_df_for_rules.empty:
+            print("[Stage 1 dropna] Resulted in an empty DataFrame. Attempting Stage 2: using non-all-NaN columns.")
+            
+            # Stage 2: Use only columns that are NOT entirely NaN
+            non_all_nan_columns = anomalous_mapped_train_df.columns[anomalous_mapped_train_df.notna().any()].tolist()
+
+            if not non_all_nan_columns:
+                print("Critical Error: [Stage 2] After mapping, no columns have any non-NaN data. Cannot generate any fake signatures.")
+                return []
+            
+            print(f"[Stage 2] Re-attempting with columns that are not entirely NaN: {non_all_nan_columns}")
+            # Use the original df but select only these columns
+            anomalous_mapped_train_df_for_rules = anomalous_mapped_train_df[non_all_nan_columns]
+            
+            rows_before_dropna_stage2 = anomalous_mapped_train_df_for_rules.shape[0]
+            anomalous_mapped_train_df_for_rules = anomalous_mapped_train_df_for_rules.dropna()
+            rows_after_dropna_stage2 = anomalous_mapped_train_df_for_rules.shape[0]
+            
+            if rows_before_dropna_stage2 > rows_after_dropna_stage2:
+                 print(f"[Stage 2 dropna] Dropped {rows_before_dropna_stage2 - rows_after_dropna_stage2} rows from the subset of columns.")
+
+            if anomalous_mapped_train_df_for_rules.empty:
+                print("Warning: [Stage 2] Still no data left after selecting non-all-NaN columns and applying dropna. Cannot generate fake signatures.")
+                return []
+            print(f"[Stage 2] Proceeding with {anomalous_mapped_train_df_for_rules.shape[0]} rows and columns: {anomalous_mapped_train_df_for_rules.columns.tolist()}")
+        else:
+            print(f"[Stage 1 dropna] Succeeded. Proceeding with {anomalous_mapped_train_df_for_rules.shape[0]} rows.")
+
+
         if file_type == 'CICModbus23':
             _internal_fixed_confidence = 0.01
         else:
@@ -308,7 +339,7 @@ def generate_fake_fp_signatures(
         print(f"Running {association_method} on ANOMALOUS training data (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
         
         rules_df = association_module(
-            anomalous_mapped_train_df, 
+            anomalous_mapped_train_df_for_rules, 
             association_method,
             association_metric=association_metric,
             min_support=min_support, 
