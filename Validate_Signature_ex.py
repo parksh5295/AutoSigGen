@@ -208,7 +208,7 @@ def generate_fake_fp_signatures(
     Internally, association_module is called with a fixed min_confidence of 0.7.
     The file_number parameter is used to specify which training data file to load.
     """
-    print(f"\\n--- Generating {num_fake_signatures} Fake FP Signatures from ANOMALOUS TRAINING Data (file_type: {file_type}, file_number: {file_number}, using min_confidence=0.7 internally for association) ---")
+    print(f"\n--- Generating {num_fake_signatures} Fake FP Signatures from ANOMALOUS TRAINING Data (file_type: {file_type}, file_number: {file_number}, using min_confidence=0.7 internally for association) ---")
     fake_signatures = []
     try:
         # 1. Load TRAINING data
@@ -778,9 +778,9 @@ def main():
                 else:
                     # This might happen if a fake signature is flagged due to other reasons (e.g., superset) 
                     # without having specific alert entries in fp_results_detailed from normal data.
-                    print(f"  Caught Fake Sig: {_sig_id_to_check}, Loop: 1, but no detailed alert data found for it in fp_results_detailed (may be caught by other logic like superset, or no alerts on normal data).")
+                    print("Warning: `fp_results_detailed` DataFrame not available/valid. Cannot analyze caught fake signatures metrics.")
             else:
-        print("Warning: `fp_results_detailed` DataFrame not available/valid. Cannot analyze caught fake signatures metrics.")
+                print("Warning: `fp_results_detailed` DataFrame not available/valid. Cannot analyze caught fake signatures metrics.")
     
     if not _caught_fake_signature_metrics_log: # Check the temp list
         print("No FAKE signatures were caught and had detailed FP metrics to report in this run.")
