@@ -357,7 +357,7 @@ def generate_fake_fp_signatures(
                     print("DEBUG_ASSOCIATION_MODULE: First 'rule' entry sample:", rules_df['rule'].iloc[0] if not rules_df.empty else "N/A (empty df)")
             elif isinstance(rules_df, list):
                 print("DEBUG_ASSOCIATION_MODULE: rules_df is a list. Length:", len(rules_df))
-                if rules_df: # 리스트가 비어있지 않다면
+                if rules_df:
                     print("DEBUG_ASSOCIATION_MODULE: First element of rules_df (list):")
                     print(rules_df[0])
                     if len(rules_df) > 1:
@@ -371,13 +371,29 @@ def generate_fake_fp_signatures(
         # ===== DEBUG CODE END =====
 
         # 7. Extract top rules as fake signatures
-        if rules_df is not None and not rules_df.empty and 'rule' in rules_df.columns:
-            potential_rules = rules_df['rule'].tolist()
-            valid_rules = [rule for rule in potential_rules if isinstance(rule, dict)]
-            fake_signatures = valid_rules[:num_fake_signatures]
+        fake_signatures = [] # Initialize
+        if rules_df is not None:
+            if isinstance(rules_df, pd.DataFrame): # When returning a DataFrame (e.g., apriori)
+                if not rules_df.empty and 'rule' in rules_df.columns:
+                    potential_rules = rules_df['rule'].tolist()
+                    valid_rules = [rule for rule in potential_rules if isinstance(rule, dict)]
+                    fake_signatures = valid_rules[:num_fake_signatures]
+                else:
+                    print("Warning: Association rule mining (DataFrame output) did not produce usable rules or 'rule' column is missing.")
+            elif isinstance(rules_df, list): # if it returns a list
+                if rules_df: # If the list is not empty
+                    # Since each element is already in the form of a signature dictionary, it can be used directly after validation.
+                    valid_rules = [rule for rule in rules_df if isinstance(rule, dict)]
+                    fake_signatures = valid_rules[:num_fake_signatures]
+                else:
+                    print("Warning: Association rule mining (list output) returned an empty list of rules.")
+            else:
+                print(f"Warning: Association rule mining returned an unexpected type: {type(rules_df)}")
+
+        if fake_signatures:
             print(f"Generated {len(fake_signatures)} fake signature rules from ANOMALOUS training data.")
         else:
-            print("Warning: Association rule mining on ANOMALOUS training data did not produce usable rules.")
+            print("Warning: No fake signatures were extracted after association rule mining (rules_df might be None, empty, or of unexpected type).")
 
     except Exception as e:
         print(f"Error during fake signature generation from ANOMALOUS training data: {e}")
