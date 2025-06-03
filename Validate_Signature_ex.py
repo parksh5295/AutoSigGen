@@ -366,10 +366,10 @@ def generate_fake_fp_signatures(
             print(f"[Stage 1 dropna] Succeeded. Proceeding with {mapped_anomalous_data_for_rules.shape[0]} rows.")
 
 
-        if file_type == 'CICModbus23':
+        if file_type in ['CICModbus23', 'CICModbus']:
             _internal_fixed_confidence = 0.5
         else:
-            _internal_fixed_confidence = 0.7 
+            _internal_fixed_confidence = 0.8
         
         # print(f"Running {association_method} on ANOMALOUS training data (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
         # print(f"Running {association_method} on NORMAL data (from source) (min_support={min_support}, using fixed min_confidence={_internal_fixed_confidence})...")
